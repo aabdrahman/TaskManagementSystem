@@ -4,11 +4,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+builder.Services.ConfigureSwagger();
 builder.Services.AddCorsImplementation(builder.Configuration);
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.ConfigureSwaggerDefinition();
 
 app.UseCors();
 

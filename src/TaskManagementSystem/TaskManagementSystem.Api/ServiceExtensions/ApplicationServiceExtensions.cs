@@ -14,4 +14,19 @@ internal static class ApplicationServiceExtensions
             });
         });
     }
+
+    internal static void ConfigureSwagger(this IServiceCollection services)
+    {
+
+        services.AddSwaggerGen(opts =>
+        {
+            opts.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo() { Title = "TaskManagementSystemApi", Description = "Task Management System Api", Version = "v1", Contact = new Microsoft.OpenApi.Models.OpenApiContact()
+            {
+                Name = "Abdrahman Akande",
+                Email = "",
+                Url = new Uri("https://github.com/aabdrahman/TaskManagementSystem")
+            } });
+        });
+
+    }
 }

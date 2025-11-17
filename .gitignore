@@ -59,3 +59,4 @@ nunit-*.xml
 /src/TaskManagementSystem/.vs/TaskManagementSystem/v17/DocumentLayout.backup.json
 /src/TaskManagementSystem/.vs/TaskManagementSystem/v17/DocumentLayout.json
 /src/TaskManagementSystem/.vs/TaskManagementSystem/config/applicationhost.config
+/src/TaskManagementSystem/.vs/TaskManagementSystem/DesignTimeBuild/.dtbcache.v2
