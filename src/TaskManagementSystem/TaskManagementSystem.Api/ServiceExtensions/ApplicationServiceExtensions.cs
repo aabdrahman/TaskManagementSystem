@@ -1,4 +1,7 @@
-﻿namespace TaskManagementSystem.Api.ServiceExtensions;
+﻿using Contracts.Infrastructure;
+using LoggerService;
+
+namespace TaskManagementSystem.Api.ServiceExtensions;
 
 internal static class ApplicationServiceExtensions
 {
@@ -28,5 +31,10 @@ internal static class ApplicationServiceExtensions
             } });
         });
 
+    }
+
+    internal static void ConfigureLogging(this IServiceCollection services)
+    {
+        services.AddScoped<ILoggerManager, LoggerManager>();
     }
 }
