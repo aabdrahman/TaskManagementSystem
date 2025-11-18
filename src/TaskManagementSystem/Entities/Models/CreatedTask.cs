@@ -8,7 +8,7 @@ public class CreatedTask : BaseEntity
     public string Description { get; set; }
     public DateTime ProjectedCompletionDate { get; set; }
     public DateTime? CompletionDate { get; set; }
-    public PrirityLevel Priority { get; set; }
+    public PriorityLevel Priority { get; set; }
     public Stage TaskStage { get; set; }
     public string TaskId { get; set; }
     public bool IsDeleted { get; set; }

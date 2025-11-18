@@ -6,5 +6,6 @@ public enum Stage
     Testing,
     Deployment,
     ChangeManagement,
-    Completed
+    Completed,
+    Cancelled
 }

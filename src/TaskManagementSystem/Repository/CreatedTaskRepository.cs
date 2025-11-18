@@ -30,7 +30,7 @@ public sealed class CreatedTaskRepository : RepositoryBase<CreatedTask>, ICreate
         return FindByCondition(x => x.Id ==  id, trackChanges, hasQueryFilter);
     }
 
-    public IQueryable<CreatedTask> GetByPriority(PrirityLevel priorityLevel, bool trackChanges = true, bool hasQueryFilter = true)
+    public IQueryable<CreatedTask> GetByPriority(PriorityLevel priorityLevel, bool trackChanges = true, bool hasQueryFilter = true)
     {
         return FindByCondition(x => x.Priority == priorityLevel, trackChanges, hasQueryFilter);
     }

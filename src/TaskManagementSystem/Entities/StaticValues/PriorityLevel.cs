@@ -1,6 +1,6 @@
 ﻿namespace Entities.StaticValues;
 
-public enum PrirityLevel
+public enum PriorityLevel
 {
     Low,
     Medium,

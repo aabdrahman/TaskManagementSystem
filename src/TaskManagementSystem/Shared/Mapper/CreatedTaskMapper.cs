@@ -30,7 +30,7 @@ public static class CreatedTaskMapper
             Description = newCreateTask.Description,
             ProjectedCompletionDate = newCreateTask.ProposedCompletionDate,
             TaskStage = Enum.Parse<Stage>(newCreateTask.Stage.ToString()),
-            Priority = Enum.Parse<PrirityLevel>(newCreateTask?.Priority.ToString()),
+            Priority = Enum.Parse<PriorityLevel>(newCreateTask?.Priority.ToString()),
             CreatedBy = ""
         };
     }

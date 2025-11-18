@@ -9,7 +9,7 @@ public interface ICreatedTaskRepository
     void UpdateTask(CreatedTask updatedCreatedTask);
     void DeleteTask(CreatedTask deletedCreatedTask);
     IQueryable<CreatedTask> GetAllTasks(bool trackChanges = true, bool hasQueryFilter = true);
-    IQueryable<CreatedTask> GetByPriority(PrirityLevel priorityLevel, bool trackChanges = true, bool hasQueryFilter = true);
+    IQueryable<CreatedTask> GetByPriority(PriorityLevel priorityLevel, bool trackChanges = true, bool hasQueryFilter = true);
     IQueryable<CreatedTask> GetByStatus(Stage stage, bool trackChanges = true, bool hasQueryFilter = true);
     IQueryable<CreatedTask> GetById(int id, bool trackChanges = true, bool hasQueryFilter = true);
     IQueryable<CreatedTask> GetByTaskId(string taskId, bool trackChanges = true, bool hasQueryFilter = true);
