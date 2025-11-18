@@ -22,6 +22,8 @@ internal class CreatedTaskConfiguration : IEntityTypeConfiguration<CreatedTask>
 
         builder.ToTable(table => table.HasCheckConstraint("CK_Priority_Level", $"[Priority] IN ('Low', 'Medium', 'High', 'Critical')"));
 
+        builder.ToTable(table => table.HasCheckConstraint("CK_Stage", "[TaskStage] IN ('Development', 'Testing', 'Deployment', 'ChangeManagement', 'Completed')"));
+
         builder.HasQueryFilter(x => !x.IsDeleted);
 
         builder.Property(x => x.IsDeleted)

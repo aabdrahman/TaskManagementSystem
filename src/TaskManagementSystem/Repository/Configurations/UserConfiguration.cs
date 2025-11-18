@@ -14,6 +14,10 @@ internal class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.HasIndex(x => x.UnitId);
 
+        builder.HasIndex(x => x.Username);
+
+        builder.HasQueryFilter(x => x.IsActive);
+
         builder.Property(x => x.CreatedBy)
             .HasMaxLength(50)
             .IsRequired();
@@ -27,6 +31,18 @@ internal class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired();
 
         builder.Property(x => x.Password)
+            .IsRequired();
+
+        builder.Property(x => x.IsActive)
+            .HasDefaultValue(true)
+            .IsRequired();
+
+        builder.Property(x => x.Email)
+            .HasMaxLength(75)
+            .IsRequired();
+
+        builder.Property(x => x.Username)
+            .HasMaxLength(75)
             .IsRequired();
 
         builder.HasOne(x => x.AssignedUnit)
