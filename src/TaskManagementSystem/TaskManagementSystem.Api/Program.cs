@@ -22,6 +22,7 @@ builder.Services.ConfigureSwagger();
 builder.Services.AddCorsImplementation(builder.Configuration);
 builder.Services.ConfigureLogging();
 builder.Services.ConfigureSqlDbConnection(builder.Configuration);
+builder.Services.ConfigureRepositoryManager();
 
 var app = builder.Build();
 

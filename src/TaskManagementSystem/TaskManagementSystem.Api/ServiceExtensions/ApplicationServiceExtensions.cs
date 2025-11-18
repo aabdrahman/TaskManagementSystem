@@ -1,4 +1,5 @@
-﻿using Contracts.Infrastructure;
+﻿using Contracts;
+using Contracts.Infrastructure;
 using LoggerService;
 using Microsoft.EntityFrameworkCore;
 using Repository;
@@ -47,5 +48,10 @@ internal static class ApplicationServiceExtensions
     internal static void ConfigureLogging(this IServiceCollection services)
     {
         services.AddScoped<ILoggerManager, LoggerManager>();
+    }
+
+    internal static void ConfigureRepositoryManager(this IServiceCollection services)
+    {
+        services.AddScoped<IRepositoryManager, RepositoryManager>();
     }
 }
