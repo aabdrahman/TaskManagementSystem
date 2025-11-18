@@ -8,4 +8,5 @@ public interface IRepositoryManager
     ICreatedTaskRepository CreatedTaskRepository { get; }
     IUserRoleRepository UserRoleRepository { get; }
     ITaskUserRepository TaskUserRepository { get; }
+    IAttachmentRepository AttachmentRepository { get; }
 }

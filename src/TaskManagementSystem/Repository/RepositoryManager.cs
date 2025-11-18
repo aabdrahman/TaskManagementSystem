@@ -11,6 +11,7 @@ public sealed class RepositoryManager : IRepositoryManager
     private readonly Lazy<ICreatedTaskRepository> _createdTaskRepository;
     private readonly Lazy<IUserRoleRepository> _userRoleRepository;
     private readonly Lazy<TaskUserRepository> _taskUserRepository;
+    private readonly Lazy<IAttachmentRepository> _attachmentRepository;
 
     public RepositoryManager()
     {
@@ -25,6 +26,7 @@ public sealed class RepositoryManager : IRepositoryManager
         _createdTaskRepository = new Lazy<ICreatedTaskRepository>(() => new CreatedTaskRepository(_repositoryContext));
         _userRoleRepository = new Lazy<IUserRoleRepository>(() => new UserRoleRepository(_repositoryContext));
         _taskUserRepository = new Lazy<TaskUserRepository>(()  => new TaskUserRepository(_repositoryContext));
+        _attachmentRepository = new Lazy<IAttachmentRepository>(() => new AttachmentRepository(_repositoryContext));
     }
 
     public IUnitRepository UnitRepository => _unitRepository.Value;
@@ -38,4 +40,6 @@ public sealed class RepositoryManager : IRepositoryManager
     public IUserRoleRepository UserRoleRepository => _userRoleRepository.Value;
 
     public ITaskUserRepository TaskUserRepository => _taskUserRepository.Value;
+
+    public IAttachmentRepository AttachmentRepository => _attachmentRepository.Value;
 }
