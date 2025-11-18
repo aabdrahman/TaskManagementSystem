@@ -4,7 +4,7 @@ public class TaskUser : BaseEntity //This is the linking table for the manay to 
 {
     public int TaskId { get; set; }
     public int UserId { get; set; }
-    public Task task { get; set; }
+    public CreatedTask task { get; set; }
     public User user { get; set; }
 
     //PROPERTIES

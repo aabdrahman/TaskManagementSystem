@@ -2,7 +2,7 @@
 
 namespace Entities.Models;
 
-public class Task : BaseEntity
+public class CreatedTask : BaseEntity
 {
     public string Title { get; set; }
     public string Description { get; set; }

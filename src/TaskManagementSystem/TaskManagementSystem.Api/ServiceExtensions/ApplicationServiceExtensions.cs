@@ -1,5 +1,7 @@
 ﻿using Contracts.Infrastructure;
 using LoggerService;
+using Microsoft.EntityFrameworkCore;
+using Repository;
 
 namespace TaskManagementSystem.Api.ServiceExtensions;
 
@@ -31,6 +33,15 @@ internal static class ApplicationServiceExtensions
             } });
         });
 
+    }
+
+    internal static void ConfigureSqlDbConnection(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddDbContext<RepositoryContext>(opts =>
+        {
+            opts.UseSqlServer(configuration.GetConnectionString("DbConnection"))
+                .EnableSensitiveDataLogging();
+        });
     }
 
     internal static void ConfigureLogging(this IServiceCollection services)

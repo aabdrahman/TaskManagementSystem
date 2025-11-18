@@ -1,6 +1,6 @@
 ﻿namespace Entities.Models;
 
-public class Roles : BaseEntity
+public class Role : BaseEntity
 {
     public string Name { get; set; }
     public string NormalizedName { get; set; }
