@@ -2,5 +2,9 @@
 
 public enum Stage
 {
-    
+    Development,
+    Testing,
+    Deployment,
+    ChangeManagement,
+    Completed
 }
