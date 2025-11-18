@@ -17,6 +17,7 @@ public class RepositoryContext : DbContext
     public DbSet<Role> Roles { get; set; }
     public DbSet<Unit> Units { get; set; }
     public DbSet<TaskUser> TaskUsers { get; set; }
+    public DbSet<Attachment> Attachments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
