@@ -6,4 +6,5 @@ public interface IRepositoryManager
     IRoleRepository RoleRepository { get; }
     IUserRepository UserRepository { get; }
     ICreatedTaskRepository CreatedTaskRepository { get; }
+    IUserRoleRepository UserRoleRepository { get; }
 }
