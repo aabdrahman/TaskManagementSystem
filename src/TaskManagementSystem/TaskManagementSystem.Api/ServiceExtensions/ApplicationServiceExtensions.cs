@@ -29,7 +29,7 @@ internal static class ApplicationServiceExtensions
             opts.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo() { Title = "TaskManagementSystemApi", Description = "Task Management System Api", Version = "v1", Contact = new Microsoft.OpenApi.Models.OpenApiContact()
             {
                 Name = "Abdrahman Akande",
-                Email = "",
+                Email = "akandeabdrahman@gmail.com",
                 Url = new Uri("https://github.com/aabdrahman/TaskManagementSystem")
             } });
         });
