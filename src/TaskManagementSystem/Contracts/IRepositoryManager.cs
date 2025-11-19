@@ -9,4 +9,5 @@ public interface IRepositoryManager
     IUserRoleRepository UserRoleRepository { get; }
     ITaskUserRepository TaskUserRepository { get; }
     IAttachmentRepository AttachmentRepository { get; }
+    Task SaveChangesAsync();
 }

@@ -42,4 +42,9 @@ public sealed class RepositoryManager : IRepositoryManager
     public ITaskUserRepository TaskUserRepository => _taskUserRepository.Value;
 
     public IAttachmentRepository AttachmentRepository => _attachmentRepository.Value;
+
+    public async Task SaveChangesAsync()
+    {
+        await _repositoryContext.SaveChangesAsync();
+    }
 }
