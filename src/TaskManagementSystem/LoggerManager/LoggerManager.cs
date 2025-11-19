@@ -14,7 +14,7 @@ public class LoggerManager : ILoggerManager
     {
         string className = Path.GetFileNameWithoutExtension(callerFile);
 
-        return Task.FromResult(
+        return Task.Run(
                () =>
                {
                    _logger.ForContext(_classDefinitionName, className)
@@ -28,7 +28,7 @@ public class LoggerManager : ILoggerManager
     {
         string className = Path.GetFileNameWithoutExtension(callerFile);
 
-        return Task.FromResult
+        return Task.Run
         (
             () =>
             {
@@ -43,7 +43,7 @@ public class LoggerManager : ILoggerManager
     {
         string className = Path.GetFileNameWithoutExtension(callerFile);
 
-        return Task.FromResult(() =>
+        return Task.Run(() =>
         {
             _logger
             .ForContext(_classDefinitionName, className)
@@ -56,7 +56,7 @@ public class LoggerManager : ILoggerManager
     {
         string className = Path.GetFileNameWithoutExtension(callerFile);
 
-        return Task.FromResult(() =>
+        return Task.Run(() =>
         {
             _logger
                 .ForContext(_classDefinitionName, className)
@@ -69,7 +69,7 @@ public class LoggerManager : ILoggerManager
     {
         string className = Path.GetFileNameWithoutExtension(callerFile);
 
-        return Task.FromResult(() =>
+        return Task.Run(() =>
         {
             _logger
                 .ForContext(_classDefinitionName, className)

@@ -4,14 +4,17 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-string logFolderPath = builder.Configuration.GetValue<string>("LogFilePath") ?? Path.Combine(Directory.GetCurrentDirectory(), "Logs");
+string logFolderPath = string.IsNullOrEmpty(builder.Configuration.GetValue<string>("LogFilePath")) ? 
+                                        Path.Combine(AppContext.BaseDirectory, "Logs") : 
+                                        builder.Configuration.GetValue<string>("LogFilePath") 
+                                ?? throw new ArgumentNullException("Log file path could not be determined.");
 
 //Serilog Logger Configuration
 Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()
             .Enrich.FromLogContext()
             .WriteTo.File(Path.Combine(logFolderPath, "log-.txt"), Serilog.Events.LogEventLevel.Debug, 
-                            outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.ff zzz}||{Level:u3}] || [{ClassName}].[{MethodName}] - {Message:lj}{NewLine}{Exception}{eventId}", 
+                            outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.ff zzz}||{Level:u3}] || [{ClassName}].[{MethodName}] - {Message:lj}{NewLine}{Exception}{Properties}{NewLine}", 
                             fileSizeLimitBytes: 10_000_000, rollOnFileSizeLimit: true,
                             rollingInterval: RollingInterval.Day)
             .CreateLogger();
