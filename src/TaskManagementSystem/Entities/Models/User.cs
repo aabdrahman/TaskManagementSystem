@@ -9,12 +9,12 @@ public class User : BaseEntity
     public string LastName { get; set; }
     public string Password { get; set; }
 
-    public DateTime LastLoginDate { get; set; }
+    public DateTime? LastLoginDate { get; set; }
     public DateTime LastPasswordChangeDate { get; set; }
     public string? RefreshToken { get; set; }
     public DateTime? TokenExpirationTime { get; set; }
 
-    public bool IsActive { get; set; }
+    public bool IsActive { get; set; } = true;
 
     //RELATIONSHIPS
     /* Unit User Relationship Many-to-One */

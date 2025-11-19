@@ -11,4 +11,5 @@ public interface IUserRepository
     IQueryable<User> GetByUserName(string userName, bool trackChanges = true, bool hasQueryFilter = true);
     IQueryable<User> GetByEmail(string email, bool trackChanges = true, bool hasQueryFilter = true);
     IQueryable<User> GetByUnitId(int unitId, bool trackChanges = true, bool hasQueryFilter = true);
+    IQueryable<User> GetById(int Id, bool trackChanges = true, bool hasQueryFilter = true);
 }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Repository;
 
 namespace TaskManagementSystem.Api.ContextFactory;
@@ -15,7 +16,13 @@ public class RepositoryContextFactory : IDesignTimeDbContextFactory<RepositoryCo
 
         var contextOptions = new DbContextOptionsBuilder<RepositoryContext>()
                                         .UseSqlServer(configuration.GetConnectionString("DbConnection") ?? throw new InvalidOperationException("No Database Connection string provided."), b => b.MigrationsAssembly("TaskManagementSystem.Api"))
-                                        .EnableSensitiveDataLogging();
+                                        .EnableSensitiveDataLogging()
+                                        .LogTo(
+                                                Serilog.Log.Information,
+                                                new[] { DbLoggerCategory.Database.Command.Name },
+                                                LogLevel.Information,
+                                                DbContextLoggerOptions.SingleLine
+                                            );
 
         return new RepositoryContext(contextOptions.Options);
 

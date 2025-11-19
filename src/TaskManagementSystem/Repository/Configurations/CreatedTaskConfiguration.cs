@@ -16,7 +16,8 @@ internal class CreatedTaskConfiguration : IEntityTypeConfiguration<CreatedTask>
 
         builder.HasIndex(x => x.TaskStage);
 
-        builder.HasIndex(x => x.TaskId);
+        builder.HasIndex(x => x.TaskId)
+            .IsUnique();
 
         builder.ToTable(table => table.HasCheckConstraint("CK_Projected_Completion_Date", "ProjectedCompletionDate > CAST(GETDATE() AS DATE)"));
 

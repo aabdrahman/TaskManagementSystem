@@ -23,12 +23,12 @@ public static class UserMapper
         return new User()
         {
             CreatedBy = "",
-            FirstName = createUserDto.FirstName,
-            LastName = createUserDto.LastName,
-            Email = createUserDto.Email,
-            PhoneNumber = createUserDto.PhoneNumber,
+            FirstName = createUserDto.FirstName.Trim(),
+            LastName = createUserDto.LastName.Trim(),
+            Email = createUserDto.Email.Trim().ToUpper(),
+            PhoneNumber = createUserDto.PhoneNumber.Trim(),
             UnitId = createUserDto.AssignedUnit,
-            Username = createUserDto.Username,
+            Username = createUserDto.Username.Trim().ToUpper(),
             RoleLink = new List<UserRole>() { new UserRole() { CreatedBy = "", RoleId = createUserDto.AssignedRole } }
         };
     }

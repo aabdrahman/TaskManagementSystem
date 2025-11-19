@@ -26,7 +26,12 @@ public sealed class UserRepository : RepositoryBase<User>, IUserRepository
 
     public IQueryable<User> GetByEmail(string email, bool trackChanges = true, bool hasQueryFilter = true)
     {
-        return FindByCondition(x => x.Email == email, trackChanges, hasQueryFilter);
+        return FindByCondition(x => x.Email == email.ToUpper(), trackChanges, hasQueryFilter);
+    }
+
+    public IQueryable<User> GetById(int Id, bool trackChanges = true, bool hasQueryFilter = true)
+    {
+        return FindByCondition(x => x.Id == Id, trackChanges, hasQueryFilter);
     }
 
     public IQueryable<User> GetByUnitId(int unitId, bool trackChanges = true, bool hasQueryFilter = true)
@@ -36,7 +41,7 @@ public sealed class UserRepository : RepositoryBase<User>, IUserRepository
 
     public IQueryable<User> GetByUserName(string userName, bool trackChanges = true, bool hasQueryFilter = true)
     {
-        return FindByCondition(x => x.Username == userName, trackChanges, hasQueryFilter);
+        return FindByCondition(x => x.Username == userName.ToUpper(), trackChanges, hasQueryFilter);
     }
 
     public void UpdateUser(User updatedUser)

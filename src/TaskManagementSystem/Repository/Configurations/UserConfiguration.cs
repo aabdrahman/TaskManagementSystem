@@ -14,7 +14,11 @@ internal class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.HasIndex(x => x.UnitId);
 
-        builder.HasIndex(x => x.Username);
+        builder.HasIndex(x => x.Username)
+            .IsUnique();
+
+        builder.HasIndex(x => x.Email)
+            .IsUnique();
 
         builder.HasQueryFilter(x => x.IsActive);
 
@@ -44,6 +48,11 @@ internal class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.Username)
             .HasMaxLength(75)
             .IsRequired();
+        builder.Property(x => x.LastLoginDate)
+            .IsRequired(false);
+        builder.Property(x => x.LastPasswordChangeDate)
+            .IsRequired(true)
+            .HasDefaultValueSql("getdate()");
 
         builder.HasOne(x => x.AssignedUnit)
             .WithMany(x => x.Users)

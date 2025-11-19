@@ -37,10 +37,10 @@ public abstract class RepositoryBase<T> : IRepositoryBase<T> where T : class
         IQueryable<T> entities = _repositoryContext.Set<T>();
 
         if (!trackChanges)
-            entities.AsNoTracking();
+            entities = entities.AsNoTracking();
 
         if(!hasQueryFilter)
-            entities.IgnoreQueryFilters();
+            entities = entities.IgnoreQueryFilters();
 
         return entities;
     }
@@ -51,9 +51,10 @@ public abstract class RepositoryBase<T> : IRepositoryBase<T> where T : class
                                 .Where(condition);
 
         if(!trackChanges)
-            entities.AsNoTracking();
+            entities = entities.AsNoTracking();
+
         if(!hasQueryFilter)
-            entities.IgnoreAutoIncludes();  
+            entities = entities.IgnoreQueryFilters();  
 
         return entities;
     }

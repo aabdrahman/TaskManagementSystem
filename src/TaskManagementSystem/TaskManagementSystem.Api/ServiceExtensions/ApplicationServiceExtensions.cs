@@ -2,6 +2,7 @@
 using Contracts.Infrastructure;
 using LoggerService;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Repository;
 using Service.Contract;
 using Services;
@@ -43,7 +44,12 @@ internal static class ApplicationServiceExtensions
         services.AddDbContext<RepositoryContext>(opts =>
         {
             opts.UseSqlServer(configuration.GetConnectionString("DbConnection"))
-                .EnableSensitiveDataLogging();
+                .EnableSensitiveDataLogging()
+                .LogTo(
+                    Serilog.Log.Information,
+                    new[] { DbLoggerCategory.Database.Command.Name },
+                    LogLevel.Information,
+                    DbContextLoggerOptions.SingleLine);
         });
     }
 
