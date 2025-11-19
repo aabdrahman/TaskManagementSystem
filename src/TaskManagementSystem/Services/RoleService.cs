@@ -78,6 +78,7 @@ public sealed class RoleService : IRoleService
             if(isSofDelete)
             {
                 await _loggerManager.LogInfo($"Marking Role as inactive. Id - {Id}");
+                _repositoryManager.RoleRepository.UpdateRole(roleToDelete);
             }
             else
             {
