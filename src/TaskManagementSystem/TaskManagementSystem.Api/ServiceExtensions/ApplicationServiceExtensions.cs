@@ -3,6 +3,8 @@ using Contracts.Infrastructure;
 using LoggerService;
 using Microsoft.EntityFrameworkCore;
 using Repository;
+using Service.Contract;
+using Services;
 
 namespace TaskManagementSystem.Api.ServiceExtensions;
 
@@ -47,12 +49,25 @@ internal static class ApplicationServiceExtensions
 
     internal static void ConfigureLogging(this IServiceCollection services)
     {
-        services.AddScoped<ILoggerManager, LoggerManager>();
+        services.AddSingleton<ILoggerManager, LoggerManager>();
     }
 
     internal static void ConfigureRepositoryManager(this IServiceCollection services)
     {
         services.AddScoped<IRepositoryManager, RepositoryManager>();
+    }
+
+    internal static void ConfigureServiceManager(this IServiceCollection services)
+    {
+        services.AddScoped<IServiceManager, ServiceManager>();
+    }
+
+    internal static void ConfigureController(this IServiceCollection services)
+    {
+        services.AddControllers(opts =>
+        {
+
+        }).AddApplicationPart(typeof(TaskManagementSystem.ApiPresentation.AssemblyReference).Assembly);
     }
 
     internal static void ConfigureExceptionHandler(this IServiceCollection services)

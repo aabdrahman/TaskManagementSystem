@@ -20,7 +20,7 @@ public class GlobalExceptionHandler : IExceptionHandler
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
         httpContext.Response.ContentType = "application/json";
-        _loggerManager.LogCritical($"An Error Occurred: {JsonSerializer.Serialize(exception)}");
+        await _loggerManager.LogCritical(exception, $"An Error Occurred: {JsonSerializer.Serialize(exception)}");
 
         IExceptionHandlerFeature? contextFeature = httpContext.Features.Get<IExceptionHandlerFeature>();
 
@@ -36,7 +36,7 @@ public class GlobalExceptionHandler : IExceptionHandler
         errorResponse.Detail = contextFeature?.Error?.InnerException?.Message;
         errorResponse.Type = contextFeature?.Error?.GetType().ToString();
 
-        _loggerManager.LogCritical($"Stack Trace: {contextFeature?.Error?.StackTrace.ToString()}");
+        await _loggerManager.LogCritical(contextFeature.Error, $"Stack Trace: {contextFeature?.Error?.StackTrace.ToString()}");
 
         var response = GenericResponse<object?>.Failure(null, HttpStatusCode.InternalServerError, "An Error Occurred.", errorResponse);
 

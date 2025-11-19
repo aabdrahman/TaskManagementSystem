@@ -26,5 +26,6 @@
 	  <ProjectReference Include="..\LoggerManager\LoggerService.csproj" />
 	  <ProjectReference Include="..\Repository\Repository.csproj" />
 	  <ProjectReference Include="..\Services\Services.csproj" />
+	  <ProjectReference Include="..\TaskManagementSystem.ApiPresentation\TaskManagementSystem.ApiPresentation.csproj" />
 	</ItemGroup>
 </Project>

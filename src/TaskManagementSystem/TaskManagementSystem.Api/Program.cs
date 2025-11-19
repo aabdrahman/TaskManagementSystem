@@ -24,6 +24,8 @@ builder.Services.ConfigureLogging();
 builder.Services.ConfigureExceptionHandler();
 builder.Services.ConfigureSqlDbConnection(builder.Configuration);
 builder.Services.ConfigureRepositoryManager();
+builder.Services.ConfigureServiceManager();
+builder.Services.ConfigureController();
 
 var app = builder.Build();
 
@@ -35,6 +37,8 @@ app.CongigureExceptionHandler();
 app.UseCors();
 
 app.UseHttpsRedirection();
+
+app.MapControllers();
 
 app.Run();
 
