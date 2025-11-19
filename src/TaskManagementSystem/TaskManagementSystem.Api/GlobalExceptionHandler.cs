@@ -1,7 +1,9 @@
 ﻿using Contracts.Infrastructure;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Shared.ApiResponse;
 using System.Data.Common;
+using System.Net;
 using System.Text.Json;
 
 namespace TaskManagementSystem.Api;
@@ -36,7 +38,9 @@ public class GlobalExceptionHandler : IExceptionHandler
 
         _loggerManager.LogCritical($"Stack Trace: {contextFeature?.Error?.StackTrace.ToString()}");
 
-        await httpContext.Response.WriteAsJsonAsync(errorResponse);
+        var response = GenericResponse<object?>.Failure(null, HttpStatusCode.InternalServerError, "An Error Occurred.", errorResponse);
+
+        await httpContext.Response.WriteAsJsonAsync(response.ToString());
 
         return true;
     }
