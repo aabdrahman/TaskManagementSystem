@@ -54,4 +54,9 @@ internal static class ApplicationServiceExtensions
     {
         services.AddScoped<IRepositoryManager, RepositoryManager>();
     }
+
+    internal static void ConfigureExceptionHandler(this IServiceCollection services)
+    {
+        services.AddExceptionHandler<GlobalExceptionHandler>();
+    }
 }

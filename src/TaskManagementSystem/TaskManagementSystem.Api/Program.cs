@@ -21,6 +21,7 @@ Log.Logger = new LoggerConfiguration()
 builder.Services.ConfigureSwagger();
 builder.Services.AddCorsImplementation(builder.Configuration);
 builder.Services.ConfigureLogging();
+builder.Services.ConfigureExceptionHandler();
 builder.Services.ConfigureSqlDbConnection(builder.Configuration);
 builder.Services.ConfigureRepositoryManager();
 
@@ -28,6 +29,8 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 app.ConfigureSwaggerDefinition();
+
+app.CongigureExceptionHandler();
 
 app.UseCors();
 

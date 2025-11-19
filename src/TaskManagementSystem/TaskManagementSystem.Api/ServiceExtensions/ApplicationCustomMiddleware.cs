@@ -17,4 +17,9 @@ internal static class ApplicationCustomMiddleware
             opts.SwaggerEndpoint("/TaskManagementSystemAPI/swagger/v1/swagger.json", "TaskManagementSystemApi");
         });
     }
+
+    internal static void CongigureExceptionHandler(this WebApplication app)
+    {
+        app.UseExceptionHandler(opts => { });
+    }
 }
