@@ -1,11 +1,12 @@
-﻿using Shared.DataTransferObjects.Unit;
+﻿using Shared.ApiResponse;
+using Shared.DataTransferObjects.Unit;
 
 namespace Service.Contract;
 
 public interface IUnitService
 {
-    Task<IEnumerable<UnitDto>> GetAllUnitsAsync(bool trackChanges, bool hasQueryFilter);
-    Task<UnitDto> CreateAsync(CreateUnitDto nwwUnitToCreate);
-    Task DeleteAsync(int UnitId);
-    Task<UnitDto> GetByIdAsuync(int UnitId);
+    Task<GenericResponse<IEnumerable<UnitDto>>> GetAllUnitsAsync(bool trackChanges, bool hasQueryFilter);
+    Task<GenericResponse<UnitDto>> CreateAsync(CreateUnitDto newUnitToCreate);
+    Task<GenericResponse<string>> DeleteAsync(int UnitId, bool isSoftDelete = true);
+    Task<GenericResponse<UnitDto>> GetByIdAsuync(int UnitId);
 }

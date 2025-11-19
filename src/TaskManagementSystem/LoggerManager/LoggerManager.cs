@@ -10,7 +10,7 @@ public class LoggerManager : ILoggerManager
     private readonly string _methodDefinitionName = "MethodName";
     private readonly string _classDefinitionName = "ClassName";
 
-    public Task LogCritical(string message, [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "")
+    public Task LogCritical(Exception ex, string message, [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "")
     {
         string className = Path.GetFileNameWithoutExtension(callerFile);
 
@@ -19,7 +19,7 @@ public class LoggerManager : ILoggerManager
                {
                    _logger.ForContext(_classDefinitionName, className)
                    .ForContext(_methodDefinitionName, callerName)
-                   .Fatal(message);
+                   .Fatal(ex, message);
                }
             );
     }
@@ -39,7 +39,7 @@ public class LoggerManager : ILoggerManager
         );
     }
 
-    public Task LogError(string message, [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "")
+    public Task LogError(Exception ex, string message, [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "")
     {
         string className = Path.GetFileNameWithoutExtension(callerFile);
 
@@ -48,7 +48,7 @@ public class LoggerManager : ILoggerManager
             _logger
             .ForContext(_classDefinitionName, className)
             .ForContext(_methodDefinitionName, callerName)
-            .Error(message);
+            .Error(ex, message);
         });
     }
 

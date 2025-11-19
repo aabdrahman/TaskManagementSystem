@@ -2,6 +2,13 @@
 using Contracts.Infrastructure;
 using Service.Contract;
 using Shared.DataTransferObjects.Unit;
+using Microsoft.EntityFrameworkCore;
+using Shared.ApiResponse;
+using System.Data.Common;
+using Shared.Mapper;
+using System.Net;
+using System.Text.Json;
+using Entities.Models;
 
 namespace Services;
 
@@ -15,23 +22,132 @@ public sealed class UnitService : IUnitService
         _repositoryManager = repositoryManager;
     }
 
-    public Task<UnitDto> CreateAsync(CreateUnitDto nwwUnitToCreate)
+    public async Task<GenericResponse<UnitDto>> CreateAsync(CreateUnitDto newUnitToCreate)
     {
-        throw new NotImplementedException();
+        await _loggerManager.LogInfo($"Creating Unit: {SerializeObjectToString(newUnitToCreate)}");
+
+        bool existingUnitWithName = await _repositoryManager.UnitRepository.GetAllUnits(false, false)
+                                                              .AnyAsync(x => x.NormalizedName == newUnitToCreate.Name.ToUpper());
+
+        if(existingUnitWithName)
+        {
+            await _loggerManager.LogWarning($"Unit with Name: {newUnitToCreate.Name} already exists.");
+            return GenericResponse<UnitDto>.Failure(null, HttpStatusCode.Conflict, $"Unit with Name: {newUnitToCreate.Name} already exists.", null);
+        }
+
+        Unit unitToInsert = newUnitToCreate.ToEntity();
+
+        await _repositoryManager.UnitRepository.CreateUnit(unitToInsert);
+
+        try
+        {
+            await _repositoryManager.SaveChangesAsync();
+            await _loggerManager.LogInfo($"Unit Creation Successful - {SerializeObjectToString(unitToInsert)}");
+
+            return GenericResponse<UnitDto>.Success(unitToInsert.ToDto(), HttpStatusCode.Created, "Unit Created Successfully");
+        }
+        catch (DbUpdateException ex)
+        {
+            await _loggerManager.LogError(ex,$"An Error Occurred Creating Unit: {ex.Message}");
+            return GenericResponse<UnitDto>.Failure(null, HttpStatusCode.InternalServerError, "Unit Creation Failed.", new { Message = ex.Message, Description = ex?.InnerException?.Message });
+        }
+
+       
     }
 
-    public Task DeleteAsync(int UnitId)
+    public async Task<GenericResponse<string>> DeleteAsync(int UnitId, bool isSoftDelete = true)
     {
-        throw new NotImplementedException();
+        try
+        {
+            await _loggerManager.LogInfo($"Delete Unit: {UnitId}");
+
+            Unit? existingUnit = await _repositoryManager.UnitRepository.GetById(UnitId, true, false)
+                                                            .SingleOrDefaultAsync();
+            if(existingUnit == null)
+            {
+                await _loggerManager.LogWarning($"Unit with specified Id: {UnitId} does not exist");
+                return GenericResponse<string>.Failure($"No Unit with specified Id exists: {UnitId}", HttpStatusCode.NotFound, "No Unit exists with specified Id", null);
+            }
+
+            if(isSoftDelete)
+            {
+                await _loggerManager.LogInfo($"{existingUnit.Name} - marking as inactive");
+                _repositoryManager.UnitRepository.UpdateUnit(existingUnit);
+            }
+            else
+            {
+                await _loggerManager.LogInfo($"Removing {existingUnit.Name} from database");
+                _repositoryManager.UnitRepository.DeleteUnit(existingUnit);
+            }
+
+            await _repositoryManager.SaveChangesAsync();
+            await _loggerManager.LogInfo(isSoftDelete ? $"Unit with Id: {UnitId} marked as inactive successfully" : $"Unit wit Id: {UnitId} deleted successfully.");
+            return GenericResponse<string>.Success($"", HttpStatusCode.OK, $"");
+
+        }
+        catch(DbUpdateException ex)
+        {
+            await _loggerManager.LogError(ex, $"An Error Occurred Deleting Unit - Id: {UnitId}");
+            return GenericResponse<string>.Failure("Error Occurred Deleting Unit.", HttpStatusCode.InternalServerError, ex.Message, null);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, $"An Error Occurred Deleting Unit. Id: {UnitId}");
+            return GenericResponse<string>.Failure("Internal Server Error Occurred", HttpStatusCode.InternalServerError, ex.Message, null);
+        }
     }
 
-    public Task<IEnumerable<UnitDto>> GetAllUnitsAsync(bool trackChanges, bool hasQueryFilter)
+    public async Task<GenericResponse<IEnumerable<UnitDto>>> GetAllUnitsAsync(bool trackChanges, bool hasQueryFilter)
     {
-        throw new NotImplementedException();
+        try
+        {
+            await _loggerManager.LogInfo($"Fetching All Units....");
+
+            List<UnitDto> allExistingUnits = await _repositoryManager.UnitRepository.GetAllUnits(trackChanges, hasQueryFilter)
+                                               .Select(x => x.ToDto())
+                                               .ToListAsync();
+
+            await _loggerManager.LogInfo($"Units Fetched Successfully: {SerializeObjectToString(allExistingUnits)}");
+
+            return GenericResponse<IEnumerable<UnitDto>>.Success(allExistingUnits, HttpStatusCode.OK, "Units Fetched Successfully.");
+        }
+        catch(DbException ex)
+        {
+            await _loggerManager.LogError(ex, $"Database Error Occurred: {ex.Message}");
+            return GenericResponse<IEnumerable<UnitDto>>.Failure(null, HttpStatusCode.InternalServerError, ex.Message, new { ErrorMessage = ex.Message, ErrorDescription = ex?.InnerException?.Message });
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, $"Database Error Occurred: {ex.Message}");
+            return GenericResponse<IEnumerable<UnitDto>>.Failure(null, HttpStatusCode.InternalServerError, ex.Message, new { ErrorMessage = ex.Message, ErrorDescription = ex?.InnerException?.Message });
+        }
     }
 
-    public Task<UnitDto> GetByIdAsuync(int UnitId)
+    public async Task<GenericResponse<UnitDto>> GetByIdAsuync(int UnitId)
     {
-        throw new NotImplementedException();
+        await _loggerManager.LogInfo($"Getting Unit with Id: {UnitId}");
+
+        try
+        {
+            UnitDto? existingUnit = await _repositoryManager.UnitRepository.GetById(UnitId, false)
+                                                        .Select(x => x.ToDto())
+                                                        .SingleOrDefaultAsync();
+
+            await _loggerManager.LogInfo(existingUnit is null ? $"Unit fetched successfully for Id: {UnitId} - {SerializeObjectToString(existingUnit)}" : $"No Unit exists for Id: {UnitId}");
+
+            return existingUnit is null ?
+                GenericResponse<UnitDto>.Failure(null, HttpStatusCode.NotFound, $"No Record Exisits for Id: {UnitId}", null) :
+                GenericResponse<UnitDto>.Success(existingUnit, HttpStatusCode.NotFound, $"Unit Fetched Successfully.");
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "An Error Occurred Fetching Unit");
+            return GenericResponse<UnitDto>.Failure(null, HttpStatusCode.InternalServerError, $"An Error Occurred Fetching Unit Details", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+    }
+
+    private string SerializeObjectToString(object obj)
+    {
+        return JsonSerializer.Serialize(obj);
     }
 }
