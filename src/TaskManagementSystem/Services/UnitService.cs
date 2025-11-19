@@ -137,7 +137,7 @@ public sealed class UnitService : IUnitService
 
             return existingUnit is null ?
                 GenericResponse<UnitDto>.Failure(null, HttpStatusCode.NotFound, $"No Record Exisits for Id: {UnitId}", null) :
-                GenericResponse<UnitDto>.Success(existingUnit, HttpStatusCode.NotFound, $"Unit Fetched Successfully.");
+                GenericResponse<UnitDto>.Success(existingUnit, HttpStatusCode.OK, $"Unit Fetched Successfully.");
         }
         catch (Exception ex)
         {
