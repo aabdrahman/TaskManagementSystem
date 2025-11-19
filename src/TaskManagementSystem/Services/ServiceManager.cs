@@ -10,6 +10,7 @@ public sealed class ServiceManager : IServiceManager
     private readonly IRepositoryManager _repositoryManager;
 
     private readonly Lazy<IUnitService> _unitService;
+    private readonly Lazy<IRoleService> _roleService;
 
     public ServiceManager(ILoggerManager loggerManager, IRepositoryManager repositoryManager)
     {
@@ -18,8 +19,11 @@ public sealed class ServiceManager : IServiceManager
         
 
         _unitService = new Lazy<IUnitService>(() => new UnitService(_loggerManager, _repositoryManager));
+        _roleService = new Lazy<IRoleService>(() => new RoleService(_repositoryManager, _loggerManager));
     }
 
 
     public IUnitService UnitService => _unitService.Value;
+
+    public IRoleService RoleService => _roleService.Value;
 }
