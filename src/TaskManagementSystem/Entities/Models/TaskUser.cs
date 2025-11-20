@@ -8,7 +8,7 @@ public class TaskUser : BaseEntity //This is the linking table for the manay to 
     public User user { get; set; }
 
     //PROPERTIES
-    public bool IsDeleted { get; set; }
+    public bool IsDeleted { get; set; } = false;
     public DateTime? CompletionDate { get; set; }
     public string Title {  get; set; }
     public string Description { get; set; }

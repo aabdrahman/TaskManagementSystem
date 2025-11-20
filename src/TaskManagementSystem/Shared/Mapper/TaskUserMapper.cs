@@ -26,10 +26,11 @@ public static class TaskUserMapper
             Id = taskUser.Id,
             Title = taskUser.Title,
             Description = taskUser.Description,
-            TaskId = taskUser.task.TaskId,
+            TaskId = taskUser?.task?.TaskId ?? "",
             CompletionDate = taskUser?.CompletionDate,
-            AssignedUser = taskUser?.user?.Email ?? "",
-            PrimaryTaskId = taskUser.TaskId
+            AssignedUser = taskUser?.user?.FirstName + " " + taskUser?.user?.LastName ?? "",
+            PrimaryTaskId = taskUser.TaskId,
+            ProposedCompletionDate = taskUser.ProposedCompletionDate
         };
     }
 }

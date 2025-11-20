@@ -6,4 +6,5 @@ public interface IServiceManager
     IRoleService RoleService { get; }
     IUserService UserService { get; }
     ICreatedTaskService CreatedTaskService { get; }
+    ITaskUserService TaskUserService { get; }
 }
