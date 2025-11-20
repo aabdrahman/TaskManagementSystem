@@ -97,4 +97,21 @@ public class CreatedTasksController : ControllerBase
             return StatusCode(500, "Internal Server Error");
         }
     }
+
+    [HttpDelete("{Id}")]
+    public async Task<IActionResult> Delete(int Id, bool isSoftDelete = true)
+    {
+        try
+        {
+            var deleteResponse = await _serviceManager.CreatedTaskService.DeleteAsync(Id, isSoftDelete);
+
+            return StatusCode((int)deleteResponse.StatusCode, deleteResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error");
+            return StatusCode(500, "Internal Server Error");
+        }
+    }
+
 }

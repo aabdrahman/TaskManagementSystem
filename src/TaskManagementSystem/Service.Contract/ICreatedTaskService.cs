@@ -10,4 +10,5 @@ public interface ICreatedTaskService
     Task<GenericResponse<IEnumerable<CreatedTaskDto>>> GetByUserAsync(int UserId, bool trackChanges = false, bool hasQueryFilter = true);
     Task<GenericResponse<IEnumerable<CreatedTaskDto>>> GetByStatusAsync(string taskStatus, bool trackChanges = false, bool hasQueryFilter = true);
     Task<GenericResponse<IEnumerable<CreatedTaskDto>>> GetByPriorityAsync(string taskPriority, bool trackChanges = false, bool hasQueryFilter = true);
+    Task<GenericResponse<string>> DeleteAsync(int taskId, bool isSoftDelete = true);
 }

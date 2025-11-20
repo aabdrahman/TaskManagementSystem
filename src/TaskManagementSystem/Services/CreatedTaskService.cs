@@ -59,6 +59,50 @@ public sealed class CreatedTaskService : ICreatedTaskService
         }
     }
 
+    public async Task<GenericResponse<string>> DeleteAsync(int taskId, bool isSoftDelete = true)
+    {
+        try
+        {
+            await _loggerManager.LogInfo($"Deleting User with Id: {taskId}");
+
+            CreatedTask? taskToDelete = await _repositoryManager.CreatedTaskRepository.GetById(taskId, true, true).SingleOrDefaultAsync();
+
+            if(taskToDelete is null)
+            {
+                await _loggerManager.LogWarning($"No task exists with specified Id: {taskId}");
+                return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.NotFound, $"No Task with Id: {taskId}", null);
+            }
+
+            if(isSoftDelete)
+            {
+                await _loggerManager.LogInfo($"Deactivation operation of Task: {taskId}");
+                taskToDelete.IsDeleted = true;
+
+                _repositoryManager.CreatedTaskRepository.UpdateTask(taskToDelete);
+            }
+            else
+            {
+                await _loggerManager.LogInfo($"Deletion operation of task: {taskId}");
+                _repositoryManager.CreatedTaskRepository.DeleteTask(taskToDelete);
+            }
+
+            await _repositoryManager.SaveChangesAsync();
+            await _loggerManager.LogInfo(isSoftDelete ? $"Task with Id: {taskId} deactivation successful." : $"Task with Id: {taskId} deleted successfully.");
+
+            return GenericResponse<string>.Success("Operation successful.", HttpStatusCode.OK, isSoftDelete ? "Task deactivation successful" : "Task Deletion Successful");
+        }
+        catch (DbException ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error Occurred - Database");
+            return GenericResponse<string>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Database Server Error.", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error Occurred");
+            return GenericResponse<string>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Server Error.", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+    }
+
     public async Task<GenericResponse<CreatedTaskDto>> GetByIdAsync(string taskId, bool trackChanges = false, bool hasQueryFilter = true)
     {
         try
