@@ -29,9 +29,9 @@ public static class CreatedTaskMapper
             Title = newCreateTask.Title,
             Description = newCreateTask.Description,
             ProjectedCompletionDate = newCreateTask.ProposedCompletionDate,
-            TaskStage = Enum.Parse<Stage>(newCreateTask.Stage.ToString()),
             Priority = Enum.Parse<PriorityLevel>(newCreateTask?.Priority.ToString()),
-            CreatedBy = ""
+            CreatedBy = "",
+            UserId = newCreateTask.UserId
         };
     }
 }

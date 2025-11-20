@@ -2,7 +2,7 @@
 
 namespace Shared.CustomValidator;
 
-public class DateTimeValidator : ValidationAttribute
+public class DateTimeValidatorAttribute : ValidationAttribute
 {
     protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
     {
@@ -13,7 +13,7 @@ public class DateTimeValidator : ValidationAttribute
 
         DateTime validDate = DateTime.Parse(value.ToString());
 
-        if(validDate <= DateTime.Today)
+        if(validDate.Date <= DateTime.Today.Date)
         {
             return new ValidationResult("The provided date must be a future date.");
         }

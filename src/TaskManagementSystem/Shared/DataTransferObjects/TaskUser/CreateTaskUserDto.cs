@@ -5,7 +5,7 @@ namespace Shared.DataTransferObjects.TaskUser;
 
 public record class CreateTaskUserDto
 {
-    [DateTimeValidator]
+    [DateTimeValidatorAttribute]
     public DateTime ProposedCompletionDate { get; set; }
     [Required(ErrorMessage = "Task Id is a required field.")]
     public string TaskId { get; set; }

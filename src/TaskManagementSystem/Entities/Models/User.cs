@@ -26,4 +26,7 @@ public class User : BaseEntity
 
     /* Task User Relationship One-to-many */
     public ICollection<TaskUser> TaskLink { get; set; } = [];
+
+    /* Task */
+    public ICollection<CreatedTask> CreatedTasks { get; set; } = [];
 }

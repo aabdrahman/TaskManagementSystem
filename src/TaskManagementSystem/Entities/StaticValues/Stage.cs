@@ -2,6 +2,7 @@
 
 public enum Stage
 {
+    Review,
     Development,
     Testing,
     Deployment,

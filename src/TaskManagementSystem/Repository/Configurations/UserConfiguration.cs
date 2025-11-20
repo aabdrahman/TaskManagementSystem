@@ -67,6 +67,7 @@ internal class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasMany(x => x.TaskLink)
             .WithOne(x => x.user)
             .HasForeignKey(x => x.UserId)
-            .OnDelete(DeleteBehavior.Cascade).IsRequired();
+            .OnDelete(DeleteBehavior.NoAction);
+
     }
 }

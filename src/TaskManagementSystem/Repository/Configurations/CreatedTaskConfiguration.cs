@@ -23,7 +23,7 @@ internal class CreatedTaskConfiguration : IEntityTypeConfiguration<CreatedTask>
 
         builder.ToTable(table => table.HasCheckConstraint("CK_Priority_Level", $"[Priority] IN ('Low', 'Medium', 'High', 'Critical')"));
 
-        builder.ToTable(table => table.HasCheckConstraint("CK_Stage", "[TaskStage] IN ('Development', 'Testing', 'Deployment', 'ChangeManagement', 'Completed', 'Cancelled')"));
+        builder.ToTable(table => table.HasCheckConstraint("CK_Stage", "[TaskStage] IN ('Development', 'Testing', 'Deployment', 'ChangeManagement', 'Completed', 'Cancelled', 'Review')"));
 
         builder.HasQueryFilter(x => !x.IsDeleted);
 
@@ -60,5 +60,10 @@ internal class CreatedTaskConfiguration : IEntityTypeConfiguration<CreatedTask>
             .HasForeignKey(x => x.TaskId)
             .OnDelete(DeleteBehavior.Cascade)
             .IsRequired();
+
+        builder.HasOne(x => x.CreatedByUser)
+            .WithMany(x => x.CreatedTasks)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }
