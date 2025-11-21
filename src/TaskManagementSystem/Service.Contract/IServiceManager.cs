@@ -7,4 +7,5 @@ public interface IServiceManager
     IUserService UserService { get; }
     ICreatedTaskService CreatedTaskService { get; }
     ITaskUserService TaskUserService { get; }
+    IAttachmentService AttachmentService { get; }
 }

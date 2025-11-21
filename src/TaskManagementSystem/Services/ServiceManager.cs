@@ -14,6 +14,7 @@ public sealed class ServiceManager : IServiceManager
     private readonly Lazy<IUserService> _userService;
     private readonly Lazy<ICreatedTaskService> _createdTaskService;
     private readonly Lazy<ITaskUserService> _taskUserService;
+    private readonly Lazy<IAttachmentService> _attachmentService;
 
     public ServiceManager(ILoggerManager loggerManager, IRepositoryManager repositoryManager)
     {
@@ -26,6 +27,7 @@ public sealed class ServiceManager : IServiceManager
         _userService = new Lazy<IUserService>(() => new UserService(_repositoryManager, _loggerManager));
         _createdTaskService = new Lazy<ICreatedTaskService>(() => new CreatedTaskService(_repositoryManager, _loggerManager));
         _taskUserService = new Lazy<ITaskUserService>(() => new TaskUserService(_repositoryManager, _loggerManager));
+        _attachmentService = new Lazy<IAttachmentService>(() => new AttachmentService(_repositoryManager, _loggerManager));
     }
 
 
@@ -38,4 +40,6 @@ public sealed class ServiceManager : IServiceManager
     public ICreatedTaskService CreatedTaskService => _createdTaskService.Value;
 
     public ITaskUserService TaskUserService => _taskUserService.Value;
+
+    public IAttachmentService AttachmentService => _attachmentService.Value;
 }

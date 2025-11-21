@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Http;
+using System.ComponentModel.DataAnnotations;
 
 namespace Shared.DataTransferObjects.Attachment;
 
@@ -8,4 +9,5 @@ public record class CreateAttachmentDto
     public string TaskId { get; set; }
     [Required(ErrorMessage = "Kindly upload file")]
     public string FileName { get; set; }
+    public IFormFile AttachmentFile { get; set; }
 }
