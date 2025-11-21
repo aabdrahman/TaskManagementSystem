@@ -24,9 +24,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
 	  <ProjectReference Include="..\LoggerManager\LoggerService.csproj" />
 	  <ProjectReference Include="..\Repository\Repository.csproj" />
 	  <ProjectReference Include="..\Services\Services.csproj" />
 	  <ProjectReference Include="..\TaskManagementSystem.ApiPresentation\TaskManagementSystem.ApiPresentation.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Attachments\Uploads\" />
 	</ItemGroup>
 </Project>

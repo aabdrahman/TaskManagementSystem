@@ -12,6 +12,7 @@
 		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
 	</ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Infrastructure.Contracts\Infrastructure.Contracts.csproj" />
     <ProjectReference Include="..\Service.Contract\Service.Contract.csproj" />
   </ItemGroup>
 

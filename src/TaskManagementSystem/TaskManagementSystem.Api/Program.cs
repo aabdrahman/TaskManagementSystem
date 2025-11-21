@@ -1,5 +1,6 @@
 using TaskManagementSystem.Api.ServiceExtensions;
 using Serilog;
+using Microsoft.Extensions.FileProviders;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,6 +29,8 @@ builder.Services.ConfigureExceptionHandler();
 builder.Services.ConfigureSqlDbConnection(builder.Configuration);
 builder.Services.ConfigureRepositoryManager();
 builder.Services.ConfigureServiceManager();
+builder.Services.ConfigureInfrastrucureManager();
+builder.Services.ConfigureModelsFromSettings(builder.Configuration);
 builder.Services.ConfigureController();
 
 var app = builder.Build();
@@ -36,6 +39,14 @@ var app = builder.Build();
 app.ConfigureSwaggerDefinition();
 
 app.CongigureExceptionHandler();
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+            Path.Combine(builder.Environment.ContentRootPath, "Attachments")
+        ),
+    RequestPath = new PathString("/Uploads")
+});
 
 app.UseCors();
 

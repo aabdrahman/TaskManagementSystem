@@ -22,6 +22,14 @@ internal class AttachmentConfiguration : IEntityTypeConfiguration<Attachment>
             .HasDefaultValue(false)
             .IsRequired();
 
+        builder.Property(x => x.FilePath)
+            .HasColumnType("nvarchar(max)")
+            .IsRequired();
+
+        builder.Property(x => x.FileName)
+            .HasColumnType("nvarchar(100)")
+            .IsRequired();
+
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

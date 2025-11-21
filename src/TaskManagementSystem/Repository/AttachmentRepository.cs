@@ -23,4 +23,14 @@ public sealed class AttachmentRepository : RepositoryBase<Attachment>, IAttachme
     {
         return FindByCondition(x => x.TaskId == taskId, trackChanges, hasQueryFilter);
     }
+
+    public IQueryable<Attachment> GetByAttachmentId(int Id, bool trackChanges, bool hasQueryFilter = true)
+    {
+        return FindByCondition(x => x.Id == Id, trackChanges, hasQueryFilter);
+    }
+
+    public void UpdateAttachment(Attachment updatedAttachment)
+    {
+        UpdateEntity(updatedAttachment);
+    }
 }

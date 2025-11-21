@@ -1,5 +1,8 @@
 ﻿using Contracts;
 using Contracts.Infrastructure;
+using Entities.ConfigurationModels;
+using Infrastructure;
+using Infrastructure.Contracts;
 using LoggerService;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -68,6 +71,11 @@ internal static class ApplicationServiceExtensions
         services.AddScoped<IServiceManager, ServiceManager>();
     }
 
+    internal static void ConfigureInfrastrucureManager(this IServiceCollection services)
+    {
+        services.AddScoped<IInfrastructureManager, InfrastructureManager>();
+    }
+
     internal static void ConfigureController(this IServiceCollection services)
     {
         services.AddControllers(opts =>
@@ -79,5 +87,11 @@ internal static class ApplicationServiceExtensions
     internal static void ConfigureExceptionHandler(this IServiceCollection services)
     {
         services.AddExceptionHandler<GlobalExceptionHandler>();
+    }
+
+    internal static void ConfigureModelsFromSettings(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<UploadConfig>(configuration.GetSection("UploadConfiguration"));
+        //services.AddOptions<UploadConfig>("UploadConfiguration").Bind(configuration).ValidateDataAnnotations();
     }
 }
