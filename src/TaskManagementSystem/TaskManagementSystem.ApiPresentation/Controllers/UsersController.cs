@@ -96,4 +96,36 @@ public class UsersController : ControllerBase
             return StatusCode(500, ex.Message);
         }
     }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] UserToLoginDto userToLogin)
+    {
+        try
+        {
+            var loginResponse = await _serviceManager.UserService.ValidateUserAsync(userToLogin);
+
+            return StatusCode((int)loginResponse.StatusCode, loginResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "An Error Occurred.");
+            return StatusCode(500, ex.Message);
+        }
+    }
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh([FromBody] TokenDto tokenDto)
+    {
+        try
+        {
+            var refreshResponse = await _serviceManager.UserService.RefreshTokenAsync(tokenDto);
+
+            return StatusCode((int)refreshResponse.StatusCode, refreshResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "An Error Occurred.");
+            return StatusCode(500, ex.Message);
+        }
+    }
 }

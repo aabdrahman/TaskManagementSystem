@@ -10,5 +10,7 @@ public interface IUserService
     Task<GenericResponse<UserDto>> GetByIdAsync(int Id, bool trackChanges = false, bool hasQueryFilter = true);
     Task<GenericResponse<UserDto>> GetByUsernameAsync(string Username, bool trackChanges = false, bool hasQueryFilter = true);
     Task<GenericResponse<string>> DeleteAsync(string Username, bool isSoftDelete = true);
+    Task<GenericResponse<TokenDto>> ValidateUserAsync(UserToLoginDto userToLogin);
+    Task<GenericResponse<TokenDto>> RefreshTokenAsync(TokenDto tokenDto);
     //Task<GenericResponse<string>> ValidateUser();
 }

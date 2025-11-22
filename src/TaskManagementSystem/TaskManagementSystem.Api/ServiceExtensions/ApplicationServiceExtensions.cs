@@ -4,11 +4,16 @@ using Entities.ConfigurationModels;
 using Infrastructure;
 using Infrastructure.Contracts;
 using LoggerService;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.IdentityModel.Tokens;
 using Repository;
 using Service.Contract;
 using Services;
+using Shared.ApiResponse;
+using System.Text;
+using System.Text.Json;
 
 namespace TaskManagementSystem.Api.ServiceExtensions;
 
@@ -96,6 +101,58 @@ internal static class ApplicationServiceExtensions
     internal static void ConfigureModelsFromSettings(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<UploadConfig>(configuration.GetSection("UploadConfiguration"));
+        services.Configure<JwtConfiguration>(configuration.GetSection("JwtSettings"));
         //services.AddOptions<UploadConfig>("UploadConfiguration").Bind(configuration).ValidateDataAnnotations();
+    }
+
+    internal static void ConfigureAuthentication(this IServiceCollection services, IConfiguration configuration)
+    {
+        var jwtConfig = configuration.GetSection("JwtSettings").Get<JwtConfiguration>();
+
+        services.AddAuthentication(opts =>
+        {
+            opts.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            opts.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        }).AddJwtBearer(opts =>
+        {
+            opts.TokenValidationParameters = new TokenValidationParameters()
+            {
+                ValidateAudience = true,
+                ValidateIssuer = true,
+                ValidateIssuerSigningKey = true,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero,
+
+                ValidIssuer = jwtConfig.validIssuer,
+                ValidAudiences = jwtConfig.validAudience,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Secret-Key"] ?? throw new ArgumentNullException("Secret Key Required.")))
+            };
+            //opts.Events = new JwtBearerEvents()
+            //{
+            //    OnForbidden = async (context) =>
+            //    {
+            //        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            //        context.Response.ContentType = "application/json";
+
+            //        var response = GenericResponse<string>.Failure("Unauthorzied Access", System.Net.HttpStatusCode.Forbidden, "Not Authorized", null);
+
+
+            //        await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+            //    },
+            //    OnAuthenticationFailed = async (context) =>
+            //    {
+            //        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            //        context.Response.ContentType = "application/json";
+
+            //        var response = GenericResponse<string>.Failure("Unauthorzied Access", System.Net.HttpStatusCode.Unauthorized, "Not Authenticated", null);
+
+
+            //        await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+
+
+            //    },
+
+            //};
+        });
     }
 }

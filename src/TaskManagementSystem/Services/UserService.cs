@@ -10,6 +10,15 @@ using System.Net;
 using Entities.Models;
 using Shared.Mapper;
 using BCrypt.Net;
+using System.Security.Cryptography;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Configuration;
+using System.Text;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
+using Entities.ConfigurationModels;
+using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Http;
 
 namespace Services;
 
@@ -17,10 +26,19 @@ public sealed class UserService : IUserService
 {
     private readonly IRepositoryManager _repositoryManager;
     private readonly ILoggerManager _loggerManager;
-    public UserService(IRepositoryManager repositoryManager, ILoggerManager loggerManager)
+    private readonly IConfiguration _configuration;
+    private readonly JwtConfiguration _jwtConfiguration;
+    private readonly IHttpContextAccessor _contextAccessor;
+
+    private User? _loginUser;
+
+    public UserService(IRepositoryManager repositoryManager, ILoggerManager loggerManager, IConfiguration configuration, IOptionsMonitor<JwtConfiguration> jwtConfiurationOptionsMonitor, IHttpContextAccessor contextAccessor)
     {
         _repositoryManager = repositoryManager;
         _loggerManager = loggerManager;
+        _configuration = configuration;
+        _jwtConfiguration = jwtConfiurationOptionsMonitor.CurrentValue;
+        _contextAccessor = contextAccessor;
     }
     public async Task<GenericResponse<UserDto>> CreateAsync(CreateUserDto createUserDto)
     {
@@ -217,6 +235,223 @@ public sealed class UserService : IUserService
         }
     }
 
+    public async Task<GenericResponse<TokenDto>> ValidateUserAsync(UserToLoginDto userToLogin)
+    {
+        try
+        {
+            await _loggerManager.LogInfo($"Login Request - {SerializeObject(userToLogin)}. From - {_contextAccessor.HttpContext.Request.Headers["Origin".ToString()]} = {SerializeObject(_jwtConfiguration)}");
+
+            User? existingUserToLogin = await _repositoryManager.UserRepository.GetByEmail(userToLogin.Email, true, true)
+                                                                .Include(x => x.AssignedUnit)
+                                                                .SingleOrDefaultAsync();
+
+            if (existingUserToLogin == null)
+            {
+                await _loggerManager.LogWarning($"Invalid User Email. User with Email: {userToLogin.Email} does not exist.");
+                return GenericResponse<TokenDto>.Failure(null, HttpStatusCode.NotFound, "Invalid Credentials", null);
+            }
+
+            bool isValidPassword = BCrypt.Net.BCrypt.EnhancedVerify(userToLogin.Password.Trim(), existingUserToLogin.Password);
+
+            if (!isValidPassword)
+            {
+                await _loggerManager.LogInfo($"Invalid User Password- - {JsonSerializer.Serialize(userToLogin)}");
+                return GenericResponse<TokenDto>.Failure(null, HttpStatusCode.NotFound, "Invalid Credentials", null);
+            }
+
+            _loginUser = existingUserToLogin;
+
+            DateTime lastLoginDate = DateTime.Now;
+
+            existingUserToLogin.LastLoginDate = lastLoginDate;
+            existingUserToLogin.RefreshToken = GenerateRefreshToken();
+            existingUserToLogin.TokenExpirationTime = lastLoginDate.AddMinutes(_jwtConfiguration.sessionTimeoutAfterInMinutes);
+
+            await _repositoryManager.SaveChangesAsync();
+
+            var tokenDetails = await GetToken();
+
+            return GenericResponse<TokenDto>.Success(tokenDetails, HttpStatusCode.OK, "User Login Successful.");
+        }
+        catch (DbException ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error - Database");
+            return GenericResponse<TokenDto>.Failure(null, HttpStatusCode.InternalServerError, "Internal Server Error", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error");
+            return GenericResponse<TokenDto>.Failure(null, HttpStatusCode.InternalServerError, "Internal Server Error", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+    }
+
+
+    public async Task<GenericResponse<TokenDto>> RefreshTokenAsync(TokenDto tokenDto)
+    {
+        try
+        {
+            await _loggerManager.LogInfo($"Refresh Token For - {SerializeObject(tokenDto)}");
+
+            var tokenPrincipal = GetPrincipalFromExpiredToken(tokenDto.Token);
+
+            if (tokenPrincipal == null)
+            {
+                await _loggerManager.LogInfo($"Token Principals could not be fetched.");
+                return GenericResponse<TokenDto>.Failure(null, HttpStatusCode.BadRequest, "Invalid Credentialis", null);
+            }
+
+            string email = tokenPrincipal.FindFirst(x => x.Type.EndsWith("emailaddress"))?.Value;
+
+            if(email == null)
+            {
+                await _loggerManager.LogInfo($"Token Principal Email is null");
+                return GenericResponse<TokenDto>.Failure(null, HttpStatusCode.BadRequest, "Invalid Credentialis", null);
+            }
+
+            User? userWithToken = await _repositoryManager.UserRepository.GetByEmail(email)
+                                                            .Include(x => x.AssignedUnit)
+                                                            .FirstOrDefaultAsync();  
+            if(userWithToken == null || !userWithToken.RefreshToken.Equals(tokenDto.RefreshToken, StringComparison.OrdinalIgnoreCase))
+            {
+                await _loggerManager.LogWarning($"Invalid User Email. User with Refresh Token: {tokenDto.RefreshToken} does not exist or session expired.");
+                return GenericResponse<TokenDto>.Failure(null, HttpStatusCode.NotFound, "Invalid Credentials", null);
+            }
+
+            userWithToken.RefreshToken = GenerateRefreshToken();
+
+            _repositoryManager.UserRepository.UpdateUser(userWithToken);
+
+            await _repositoryManager.SaveChangesAsync();
+
+            _loginUser = userWithToken;
+
+            var tokenDetails = await GetToken();
+
+            await _loggerManager.LogInfo($"Refresh token Successful - {SerializeObject(tokenDetails)}");
+
+            return GenericResponse<TokenDto>.Success(tokenDetails, HttpStatusCode.OK, "Token Refreshed Successfully.");
+        }
+        catch (DbException ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error - Database");
+            return GenericResponse<TokenDto>.Failure(null, HttpStatusCode.InternalServerError, "Internal Server Error", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error");
+            return GenericResponse<TokenDto>.Failure(null, HttpStatusCode.InternalServerError, "Internal Server Error", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+    }
+
     private string SerializeObject(object obj)
                         => JsonSerializer.Serialize(obj);
+
+    private string GenerateRefreshToken()
+    {
+        var rndNum = new byte[32];
+
+        using(var rndGenerator = RandomNumberGenerator.Create())
+        {
+            rndGenerator.GetBytes(rndNum);
+        }
+
+        return Convert.ToBase64String(rndNum);
+    }
+
+    private JwtSecurityToken GetSecurityToken(List<Claim> claims, SigningCredentials credentials)
+    {
+
+        var tokenOptions = new JwtSecurityToken
+        (
+            issuer: _jwtConfiguration.validIssuer,
+            audience: _contextAccessor.HttpContext.Request.Headers["Origin"].ToString(),
+            claims: claims,
+            signingCredentials: credentials,
+            expires: DateTime.UtcNow.AddSeconds(Convert.ToDouble(_jwtConfiguration.expireAfter))
+        );
+
+        return tokenOptions;
+    }
+
+    private async Task<TokenDto> GetToken()
+    {
+        var claims = await GetClaims();
+        var credentials = GetCredentials();
+        var tokenOptions = GetSecurityToken(claims, credentials);
+
+        string? token = new JwtSecurityTokenHandler().WriteToken(tokenOptions);
+
+        if (token == null)
+            throw new ArgumentNullException("Toekn Genration Failed.");
+
+        return new TokenDto() { RefreshToken = _loginUser?.RefreshToken!, Token = token };
+    }
+
+    private async Task<List<Claim>> GetClaims()
+    {
+        List<Claim> claims = new List<Claim>() 
+        {
+            new Claim(ClaimTypes.Email, _loginUser.Email),
+            new Claim(ClaimTypes.NameIdentifier, _loginUser.Username),
+            new Claim(ClaimTypes.SerialNumber, _loginUser.Id.ToString()),
+            new Claim("UnitId", _loginUser.UnitId.ToString()),
+            new Claim("AssignedUnit", _loginUser.AssignedUnit.NormalizedName),
+            new Claim("FirstName", _loginUser.FirstName),
+            new Claim("LastName", _loginUser.LastName),
+            new Claim(ClaimTypes.Name, $"{_loginUser.FirstName} {_loginUser.LastName}")
+        };
+
+        var userRoles = await _repositoryManager.UserRoleRepository.GetByUserId(_loginUser.Id, false, true)
+                                                    .Include(x => x.role)
+                                                    .ToListAsync();
+        foreach (var role in userRoles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role.role.NormalizedName));
+        }
+        
+        if(_loginUser.AssignedUnit.UnitHeadName.Equals(_loginUser.AssignedUnit.UnitHeadName, StringComparison.OrdinalIgnoreCase))
+        {
+            claims.Add(new Claim("isUnitHead", "true"));
+        }
+
+        return claims;
+
+    }
+
+    private ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
+    {
+        var tokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateIssuerSigningKey = true,
+            ValidateLifetime = false,
+            //ValidAudience = _jwtConfiguration.validAudience,
+            ValidAudiences = _jwtConfiguration.validAudience,
+            ValidIssuer = _jwtConfiguration.validIssuer,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Secret-Key"]!))
+        };
+        SecurityToken securityToken;
+        var tokenHandler = new JwtSecurityTokenHandler();
+
+        var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out securityToken);
+
+        var jwtSecurityToken = securityToken as JwtSecurityToken;
+
+        if (jwtSecurityToken == null || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+        {
+            return null!;
+        }
+
+        return principal;
+    }
+
+    private SigningCredentials GetCredentials()
+    {
+        string secretKey = _configuration["Secret-Key"] ?? throw new ArgumentNullException("No Secret Key.");
+
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+
+        return new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+    }
 }

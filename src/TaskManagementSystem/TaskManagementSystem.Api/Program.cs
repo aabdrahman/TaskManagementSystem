@@ -32,6 +32,7 @@ builder.Services.ConfigureServiceManager();
 builder.Services.ConfigureInfrastrucureManager();
 builder.Services.ConfigureModelsFromSettings(builder.Configuration);
 builder.Services.ConfigureHttpContextAccessor();
+builder.Services.ConfigureAuthentication(builder.Configuration);
 builder.Services.ConfigureController();
 
 var app = builder.Build();
@@ -52,6 +53,8 @@ app.UseStaticFiles(new StaticFileOptions
 app.UseCors();
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 
 app.MapControllers();
 

@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>0ffb7c51-de5c-4c53-8da9-0e0c65f7f7c9</UserSecretsId>
   </PropertyGroup>
 
 	<ItemGroup>
@@ -11,7 +12,8 @@
 		<PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="8.1.4" />
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="8.1.4" />
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="8.1.4" />
-
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.22" />
+		
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.22" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.22">
 			<PrivateAssets>all</PrivateAssets>

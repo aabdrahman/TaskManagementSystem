@@ -3,6 +3,7 @@ using Contracts.Infrastructure;
 using Entities.ConfigurationModels;
 using Infrastructure.Contracts;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Service.Contract;
 
@@ -15,6 +16,8 @@ public sealed class ServiceManager : IServiceManager
     private readonly IInfrastructureManager _infrastructureManager;
     private readonly IHttpContextAccessor _contextAccessor;
     private readonly IOptionsMonitor<UploadConfig> _uploadConfigOptionsMonitor;
+    private readonly IConfiguration _configuration;
+    private readonly IOptionsMonitor<JwtConfiguration> _jwtConfigurationOptionsMonitor;
 
     private readonly Lazy<IUnitService> _unitService;
     private readonly Lazy<IRoleService> _roleService;
@@ -23,17 +26,22 @@ public sealed class ServiceManager : IServiceManager
     private readonly Lazy<ITaskUserService> _taskUserService;
     private readonly Lazy<IAttachmentService> _attachmentService;
 
-    public ServiceManager(ILoggerManager loggerManager, IRepositoryManager repositoryManager, IInfrastructureManager infrastructureManager, IOptionsMonitor<UploadConfig> uploadConfigOptionsMonitor, IHttpContextAccessor httpContextAccessor)
+    public ServiceManager(ILoggerManager loggerManager, IRepositoryManager repositoryManager, 
+                            IInfrastructureManager infrastructureManager, IOptionsMonitor<UploadConfig> uploadConfigOptionsMonitor, 
+                            IHttpContextAccessor httpContextAccessor, IConfiguration configuration,
+                            IOptionsMonitor<JwtConfiguration> jwtConfigurationOptionsMonitor)
     {
         _loggerManager = loggerManager;
         _repositoryManager = repositoryManager;
         _infrastructureManager = infrastructureManager;
         _uploadConfigOptionsMonitor = uploadConfigOptionsMonitor;
         _contextAccessor = httpContextAccessor;
+        _configuration = configuration;
+        _jwtConfigurationOptionsMonitor = jwtConfigurationOptionsMonitor;
 
         _unitService = new Lazy<IUnitService>(() => new UnitService(_loggerManager, _repositoryManager));
         _roleService = new Lazy<IRoleService>(() => new RoleService(_repositoryManager, _loggerManager));
-        _userService = new Lazy<IUserService>(() => new UserService(_repositoryManager, _loggerManager));
+        _userService = new Lazy<IUserService>(() => new UserService(_repositoryManager, _loggerManager, _configuration, _jwtConfigurationOptionsMonitor, _contextAccessor));
         _createdTaskService = new Lazy<ICreatedTaskService>(() => new CreatedTaskService(_repositoryManager, _loggerManager));
         _taskUserService = new Lazy<ITaskUserService>(() => new TaskUserService(_repositoryManager, _loggerManager));
         _attachmentService = new Lazy<IAttachmentService>(() => new AttachmentService(_repositoryManager, _loggerManager, _infrastructureManager, _uploadConfigOptionsMonitor, _contextAccessor));
