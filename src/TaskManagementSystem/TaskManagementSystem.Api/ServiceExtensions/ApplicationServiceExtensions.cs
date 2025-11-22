@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Repository;
 using Service.Contract;
 using Services;
@@ -43,6 +44,31 @@ internal static class ApplicationServiceExtensions
                 Email = "akandeabdrahman@gmail.com",
                 Url = new Uri("https://github.com/aabdrahman/TaskManagementSystem")
             } });
+
+            opts.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+            {
+                Description = "Enter  your Bearer token here. Enter 'Bearer' followed by your token (e.g., Bearer abc.def.ghi)",
+                In = ParameterLocation.Header,
+                Scheme = "Bearer",
+                Type = SecuritySchemeType.ApiKey,
+                BearerFormat = "JWT"
+            });
+
+            opts.AddSecurityRequirement(new OpenApiSecurityRequirement()
+            {
+                {
+                    new OpenApiSecurityScheme()
+                    {
+                        Reference = new OpenApiReference()
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        },
+                        Name = "Bearer"
+                    },
+                    new List<string>()
+                }
+            });
         });
 
     }
