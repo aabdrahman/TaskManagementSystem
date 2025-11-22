@@ -14,6 +14,11 @@ public sealed class AttachmentRepository : RepositoryBase<Attachment>, IAttachme
         await Create(newAttachment);
     }
 
+    public async Task CreateMultipleAttachments(IEnumerable<Attachment> newAttachments)
+    {
+        await CreateMultiple(newAttachments);
+    }
+
     public void DeleteAttachment(Attachment deletedAttachment)
     {
         DeleteEntity(deletedAttachment);

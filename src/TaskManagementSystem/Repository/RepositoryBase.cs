@@ -17,6 +17,11 @@ public abstract class RepositoryBase<T> : IRepositoryBase<T> where T : class
         await _repositoryContext.Set<T>().AddAsync(entity);
     }
 
+    public async Task CreateMultiple(IEnumerable<T> entities)
+    {
+        await _repositoryContext.AddRangeAsync(entities);
+    }
+
     public async Task<IQueryable<T>> CustomeDatabaseQuery(string command, params object[] parameters)
     {
         return await Task.FromResult(_repositoryContext.Database.SqlQueryRaw<T>(command, parameters));

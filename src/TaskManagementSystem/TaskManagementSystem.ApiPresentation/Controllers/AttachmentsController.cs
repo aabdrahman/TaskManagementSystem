@@ -49,4 +49,37 @@ public class AttachmentsController : ControllerBase
             return StatusCode(500, ex.Message);
         }
     }
+
+    [NonAction]
+    [HttpPost("upload-multiple")]
+    public async Task<IActionResult> UploadMultiple([FromForm] IEnumerable<CreateAttachmentDto> createAttachments)
+    {
+        try
+        {
+            var uploadMultipleResponse = await _serviceManager.AttachmentService.UploadMultipleAttachments(createAttachments);
+
+            return StatusCode((int)uploadMultipleResponse.StatusCode, uploadMultipleResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, ex.Message);
+            return StatusCode(500, ex.Message);
+        }
+    }
+
+    [HttpPost("upload-multiple2")]
+    public async Task<IActionResult> UploadMultiple2([FromForm] UploadMultipleAttachmentDto createAttachments)
+    {
+        try
+        {
+            var uploadMultipleResponse = await _serviceManager.AttachmentService.UploadMultipleAttachments2(createAttachments);
+
+            return StatusCode((int)uploadMultipleResponse.StatusCode, uploadMultipleResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, ex.Message);
+            return StatusCode(500, ex.Message);
+        }
+    }
 }

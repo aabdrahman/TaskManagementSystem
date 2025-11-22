@@ -4,6 +4,8 @@ using Infrastructure.Contracts;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
+using Shared.DataTransferObjects.Attachment;
+using System.Threading.Tasks;
 
 namespace Infrastructure;
 
@@ -21,6 +23,33 @@ public sealed class FileUtilityService : IFileUtilityService
         _webHostEnvironment = webHostEnvironment;
         _uploadConfig = uploadConfigOptionsMonitor.CurrentValue as UploadConfig;
  
+    }
+
+    public async Task<IEnumerable<Stream>> FetchTaskAttachments(string taskId)
+    {
+        try
+        {
+            _contentFilePath = _uploadConfig.UploadFilepath;
+            string attachmentDirectory = Path.Combine(_contentFilePath, taskId);
+
+            IEnumerable<Stream> files = [];
+
+            foreach (var file in Directory.EnumerateFiles(attachmentDirectory))
+            {
+                byte[] fileContentBytes = await File.ReadAllBytesAsync(file);
+                using var memoryStream = new MemoryStream(fileContentBytes);
+
+                files.Append(memoryStream);
+            }
+
+            return files;
+
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, ex.Message);
+            return [];
+        }
     }
 
     public async Task<string> RemoveFileAsync(string taskId, string fileName)
@@ -80,6 +109,48 @@ public sealed class FileUtilityService : IFileUtilityService
         {
             await _loggerManager.LogError(ex, $"Error Occurred Uploading file for: {taskId}");
             return "Failed";
+        }
+    }
+
+    public async Task<MultipleAttachmentUploadResponse> UploadMultipleFilesAsync(IEnumerable<UploadAttachmentDto> uploadAttachments)
+    {
+        try
+        {
+            _contentFilePath = _uploadConfig.UploadFilepath;
+            int successCount = 0; int failureCount = 0; IEnumerable<string> successfulFiles = [];
+
+            foreach (var uploadItem in uploadAttachments)
+            {
+
+                if (!Directory.Exists(Path.Combine(_contentFilePath, uploadItem.TaskId)))
+                {
+                    Directory.CreateDirectory(Path.Combine(_contentFilePath, uploadItem.TaskId));
+                }
+
+                try
+                {
+                    using (var memoryFileStream = new MemoryStream())
+                    {
+                        await uploadItem.UploadAttachment.CopyToAsync(memoryFileStream);
+                        await File.WriteAllBytesAsync(Path.Combine(_contentFilePath, uploadItem.TaskId, uploadItem.UploadAttachment.FileName), memoryFileStream.ToArray());
+                    }
+                    successCount++;
+                    successfulFiles.Append(uploadItem.UploadAttachment.FileName);
+                }
+                catch (Exception ex)
+                {
+                    await _loggerManager.LogError(ex, ex.Message);
+                    failureCount++;
+                }
+            }
+
+            return new MultipleAttachmentUploadResponse(successCount, failureCount, successfulFiles);
+
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, ex.Message);
+            return new MultipleAttachmentUploadResponse(0, 0, []);
         }
     }
 }

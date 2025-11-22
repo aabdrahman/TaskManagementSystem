@@ -3,6 +3,7 @@ using Contracts.Infrastructure;
 using Entities.ConfigurationModels;
 using Entities.Models;
 using Infrastructure.Contracts;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Service.Contract;
@@ -20,17 +21,32 @@ public sealed class AttachmentService : IAttachmentService
     private readonly IRepositoryManager _repositoryManager;
     private readonly ILoggerManager _loggerManager;
     private readonly IInfrastructureManager _infrastructureManager;
+    private readonly IHttpContextAccessor _contextAccessor;
     private UploadConfig _uploadFileConfig;
-    public AttachmentService(IRepositoryManager repositoryManager, ILoggerManager loggerManager, IInfrastructureManager infrastructureManager, IOptionsMonitor<UploadConfig> uploadConfigOptionsMonitor)
+    public AttachmentService(IRepositoryManager repositoryManager, ILoggerManager loggerManager, IInfrastructureManager infrastructureManager, IOptionsMonitor<UploadConfig> uploadConfigOptionsMonitor, IHttpContextAccessor contextAccessor)
     {
         _repositoryManager = repositoryManager;
         _loggerManager = loggerManager;
         _infrastructureManager = infrastructureManager;
+        _contextAccessor = contextAccessor;
         _uploadFileConfig = uploadConfigOptionsMonitor.CurrentValue as UploadConfig;
     }
+
     public Task<GenericResponse<IEnumerable<AttachmentDto>>> GetTaskAttachments(string taskId, bool hasQueryFilter)
     {
         throw new NotImplementedException();
+        //try
+        //{
+        //    var baseUri = $"{_contextAccessor.HttpContext.Request.Scheme}://{_contextAccessor.HttpContext.Request.Host}";
+
+            
+        //}throw new NotImplementedException();
+        //catch (Exception ex)
+        //{
+
+        //    throw;
+        //}
+        //throw new NotImplementedException();
     }
 
     public async Task<GenericResponse<string>> RemoveAttachment(int Id, bool isSoftDelete = true)
@@ -152,6 +168,128 @@ public sealed class AttachmentService : IAttachmentService
         {
             await _loggerManager.LogError(ex, "Internal Server Error Occurred");
             return GenericResponse<string>.Failure("Error", HttpStatusCode.InternalServerError, "", new { ex.Message, description = ex?.InnerException?.Message });
+        }
+    }
+
+    public async Task<GenericResponse<string>> UploadMultipleAttachments(IEnumerable<CreateAttachmentDto> attachments)
+    {
+        try
+        {
+            await _loggerManager.LogInfo($"Upload bulk files - {JsonSerializer.Serialize(attachments)}");
+
+            IEnumerable<string> uploadFileExtensions = attachments.Select(x => Path.GetExtension(x.AttachmentFile.FileName)).Distinct();
+
+            IEnumerable<string> isInvalidExtensionExists = uploadFileExtensions.Except(_uploadFileConfig.AllowedExtensions);
+
+            if(isInvalidExtensionExists.Any())
+            {
+                await _loggerManager.LogWarning($"Some file extensions are invalid: {string.Join(", ", isInvalidExtensionExists)}");
+                return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.BadRequest, $"Invalid Extension - {string.Join(", ", isInvalidExtensionExists)}", null);
+            }
+
+            await _loggerManager.LogInfo($"Upload bulk files - {JsonSerializer.Serialize(attachments)}");
+
+            bool isExistTask = await _repositoryManager.CreatedTaskRepository.GetByTaskId(attachments.Select(x => x.TaskId).First(), false, true).AnyAsync();
+
+            if (!isExistTask)
+            {
+                await _loggerManager.LogInfo($"No Task Exists with task Id: {attachments.Select(x => x.TaskId).First()}");
+                return GenericResponse<string>.Failure("Invalid Task Id", HttpStatusCode.BadRequest, $"Task Id does not exist: {attachments.Select(x => x.TaskId).First()}", null);
+            }
+
+            IEnumerable<UploadAttachmentDto> multipleAttachmentRecords = attachments.Select(x => x.ToUploadAttachmentDto()).ToList();
+
+            MultipleAttachmentUploadResponse uploadFileResponse = await _infrastructureManager.FileUtilityService.UploadMultipleFilesAsync(multipleAttachmentRecords);
+
+            await _loggerManager.LogInfo($"Multiple file upload response - {JsonSerializer.Serialize(uploadFileResponse)}");
+
+            if(uploadFileResponse.successCount == 0)
+            {
+                return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.BadRequest, "File Upload Unsuccessful.", null);
+            }
+
+            IEnumerable<CreateAttachmentDto> finalCreateAttachments = attachments.IntersectBy(uploadFileResponse.successfulFiles, x => x.AttachmentFile.FileName, StringComparer.OrdinalIgnoreCase); //This is done to ensure that the only successfullly uploaded files are created in the database.
+
+            IEnumerable<Attachment> attachmentsToInsert = finalCreateAttachments.Select(x => x.ToEntity());
+
+            await _repositoryManager.AttachmentRepository.CreateMultipleAttachments(attachmentsToInsert);
+
+            await _repositoryManager.SaveChangesAsync();
+
+            await _loggerManager.LogInfo($"Records created successfully for - {string.Join(", ", attachmentsToInsert.Select(x => x.FileName))}");
+
+            return GenericResponse<string>.Success($"Uploaded Files: {string.Join(", ", uploadFileResponse.successfulFiles)}", HttpStatusCode.Created, "Multiple Upload Successful.");
+
+        }
+        catch (DbException ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error Occurred - Database");
+            return GenericResponse<string>.Failure("Error", HttpStatusCode.InternalServerError, "Internal Server Error - Database", new { ex.Message, description = ex?.InnerException?.Message });
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error Occurred");
+            return GenericResponse<string>.Failure("Error", HttpStatusCode.InternalServerError, "Internal Server Error", new { ex.Message, description = ex?.InnerException?.Message });
+        }
+    }
+
+    public async Task<GenericResponse<string>> UploadMultipleAttachments2(UploadMultipleAttachmentDto attachments)
+    {
+        try
+        {
+            await _loggerManager.LogInfo($"Upload bulk files - {JsonSerializer.Serialize(attachments)}");
+
+            IEnumerable<string> uploadFileExtensions = attachments.Attachments.Select(x => Path.GetExtension(x.FileName)).Distinct();
+
+            IEnumerable<string> isInvalidExtensionExists = uploadFileExtensions.Except(_uploadFileConfig.AllowedExtensions);
+
+            if (isInvalidExtensionExists.Any())
+            {
+                await _loggerManager.LogWarning($"Some file extensions are invalid: {string.Join(", ", isInvalidExtensionExists)}");
+                return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.BadRequest, $"Invalid Extension - {string.Join(", ", isInvalidExtensionExists)}", null);
+            }
+
+            bool isExistTask = await _repositoryManager.CreatedTaskRepository.GetByTaskId(attachments.TaskId, false, true).AnyAsync();
+
+            if (!isExistTask)
+            {
+                await _loggerManager.LogInfo($"No Task Exists with task Id: {attachments.TaskId}");
+                return GenericResponse<string>.Failure("Invalid Task Id", HttpStatusCode.BadRequest, $"Task Id does not exist: {attachments.TaskId}", null);
+            }
+
+            IEnumerable<UploadAttachmentDto> multipleAttachmentRecords = attachments.ToUploadDto();
+
+            MultipleAttachmentUploadResponse uploadFileResponse = await _infrastructureManager.FileUtilityService.UploadMultipleFilesAsync(multipleAttachmentRecords);
+
+            await _loggerManager.LogInfo($"Multiple file upload response - {JsonSerializer.Serialize(uploadFileResponse)}");
+
+            if (uploadFileResponse.successCount == 0)
+            {
+                return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.BadRequest, "File Upload Unsuccessful.", null);
+            }
+
+            IEnumerable<CreateAttachmentDto> finalCreateAttachments = (attachments.Attachments.IntersectBy(uploadFileResponse.successfulFiles, x => x.FileName, StringComparer.OrdinalIgnoreCase)).Select(x => new CreateAttachmentDto() { TaskId = attachments.TaskId, AttachmentFile = x, FileName = x.FileName}); //This is done to ensure that the only successfullly uploaded files are created in the database.
+
+            IEnumerable<Attachment> attachmentsToInsert = finalCreateAttachments.Select(x => x.ToEntity());
+
+            await _repositoryManager.AttachmentRepository.CreateMultipleAttachments(attachmentsToInsert);
+
+            await _repositoryManager.SaveChangesAsync();
+
+            await _loggerManager.LogInfo($"Records created successfully for - {string.Join(", ", attachmentsToInsert.Select(x => x.FileName))}");
+
+            return GenericResponse<string>.Success($"Uploaded Files: {string.Join(", ", uploadFileResponse.successfulFiles)}", HttpStatusCode.Created, "Multiple Upload Successful.");
+
+        }
+        catch (DbException ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error Occurred - Database");
+            return GenericResponse<string>.Failure("Error", HttpStatusCode.InternalServerError, "Internal Server Error - Database", new { ex.Message, description = ex?.InnerException?.Message });
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error Occurred");
+            return GenericResponse<string>.Failure("Error", HttpStatusCode.InternalServerError, "Internal Server Error", new { ex.Message, description = ex?.InnerException?.Message });
         }
     }
 }

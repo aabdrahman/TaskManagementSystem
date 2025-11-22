@@ -5,6 +5,7 @@ namespace Contracts;
 public interface IAttachmentRepository
 {
     Task CreateAttachment(Attachment newAttachment);
+    Task CreateMultipleAttachments(IEnumerable<Attachment> newAttachments);
     void DeleteAttachment(Attachment deletedAttachment);
     void UpdateAttachment(Attachment updatedAttachment);
     IQueryable<Attachment> GetAllAttachmentsByTaskId(string taskId, bool trackChanges = true, bool hasQueryFilter = true);

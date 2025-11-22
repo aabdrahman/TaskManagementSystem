@@ -89,6 +89,10 @@ internal static class ApplicationServiceExtensions
         services.AddExceptionHandler<GlobalExceptionHandler>();
     }
 
+    internal static void ConfigureHttpContextAccessor(this IServiceCollection services)
+    {
+        services.AddHttpContextAccessor();
+    }
     internal static void ConfigureModelsFromSettings(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<UploadConfig>(configuration.GetSection("UploadConfiguration"));

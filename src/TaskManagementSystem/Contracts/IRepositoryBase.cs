@@ -5,6 +5,7 @@ namespace Contracts;
 public interface IRepositoryBase<T>
 {
     Task Create(T entity);
+    Task CreateMultiple(IEnumerable<T> entities);
     void UpdateEntity(T entity);
     void DeleteEntity(T entity);
     IQueryable<T> FindAll(bool trackChanges = true, bool hasQueryFilter = true);

@@ -11,7 +11,7 @@ public static class AttachmentMapper
         {
             CreatedBy = "",
             TaskId = createAttachmentDto.TaskId,
-            FileName = createAttachmentDto.FileName
+            FileName = createAttachmentDto.AttachmentFile.FileName
         };
     }
 
@@ -25,4 +25,22 @@ public static class AttachmentMapper
             FilePath = attachment.FilePath
         };
     }
+
+    public static UploadAttachmentDto ToUploadAttachmentDto(this CreateAttachmentDto createAttachment)
+    {
+        return new UploadAttachmentDto(UploadAttachment: createAttachment.AttachmentFile, TaskId: createAttachment.TaskId);
+    }
+
+    public static IEnumerable<UploadAttachmentDto> ToUploadDto(this UploadMultipleAttachmentDto uploadMultipleAttachment)
+    {
+        IEnumerable<UploadAttachmentDto> uploadAttachments = [];
+
+        foreach (var item in uploadMultipleAttachment.Attachments)
+        {
+            uploadAttachments.Append(new UploadAttachmentDto(item, uploadMultipleAttachment.TaskId));
+        }
+
+        return uploadAttachments;
+    }
+
 }

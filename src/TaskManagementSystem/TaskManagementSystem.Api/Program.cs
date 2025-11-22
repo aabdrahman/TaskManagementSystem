@@ -31,6 +31,7 @@ builder.Services.ConfigureRepositoryManager();
 builder.Services.ConfigureServiceManager();
 builder.Services.ConfigureInfrastrucureManager();
 builder.Services.ConfigureModelsFromSettings(builder.Configuration);
+builder.Services.ConfigureHttpContextAccessor();
 builder.Services.ConfigureController();
 
 var app = builder.Build();

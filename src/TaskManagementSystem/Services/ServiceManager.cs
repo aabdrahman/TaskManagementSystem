@@ -2,6 +2,7 @@
 using Contracts.Infrastructure;
 using Entities.ConfigurationModels;
 using Infrastructure.Contracts;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Service.Contract;
 
@@ -12,6 +13,7 @@ public sealed class ServiceManager : IServiceManager
     private readonly ILoggerManager _loggerManager;
     private readonly IRepositoryManager _repositoryManager;
     private readonly IInfrastructureManager _infrastructureManager;
+    private readonly IHttpContextAccessor _contextAccessor;
     private readonly IOptionsMonitor<UploadConfig> _uploadConfigOptionsMonitor;
 
     private readonly Lazy<IUnitService> _unitService;
@@ -21,19 +23,20 @@ public sealed class ServiceManager : IServiceManager
     private readonly Lazy<ITaskUserService> _taskUserService;
     private readonly Lazy<IAttachmentService> _attachmentService;
 
-    public ServiceManager(ILoggerManager loggerManager, IRepositoryManager repositoryManager, IInfrastructureManager infrastructureManager, IOptionsMonitor<UploadConfig> uploadConfigOptionsMonitor)
+    public ServiceManager(ILoggerManager loggerManager, IRepositoryManager repositoryManager, IInfrastructureManager infrastructureManager, IOptionsMonitor<UploadConfig> uploadConfigOptionsMonitor, IHttpContextAccessor httpContextAccessor)
     {
         _loggerManager = loggerManager;
         _repositoryManager = repositoryManager;
         _infrastructureManager = infrastructureManager;
         _uploadConfigOptionsMonitor = uploadConfigOptionsMonitor;
+        _contextAccessor = httpContextAccessor;
 
         _unitService = new Lazy<IUnitService>(() => new UnitService(_loggerManager, _repositoryManager));
         _roleService = new Lazy<IRoleService>(() => new RoleService(_repositoryManager, _loggerManager));
         _userService = new Lazy<IUserService>(() => new UserService(_repositoryManager, _loggerManager));
         _createdTaskService = new Lazy<ICreatedTaskService>(() => new CreatedTaskService(_repositoryManager, _loggerManager));
         _taskUserService = new Lazy<ITaskUserService>(() => new TaskUserService(_repositoryManager, _loggerManager));
-        _attachmentService = new Lazy<IAttachmentService>(() => new AttachmentService(_repositoryManager, _loggerManager, _infrastructureManager, _uploadConfigOptionsMonitor));
+        _attachmentService = new Lazy<IAttachmentService>(() => new AttachmentService(_repositoryManager, _loggerManager, _infrastructureManager, _uploadConfigOptionsMonitor, _contextAccessor));
 
     }
 
