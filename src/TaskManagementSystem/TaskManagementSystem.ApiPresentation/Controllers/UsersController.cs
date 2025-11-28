@@ -97,6 +97,22 @@ public class UsersController : ControllerBase
         }
     }
 
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangeUserPasswordDto changePassword)
+    {
+        try
+        {
+            var changePasswordResponse = await _serviceManager.UserService.ChangePasswordAsync(changePassword);
+
+            return StatusCode((int)changePasswordResponse.StatusCode, changePasswordResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "An Error Occurred.");
+            return StatusCode(500, ex.Message);
+        }
+    }
+
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] UserToLoginDto userToLogin)
     {

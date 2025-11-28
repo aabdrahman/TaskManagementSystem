@@ -12,5 +12,6 @@ public interface IUserService
     Task<GenericResponse<string>> DeleteAsync(string Username, bool isSoftDelete = true);
     Task<GenericResponse<TokenDto>> ValidateUserAsync(UserToLoginDto userToLogin);
     Task<GenericResponse<TokenDto>> RefreshTokenAsync(TokenDto tokenDto);
+    Task<GenericResponse<string>> ChangePasswordAsync(ChangeUserPasswordDto changePasswordDto);
     //Task<GenericResponse<string>> ValidateUser();
 }

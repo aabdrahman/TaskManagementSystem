@@ -104,6 +104,52 @@ public sealed class UserService : IUserService
         }
     }
 
+    public async Task<GenericResponse<string>> ChangePasswordAsync(ChangeUserPasswordDto changePasswordDto)
+    {
+        try
+        {
+            await _loggerManager.LogInfo($"Chnage Password for - {SerializeObject(changePasswordDto)}");
+
+            User? existingUser = await _repositoryManager.UserRepository.GetByEmail(changePasswordDto.Email, true, false).SingleOrDefaultAsync();
+
+            if(existingUser is null)
+            {
+                await _loggerManager.LogWarning($"User with email does not exist - {changePasswordDto.Email}");
+                return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.NotFound, "No User found with email", null);
+            }
+
+            bool isValidOldPassword = BCrypt.Net.BCrypt.EnhancedVerify(changePasswordDto.Password, existingUser.Password);
+
+            if(!isValidOldPassword)
+            {
+                await _loggerManager.LogWarning($"User with email does not exist - {changePasswordDto.Email}");
+                return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.BadRequest, "Invalid Password.", null);
+            }
+
+            existingUser.LastPasswordChangeDate = DateTime.UtcNow;
+            existingUser.Password = BCrypt.Net.BCrypt.EnhancedHashPassword(changePasswordDto.Password);
+            existingUser.IsActive = true;
+
+            _repositoryManager.UserRepository.UpdateUser(existingUser);
+
+            await _repositoryManager.SaveChangesAsync();
+
+            await _loggerManager.LogInfo($"User Password Change Operation Successful for user - {changePasswordDto.Email}");
+
+            return GenericResponse<string>.Success("Operation Successful.", HttpStatusCode.OK, "User Password Changed");
+        }
+        catch (DbException ex)
+        {
+            await _loggerManager.LogError(ex, $"Internal Server Error - Database");
+            return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.InternalServerError, $"An Error Occurred - Database", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, $"Internal Server Error");
+            return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.InternalServerError, $"An Error Occurred - Database", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+    }
+
     public async Task<GenericResponse<string>> DeleteAsync(string Username, bool isSoftDelete = true)
     {
         try
@@ -249,6 +295,16 @@ public sealed class UserService : IUserService
             {
                 await _loggerManager.LogWarning($"Invalid User Email. User with Email: {userToLogin.Email} does not exist.");
                 return GenericResponse<TokenDto>.Failure(null, HttpStatusCode.NotFound, "Invalid Credentials", null);
+            }
+
+            int daysToLastPasswordChnage = (int)(DateTime.UtcNow - existingUserToLogin.LastPasswordChangeDate).TotalDays;
+
+            bool maxDaysToChangeFromConfig = int.TryParse(_configuration["UserManagement:MaxDaysToChangePassword"] ?? "30", out int daysToLastPasswordChangeValue);
+
+
+            if (daysToLastPasswordChnage > daysToLastPasswordChangeValue)
+            {
+                return GenericResponse<TokenDto>.Failure(null, HttpStatusCode.Locked, "Password Change required", null);
             }
 
             bool isValidPassword = BCrypt.Net.BCrypt.EnhancedVerify(userToLogin.Password.Trim(), existingUserToLogin.Password);
