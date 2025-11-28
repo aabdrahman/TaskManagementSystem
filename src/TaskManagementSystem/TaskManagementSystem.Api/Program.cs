@@ -38,9 +38,12 @@ builder.Services.ConfigureController();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-app.ConfigureSwaggerDefinition();
 
 app.CongigureExceptionHandler();
+
+app.UseCors();
+
+app.ConfigureSwaggerDefinition();
 
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -50,11 +53,11 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = new PathString("/Uploads")
 });
 
-app.UseCors();
-
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
+
+app.UseAuthorization();
 
 app.MapControllers();
 

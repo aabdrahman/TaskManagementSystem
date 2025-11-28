@@ -49,9 +49,10 @@ internal static class ApplicationServiceExtensions
             {
                 Description = "Enter  your Bearer token here. Enter 'Bearer' followed by your token (e.g., Bearer abc.def.ghi)",
                 In = ParameterLocation.Header,
-                Scheme = "Bearer",
+                //Scheme = "Bearer",
                 Type = SecuritySchemeType.ApiKey,
-                BearerFormat = "JWT"
+                BearerFormat = "JWT",
+                Name = "Authorization"
             });
 
             opts.AddSecurityRequirement(new OpenApiSecurityRequirement()
@@ -139,8 +140,10 @@ internal static class ApplicationServiceExtensions
         {
             opts.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
             opts.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            opts.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
         }).AddJwtBearer(opts =>
         {
+            opts.UseSecurityTokenValidators = true;
             opts.TokenValidationParameters = new TokenValidationParameters()
             {
                 ValidateAudience = true,
