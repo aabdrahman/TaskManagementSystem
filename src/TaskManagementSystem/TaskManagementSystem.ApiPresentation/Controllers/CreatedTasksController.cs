@@ -114,4 +114,35 @@ public class CreatedTasksController : ControllerBase
         }
     }
 
+    [HttpPost("cancel-task")]
+    public async Task<IActionResult> CancelTask([FromBody] CancelCreatedTaskDto cancelCreatedTask)
+    {
+        try
+        {
+            var cancelTaskResponse = await _serviceManager.CreatedTaskService.CancelTaskAsync(cancelCreatedTask);
+
+            return StatusCode((int)cancelTaskResponse.StatusCode, cancelTaskResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error");
+            return StatusCode(500, "Internal Server Error");
+        }
+    }
+
+    [HttpPost("reassign-task")]
+    public async Task<IActionResult> ReassignTask([FromBody]  ReassignCreatedTaskDto reassignCreatedTask)
+    {
+        try
+        {
+            var reassignTaskResponse = await _serviceManager.CreatedTaskService.ReassignTaskAsync(reassignCreatedTask);
+
+            return StatusCode((int)reassignTaskResponse.StatusCode, reassignTaskResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error");
+            return StatusCode(500, "Internal Server Error");
+        }
+    }
 }

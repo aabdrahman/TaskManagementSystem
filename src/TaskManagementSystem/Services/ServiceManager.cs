@@ -42,7 +42,7 @@ public sealed class ServiceManager : IServiceManager
         _unitService = new Lazy<IUnitService>(() => new UnitService(_loggerManager, _repositoryManager));
         _roleService = new Lazy<IRoleService>(() => new RoleService(_repositoryManager, _loggerManager));
         _userService = new Lazy<IUserService>(() => new UserService(_repositoryManager, _loggerManager, _configuration, _jwtConfigurationOptionsMonitor, _contextAccessor));
-        _createdTaskService = new Lazy<ICreatedTaskService>(() => new CreatedTaskService(_repositoryManager, _loggerManager));
+        _createdTaskService = new Lazy<ICreatedTaskService>(() => new CreatedTaskService(_repositoryManager, _loggerManager, _contextAccessor));
         _taskUserService = new Lazy<ITaskUserService>(() => new TaskUserService(_repositoryManager, _loggerManager));
         _attachmentService = new Lazy<IAttachmentService>(() => new AttachmentService(_repositoryManager, _loggerManager, _infrastructureManager, _uploadConfigOptionsMonitor, _contextAccessor));
 

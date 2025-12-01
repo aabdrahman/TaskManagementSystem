@@ -10,6 +10,8 @@ using System.Data.Common;
 using System.Text.Json;
 using System.Net;
 using Entities.StaticValues;
+using Microsoft.AspNetCore.Http;
+using Shared.StaticValues;
 
 namespace Services;
 
@@ -17,12 +19,64 @@ public sealed class CreatedTaskService : ICreatedTaskService
 {
     private readonly IRepositoryManager _repositoryManager;
     private readonly ILoggerManager _loggerManager;
+    private readonly IHttpContextAccessor _contextAccessor;
 
-    public CreatedTaskService(IRepositoryManager repositoryManager, ILoggerManager loggerManager)
+    public CreatedTaskService(IRepositoryManager repositoryManager, ILoggerManager loggerManager, IHttpContextAccessor contextAccessor)
     {
         _repositoryManager = repositoryManager;
         _loggerManager = loggerManager;
+        _contextAccessor = contextAccessor;
     }
+
+    public async Task<GenericResponse<string>> CancelTaskAsync(CancelCreatedTaskDto cancelCreatedTaskDto)
+    {
+        try
+        {
+            await _loggerManager.LogInfo($"Cancel Task Request - {SerializeObjects(cancelCreatedTaskDto)}");
+
+            CreatedTask? taskToCancel = await _repositoryManager.CreatedTaskRepository.GetById(cancelCreatedTaskDto.TaskPrimaryId, true).SingleOrDefaultAsync();
+
+            if(taskToCancel is null)
+            {
+                await _loggerManager.LogWarning($"No task with Id - {cancelCreatedTaskDto.TaskPrimaryId}");
+                return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.NotFound, "Invalid Task Id provided.", null);
+            }
+
+            if(taskToCancel.CompletionDate.HasValue || taskToCancel.TaskStage == Stage.Cancelled)
+            {
+                await _loggerManager.LogInfo($"Invalid Task Selected To Cancel - Status: {taskToCancel.TaskStage.ToString()}");
+                return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.Conflict, $"Task Status: {taskToCancel.TaskStage.ToString()}", null);
+            }
+
+            if(taskToCancel.UserId != cancelCreatedTaskDto.ReqesterId || taskToCancel.TaskId != cancelCreatedTaskDto.TaskId)
+            {
+                await _loggerManager.LogWarning($"Request Mismatch with the existing id: {SerializeObjects(taskToCancel)}");
+                return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.BadRequest, "Request Mismatch.", null);
+            }
+
+            taskToCancel.TaskStage = Stage.Cancelled;
+            taskToCancel.CancelReason = cancelCreatedTaskDto.Justification;
+
+            _repositoryManager.CreatedTaskRepository.UpdateTask(taskToCancel);
+
+            await _repositoryManager.SaveChangesAsync();
+
+            await _loggerManager.LogInfo($"Cancel Created Task Success - {SerializeObjects(cancelCreatedTaskDto)}");
+
+            return GenericResponse<string>.Success("Operation Successul", HttpStatusCode.OK, "Task Cancelled Successfuly.");
+        }
+        catch (DbException ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error Occurred - Database");
+            return GenericResponse<string>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Database Server Error.", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error Occurred");
+            return GenericResponse<string>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Server Error.", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+    }
+
     public async Task<GenericResponse<CreatedTaskDto>> CreateAsync(CreateTaskDto createTask)
     {
         try
@@ -213,6 +267,75 @@ public sealed class CreatedTaskService : ICreatedTaskService
         {
             await _loggerManager.LogError(ex, "Internal Server Error Occurred");
             return GenericResponse<IEnumerable<CreatedTaskDto>>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Server Error.", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+    }
+
+    public async Task<GenericResponse<string>> ReassignTaskAsync(ReassignCreatedTaskDto reassignCreatedTaskDto)
+    {
+        try
+        {
+            string userIdFromToken = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("serialnumber"))?.Value ?? "0";
+
+            await _loggerManager.LogInfo($"Reassign Task - {SerializeObjects(reassignCreatedTaskDto)}. User: {_contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("emailaddress"))?.Value ?? "anonymous"}");
+
+            bool isValidUser = _contextAccessor.HttpContext.User.IsInRole("Analyst") || _contextAccessor.HttpContext.User.IsInRole("Product Manager");
+
+            if (!isValidUser)
+            {
+                await _loggerManager.LogWarning($"User Role is not valid enough.");
+                return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.Forbidden, "Unauthorized Access.", null);
+            }
+
+            CreatedTask? taskToReassign = await _repositoryManager.CreatedTaskRepository.GetByTaskId(reassignCreatedTaskDto.TaskId, true).SingleOrDefaultAsync();
+
+            if(taskToReassign is null)
+            {
+                await _loggerManager.LogWarning($"Invalid Task Id provided - {reassignCreatedTaskDto.TaskId}");
+                return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.NotFound, "Invalid Task Id.", null);
+            }
+
+            if(taskToReassign.CompletionDate.HasValue)
+            {
+                await _loggerManager.LogWarning($"Invalid Task Selected. Task already completed.");
+                return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.NotFound, $"Task already completed. Stage: {taskToReassign.TaskStage.ToString()}", null);
+            }
+
+            if(taskToReassign.UserId.ToString() != userIdFromToken)
+            {
+                await _loggerManager.LogWarning($"Invalid User Conflict. Initiating User: {taskToReassign.UserId.ToString()}. Logged In User {userIdFromToken}");
+                return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.BadRequest, "Failed Operation", null);
+            }
+
+            //User? userToAssign = await _repositoryManager.UserRepository.GetById(reassignCreatedTaskDto.UserId, false).SingleOrDefaultAsync();
+
+            bool isUserValid = await _repositoryManager.UserRepository.GetAllUsers().AnyAsync(x => x.AssignedUnit.NormalizedName.Contains(StaticRoles.TaskCreateUnit1.ToUpper()) || x.AssignedUnit.NormalizedName.Contains(StaticRoles.TaskCreateUnit2.ToUpper()));
+
+            if(!isUserValid)
+            {
+                await _loggerManager.LogWarning($"Invalid User provided. User is not in the desired role to assign task.");
+                return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.BadRequest, "User Role is not valid.", null);
+            }
+
+            taskToReassign.UserId = reassignCreatedTaskDto.UserId;
+
+            _repositoryManager.CreatedTaskRepository.UpdateTask(taskToReassign);
+
+            await _repositoryManager.SaveChangesAsync();
+
+            await _loggerManager.LogInfo($"Task Reassign Successful. {SerializeObjects(reassignCreatedTaskDto)}");
+
+            return GenericResponse<string>.Success("Operation Successful.", HttpStatusCode.OK, "Task Successfully Reassigned.");
+
+        }
+        catch (DbException ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error Occurred - Database");
+            return GenericResponse<string>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Database Server Error.", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error Occurred");
+            return GenericResponse<string>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Server Error.", new { ex.Message, Description = ex?.InnerException?.Message });
         }
     }
 
