@@ -13,4 +13,5 @@ public class TaskUser : BaseEntity //This is the linking table for the manay to 
     public string Title {  get; set; }
     public string Description { get; set; }
     public DateTime ProposedCompletionDate { get; set; }
+    public string? CancelReason { get; set; }
 }
