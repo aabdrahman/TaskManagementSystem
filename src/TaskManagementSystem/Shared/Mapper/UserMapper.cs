@@ -14,7 +14,8 @@ public static class UserMapper
             LastName = user.LastName,
             Email = user.Email,
             PhoneNumber = user.PhoneNumber,
-            Username = user.Username
+            Username = user.Username,
+            DaysToPasswordExpiry = (int)(DateTime.Now.Date - user.LastPasswordChangeDate.Date).TotalDays
         };
     }
 
