@@ -54,3 +54,8 @@ TestResult.xml
 nunit-*.xml
 /.vs/TaskManagementSystem/v17
 /.vs
+*.vsidx
+*.v2
+*.json
+/src/TaskManagementSystem/.vs/TaskManagementSystem/v17/DocumentLayout.json
+/src/TaskManagementSystem/.vs/TaskManagementSystem/v17/.suo
