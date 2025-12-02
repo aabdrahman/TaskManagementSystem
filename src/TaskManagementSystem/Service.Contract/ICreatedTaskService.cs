@@ -14,4 +14,5 @@ public interface ICreatedTaskService
     Task<GenericResponse<string>> CancelTaskAsync(CancelCreatedTaskDto cancelCreatedTaskDto);
     Task<GenericResponse<string>> ReassignTaskAsync(ReassignCreatedTaskDto reassignCreatedTaskDto);
     Task<GenericResponse<CreatedTaskDto>> UpdateCreatedTaskAsync(UpdateCreatedTaskDto updateCreatedTaskDto);
+    Task<GenericResponse<string>> UpdateCreatedTaskStatus(UpdateCreatedTaskStatusDto updateCreatedTaskCompleteStatusDto);
 }

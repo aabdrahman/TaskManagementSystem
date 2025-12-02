@@ -377,7 +377,7 @@ public sealed class CreatedTaskService : ICreatedTaskService
             createdTaskToUpdate.Title = updateCreatedTaskDto.Title;
             createdTaskToUpdate.Description = updateCreatedTaskDto.Description;
             createdTaskToUpdate.ProjectedCompletionDate = updateCreatedTaskDto.ProposedCompletionDate;
-            createdTaskToUpdate.Priority = Enum.Parse<PriorityLevel>(updateCreatedTaskDto.Priority);
+            createdTaskToUpdate.Priority = Enum.Parse<PriorityLevel>(updateCreatedTaskDto.Priority, ignoreCase: true);
 
             _repositoryManager.CreatedTaskRepository.UpdateTask(createdTaskToUpdate);
 
@@ -397,6 +397,66 @@ public sealed class CreatedTaskService : ICreatedTaskService
         {
             await _loggerManager.LogError(ex, "Internal Server Error Occurred");
             return GenericResponse<CreatedTaskDto>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Server Error.", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+    }
+
+    public async Task<GenericResponse<string>> UpdateCreatedTaskStatus(UpdateCreatedTaskStatusDto updateCreatedTaskCompleteStatusDto)
+    {
+        try
+        {
+            await _loggerManager.LogInfo($"Updating Created Task Status - {SerializeObjects(updateCreatedTaskCompleteStatusDto)}");
+
+            CreatedTask? taskToUpdate = await _repositoryManager.CreatedTaskRepository.GetById(updateCreatedTaskCompleteStatusDto.Id).Include(x => x.UserLink).SingleOrDefaultAsync();
+
+            if(taskToUpdate is null)
+            {
+                await _loggerManager.LogWarning($"Created Task with Id: {updateCreatedTaskCompleteStatusDto.Id} does not exist.");
+                return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.NotFound, "Created Task not found", null);
+            }
+
+            bool checkInValidStatus = Enum.Parse<Stage>(updateCreatedTaskCompleteStatusDto.Stage, ignoreCase: true) == Stage.Cancelled;
+
+            if(checkInValidStatus)
+            {
+                await _loggerManager.LogWarning($"Created Task with Id: {updateCreatedTaskCompleteStatusDto.Id} cannot be updated.");
+                return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.NotFound, "Failed.", null);
+            }
+
+            bool anyPendingRequest = taskToUpdate.UserLink.Any(x => !x.CompletionDate.HasValue);
+
+            if(anyPendingRequest)
+            {
+                await _loggerManager.LogWarning($"One or more user task are still pending completion.");
+                return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.Conflict, $"One or more user tasks are yet to be completed.", null);
+            }
+
+            string loggedInUser = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0";
+
+            if(!string.Equals(loggedInUser, taskToUpdate.UserId.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
+                await _loggerManager.LogWarning($"Logged in user: {loggedInUser} is not same as created task id: {taskToUpdate.UserId}");
+                return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.BadRequest, "Created Task not found", null);
+            }
+
+            taskToUpdate.TaskStage = Enum.Parse<Stage>(updateCreatedTaskCompleteStatusDto.Stage, ignoreCase: true);
+
+            _repositoryManager.CreatedTaskRepository.UpdateTask(taskToUpdate);
+
+            await _repositoryManager.SaveChangesAsync();
+
+            await _loggerManager.LogInfo($"Task Sttaus Update Successful - {SerializeObjects(updateCreatedTaskCompleteStatusDto)}");
+
+            return GenericResponse<string>.Success("Operation Successful", HttpStatusCode.OK, $"Task updated Successfully. Current Status: {taskToUpdate.TaskStage.ToString()}");
+        }
+        catch (DbException ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error Occurred - Database");
+            return GenericResponse<string>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Database Server Error.", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error Occurred");
+            return GenericResponse<string>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Server Error.", new { ex.Message, Description = ex?.InnerException?.Message });
         }
     }
 
