@@ -88,7 +88,7 @@ public sealed class TaskUserService : ITaskUserService
 
             string loggedInUserId = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("serialnumber"))?.Value ?? "0";
 
-            TaskUser? taskUserToCancel = await _repositoryManager.TaskUserRepository.GetByTaskId(cancelUserTaskDto.UserTaskId, true)
+            TaskUser? taskUserToCancel = await _repositoryManager.TaskUserRepository.GetTaskUserById(cancelUserTaskDto.UserTaskId, true)
                                                                                 .Include(x => x.task)
                                                                                 .SingleOrDefaultAsync();
             if(taskUserToCancel is null)
@@ -184,6 +184,56 @@ public sealed class TaskUserService : ITaskUserService
         }
     }
 
+    public async Task<GenericResponse<string>> MarkAsCompleteAsync(UpdateUserTaskCompleteStatusDto updateUserTaskCompleteStatus)
+    {
+        try
+        {
+            await _loggerManager.LogInfo($"Mark User Task as completed - {SerializeObject(updateUserTaskCompleteStatus)}");
+
+            TaskUser? taskUserToUpdate = await _repositoryManager.TaskUserRepository.GetTaskUserById(updateUserTaskCompleteStatus.Id).Include(x => x.task).SingleOrDefaultAsync();
+
+            if(taskUserToUpdate is null)
+            {
+                await _loggerManager.LogWarning($"User Task does not exist - {updateUserTaskCompleteStatus.Id}");
+            }
+
+            if(taskUserToUpdate.CompletionDate.HasValue)
+            {
+                await _loggerManager.LogWarning($"User Task already completed at {taskUserToUpdate.CompletionDate}");
+                return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.Conflict, $"User Task already completed at: {taskUserToUpdate.CompletionDate.Value.Date}", null);
+            }
+
+            string loggedInUserId = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0";
+
+            if(!string.Equals(loggedInUserId, taskUserToUpdate.task.UserId.ToString(), StringComparison.OrdinalIgnoreCase) && !string.Equals(loggedInUserId, taskUserToUpdate.UserId.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
+                await _loggerManager.LogWarning($"Logged in user: {loggedInUserId} cannot perform operation.Can either be: {taskUserToUpdate.task.UserId} or {taskUserToUpdate.UserId}");
+                return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.BadRequest, "Cannot perform operation.", null);
+            }
+
+            taskUserToUpdate.CompletionDate = DateTime.UtcNow;
+
+            _repositoryManager.TaskUserRepository.UpdateTaskUser(taskUserToUpdate);
+
+            await _repositoryManager.SaveChangesAsync();
+
+            await _loggerManager.LogInfo($"Mark User Task Completion Successfu - {SerializeObject(updateUserTaskCompleteStatus)}");
+
+            return GenericResponse<string>.Success("Operation Success", HttpStatusCode.OK, $"User Task marked as completed.");
+
+        }
+        catch (DbException ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error - Database");
+            return GenericResponse<string>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Server Error - Database", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error");
+            return GenericResponse<string>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Server Error", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+    }
+
     public async Task<GenericResponse<string>> ReassignTaskToUser(ReassignTaskUserDto reassignTaskUserDto)
     {
         try
@@ -192,7 +242,7 @@ public sealed class TaskUserService : ITaskUserService
 
             string loggedInUserId = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("serialnumber"))?.Value ?? "0";
 
-            TaskUser? taskUserToReassign = await _repositoryManager.TaskUserRepository.GetByTaskId(reassignTaskUserDto.UserTaskId, true)
+            TaskUser? taskUserToReassign = await _repositoryManager.TaskUserRepository.GetTaskUserById(reassignTaskUserDto.UserTaskId, true)
                                                                         .Include(x => x.task)
                                                                         .Include(x => x.user)
                                                                         .SingleOrDefaultAsync();
@@ -309,7 +359,7 @@ public sealed class TaskUserService : ITaskUserService
 
             string loggedInUserId = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0";
 
-            TaskUser? taskUserToUpdate = await _repositoryManager.TaskUserRepository.GetByTaskId(taskUserDto.Id, true).Include(x => x.task).SingleOrDefaultAsync();
+            TaskUser? taskUserToUpdate = await _repositoryManager.TaskUserRepository.GetTaskUserById(taskUserDto.Id, true).Include(x => x.task).SingleOrDefaultAsync();
 
             if(taskUserToUpdate is null)
             {

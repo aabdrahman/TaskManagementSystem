@@ -29,7 +29,7 @@ public static class CreatedTaskMapper
             Title = newCreateTask.Title,
             Description = newCreateTask.Description,
             ProjectedCompletionDate = newCreateTask.ProposedCompletionDate,
-            Priority = Enum.Parse<PriorityLevel>(newCreateTask?.Priority.ToString()),
+            Priority = Enum.Parse<PriorityLevel>(newCreateTask?.Priority.ToString(), ignoreCase: true),
             CreatedBy = "",
             UserId = newCreateTask.UserId
         };

@@ -163,4 +163,20 @@ public class CreatedTasksController : ControllerBase
             return StatusCode(500, "Internal Server Error");
         }
     }
+
+    [HttpPut("update-task-status")]
+    public async Task<IActionResult> UpdateTaskStatus([FromBody] UpdateCreatedTaskStatusDto updateCreatedTaskStatus)
+    {
+        try
+        {
+            var updateCreatedTaskStatusResponse = await _serviceManager.CreatedTaskService.UpdateCreatedTaskStatus(updateCreatedTaskStatus);
+
+            return StatusCode((int)updateCreatedTaskStatusResponse.StatusCode, updateCreatedTaskStatusResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error");
+            return StatusCode(500, "Internal Server Error");
+        }
+    }
 }

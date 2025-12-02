@@ -130,4 +130,20 @@ public class TaskUsersController : ControllerBase
             return StatusCode(500, "Internal Server Error");
         }
     }
+
+    [HttpPut("update-user-task-status")]
+    public async Task<IActionResult> UpdateUserTaskStatus([FromBody] UpdateUserTaskCompleteStatusDto updateUserTaskCompleteStatus)
+    {
+        try
+        {
+            var updateUserTaskStatusResponse = await _serviceManager.TaskUserService.MarkAsCompleteAsync(updateUserTaskCompleteStatus);
+
+            return StatusCode((int)updateUserTaskStatusResponse.StatusCode, updateUserTaskStatusResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error");
+            return StatusCode(500, "Internal Server Error");
+        }
+    }
 }
