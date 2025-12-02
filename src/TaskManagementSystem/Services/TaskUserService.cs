@@ -9,6 +9,7 @@ using System.Data.Common;
 using System.Text.Json;
 using System.Net;
 using Shared.Mapper;
+using Microsoft.AspNetCore.Http;
 
 namespace Services;
 
@@ -16,11 +17,13 @@ public sealed class TaskUserService : ITaskUserService
 {
     private readonly IRepositoryManager _repositoryManager;
     private readonly ILoggerManager _loggerManager;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public TaskUserService(IRepositoryManager repositoryManager, ILoggerManager loggerManager)
+    public TaskUserService(IRepositoryManager repositoryManager, ILoggerManager loggerManager, IHttpContextAccessor httpContextAccessor)
     {
         _repositoryManager = repositoryManager;
         _loggerManager = loggerManager;
+        _httpContextAccessor = httpContextAccessor;
     }
     public async Task<GenericResponse<TaskUserDto>> AssignUserToTask(CreateTaskUserDto taskUserDto)
     {
@@ -77,6 +80,57 @@ public sealed class TaskUserService : ITaskUserService
         }
     }
 
+    public async Task<GenericResponse<string>> CancelTask(CancelUserTaskDto cancelUserTaskDto)
+    {
+        try
+        {
+            await _loggerManager.LogInfo($"Cancel User Task - {SerializeObject(cancelUserTaskDto)}");
+
+            string loggedInUserId = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("serialnumber"))?.Value ?? "0";
+
+            TaskUser? taskUserToCancel = await _repositoryManager.TaskUserRepository.GetByTaskId(cancelUserTaskDto.UserTaskId, true)
+                                                                                .Include(x => x.task)
+                                                                                .SingleOrDefaultAsync();
+            if(taskUserToCancel is null)
+            {
+                await _loggerManager.LogInfo($"Task with User Id does not exist -  {cancelUserTaskDto.UserTaskId}");
+                return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.NotFound, $"No Task User with Id: {cancelUserTaskDto.UserTaskId}", null);
+            }
+
+            if(loggedInUserId != taskUserToCancel.task.UserId.ToString())
+            {
+                await _loggerManager.LogInfo($"Invalid Logged In User.");
+                return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.BadRequest, "Unauthorized.", null);
+            }
+
+            if(taskUserToCancel.CompletionDate.HasValue)
+            {
+                await _loggerManager.LogWarning($"Invalid Task User Selected. Task already completed.");
+                return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.Conflict, "Invalid Taskk User. Already Completed.", null);
+            }
+
+            taskUserToCancel.CancelReason = cancelUserTaskDto.CancelReason;
+
+            _repositoryManager.TaskUserRepository.UpdateTaskUser(taskUserToCancel);
+
+            await _repositoryManager.SaveChangesAsync();
+
+            await _loggerManager.LogInfo($"User Task: {cancelUserTaskDto.UserTaskId} cancelled by {_httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value} due to {cancelUserTaskDto.CancelReason}");
+
+            return GenericResponse<string>.Success($"Operation Success.", HttpStatusCode.OK, "User Task Cancelled Successsfully.");
+        }
+        catch (DbException ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error - Database");
+            return GenericResponse<string>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Server Error - Database", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error");
+            return GenericResponse<string>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Server Error", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+    }
+
     public async Task<GenericResponse<IEnumerable<TaskUserDto>>> GetAssignedTasksByTaskId(int TaskId)
     {
         try
@@ -127,6 +181,72 @@ public sealed class TaskUserService : ITaskUserService
         {
             await _loggerManager.LogError(ex, "Internal Server Error");
             return GenericResponse<IEnumerable<TaskUserDto>>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Server Error", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+    }
+
+    public async Task<GenericResponse<string>> ReassignTaskToUser(ReassignTaskUserDto reassignTaskUserDto)
+    {
+        try
+        {
+            await _loggerManager.LogInfo($"Reassign User Task - {SerializeObject(reassignTaskUserDto)}");
+
+            string loggedInUserId = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("serialnumber"))?.Value ?? "0";
+
+            TaskUser? taskUserToReassign = await _repositoryManager.TaskUserRepository.GetByTaskId(reassignTaskUserDto.UserTaskId, true)
+                                                                        .Include(x => x.task)
+                                                                        .Include(x => x.user)
+                                                                        .SingleOrDefaultAsync();
+            if(taskUserToReassign is null)
+            {
+                await _loggerManager.LogWarning($"User Task with specified Id does not exist: {reassignTaskUserDto.UserTaskId}");
+                return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.NotFound, "Invalid User Task Id", null);
+            }
+
+            if(loggedInUserId != taskUserToReassign.task.UserId.ToString())
+            {
+                await _loggerManager.LogWarning($"Logged in user and created task user mismatch. Logged in user: {loggedInUserId}. Created Task User Id: {taskUserToReassign.UserId}");
+                return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.Conflict, "Invalid Credentials.", null);
+            }
+
+            User? userToAssignTask = await _repositoryManager.UserRepository.GetById(reassignTaskUserDto.UserId, false)
+                                                                .Include(x => x.AssignedUnit)
+                                                                .SingleOrDefaultAsync();
+
+            if(userToAssignTask is null)
+            {
+                await _loggerManager.LogWarning($"User with Id: {reassignTaskUserDto.UserId} does not exist.");
+                return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.NotFound, "Invalid User Id.", null);
+            }
+
+            //User? currentPendingUser = await _repositoryManager.UserRepository.GetById(taskUserToReassign.UserId, false, false)
+            //                                                        .Include(x => x.AssignedUnit)
+            //                                                        .SingleOrDefaultAsync();
+
+            if(userToAssignTask.UnitId != taskUserToReassign.user.UnitId)
+            {
+                await _loggerManager.LogInfo($"Current User and new user to reassign does not belong to same unit. Current User: {taskUserToReassign.user.UnitId} - Reassign User: {userToAssignTask.UnitId}");
+                return GenericResponse<string>.Failure($"Operation Failed.", HttpStatusCode.BadRequest, "User to assign task is not in the expected unit.", null);
+            }
+
+            taskUserToReassign.UserId = reassignTaskUserDto.UserId;
+
+            _repositoryManager.TaskUserRepository.UpdateTaskUser(taskUserToReassign);
+
+            await _repositoryManager.SaveChangesAsync();
+
+            await _loggerManager.LogInfo($"Reassign User Task: {reassignTaskUserDto.TaskId} Operation successful by: {_httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value}. Justification: {reassignTaskUserDto.Justification}");
+
+            return GenericResponse<string>.Success("Operation Successful.", HttpStatusCode.OK, "User Task Reassigned Successfully.");
+        }
+        catch (DbException ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error - Database");
+            return GenericResponse<string>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Server Error - Database", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error");
+            return GenericResponse<string>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Server Error", new { ex.Message, Description = ex?.InnerException?.Message });
         }
     }
 

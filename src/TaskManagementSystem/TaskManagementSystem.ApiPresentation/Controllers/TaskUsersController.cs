@@ -81,4 +81,35 @@ public class TaskUsersController : ControllerBase
             return StatusCode(500, ex.Message);
         }
     }
+
+    [HttpPost("cancel-user-task")]
+    public async Task<IActionResult> CancelUserTask([FromBody]CancelUserTaskDto cancelTask)
+    {
+        try
+        {
+            var cancelUserTaskResponse = await _serviceManager.TaskUserService.CancelTask(cancelTask);
+
+            return StatusCode((int)cancelUserTaskResponse.StatusCode, cancelUserTaskResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, ex.Message);
+            return StatusCode(500, ex.Message);
+        }
+    }
+    [HttpPost("reassign-user-task")]
+    public async Task<IActionResult> ReassignUserTask([FromBody] ReassignTaskUserDto reassignTaskUser)
+    {
+        try
+        {
+            var reassignUserTaskResponse = await _serviceManager.TaskUserService.ReassignTaskToUser(reassignTaskUser);
+
+            return StatusCode((int)reassignUserTaskResponse.StatusCode, reassignUserTaskResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, ex.Message);
+            return StatusCode(500, ex.Message);
+        }
+    }
 }

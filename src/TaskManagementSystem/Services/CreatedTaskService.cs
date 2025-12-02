@@ -61,7 +61,7 @@ public sealed class CreatedTaskService : ICreatedTaskService
 
             await _repositoryManager.SaveChangesAsync();
 
-            await _loggerManager.LogInfo($"Cancel Created Task Success - {SerializeObjects(cancelCreatedTaskDto)}");
+            await _loggerManager.LogInfo($"Cancel Created Task Success - {SerializeObjects(cancelCreatedTaskDto)} by {_contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value}");
 
             return GenericResponse<string>.Success("Operation Successul", HttpStatusCode.OK, "Task Cancelled Successfuly.");
         }
