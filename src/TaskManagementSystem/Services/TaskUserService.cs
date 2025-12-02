@@ -301,5 +301,63 @@ public sealed class TaskUserService : ITaskUserService
         }
     }
 
+    public async Task<GenericResponse<TaskUserDto>> UpdateTaskUserAsync(UpdateTaskUserDto taskUserDto)
+    {
+        try
+        {
+            await _loggerManager.LogInfo($"Update Task User - {SerializeObject(taskUserDto)}");
+
+            string loggedInUserId = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0";
+
+            TaskUser? taskUserToUpdate = await _repositoryManager.TaskUserRepository.GetByTaskId(taskUserDto.Id, true).Include(x => x.task).SingleOrDefaultAsync();
+
+            if(taskUserToUpdate is null)
+            {
+                await _loggerManager.LogWarning($"User taks with Id: {taskUserDto.Id} does not exist.");
+                return GenericResponse<TaskUserDto>.Failure(null, HttpStatusCode.NotFound, "Task User with Id does not exist", null);
+            }
+
+            if(!taskUserToUpdate.task.UserId.ToString().Equals(loggedInUserId, StringComparison.OrdinalIgnoreCase))
+            {
+                await _loggerManager.LogWarning($"Task Creation User: {taskUserToUpdate.task.UserId} is different from logged in user: {loggedInUserId}");
+                return GenericResponse<TaskUserDto>.Failure(null, HttpStatusCode.BadRequest, "Invalid Credentials", null);
+            }
+
+            if(taskUserToUpdate.CompletionDate.HasValue)
+            {
+                await _loggerManager.LogWarning($"Task User with Id: {taskUserDto.Id} is already completed at: {taskUserToUpdate.CompletionDate}");
+                return GenericResponse<TaskUserDto>.Failure(null, HttpStatusCode.Conflict, "User Task already completed.", null);
+            }
+
+            if (!string.IsNullOrEmpty(taskUserToUpdate.CancelReason))
+            {
+                await _loggerManager.LogWarning($"Task User with Id: {taskUserDto.Id} is already cancelled {taskUserToUpdate.CancelReason}");
+                return GenericResponse<TaskUserDto>.Failure(null, HttpStatusCode.Conflict, "User Task already cancelled.", null);
+            }
+
+            taskUserToUpdate.Title = taskUserDto.Title;
+            taskUserToUpdate.Description = taskUserDto.Description;
+
+            _repositoryManager.TaskUserRepository.UpdateTaskUser(taskUserToUpdate);
+
+            await _repositoryManager.SaveChangesAsync();
+
+            await _loggerManager.LogInfo($"User Task successfully updated - {SerializeObject(taskUserDto)}");
+
+            return GenericResponse<TaskUserDto>.Success(taskUserToUpdate.ToDto(), HttpStatusCode.OK, "User Task Update Successfully.");
+        }
+        catch (DbException ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error - Database");
+            return GenericResponse<TaskUserDto>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Server Error - Database", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+        catch (Exception ex)
+        {
+
+            await _loggerManager.LogError(ex, "Internal Server Error");
+            return GenericResponse<TaskUserDto>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Server Error", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+    }
+
     private string SerializeObject(object obj) => JsonSerializer.Serialize(obj);
 }

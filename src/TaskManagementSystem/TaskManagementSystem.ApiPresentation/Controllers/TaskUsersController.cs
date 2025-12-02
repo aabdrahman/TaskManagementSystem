@@ -1,4 +1,5 @@
 ﻿using Contracts.Infrastructure;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Contract;
 using Shared.DataTransferObjects.TaskUser;
@@ -7,6 +8,7 @@ namespace TaskManagementSystem.ApiPresentation.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class TaskUsersController : ControllerBase
 {
     private readonly IServiceManager _serviceManager;
@@ -110,6 +112,22 @@ public class TaskUsersController : ControllerBase
         {
             await _loggerManager.LogError(ex, ex.Message);
             return StatusCode(500, ex.Message);
+        }
+    }
+
+    [HttpPut("update-user-task")]
+    public async Task<IActionResult> UpdateUserTask([FromBody] UpdateTaskUserDto updateTaskUser)
+    {
+        try
+        {
+            var updateUserTaskResponse = await _serviceManager.TaskUserService.UpdateTaskUserAsync(updateTaskUser);
+
+            return StatusCode((int)updateUserTaskResponse.StatusCode, updateUserTaskResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error");
+            return StatusCode(500, "Internal Server Error");
         }
     }
 }

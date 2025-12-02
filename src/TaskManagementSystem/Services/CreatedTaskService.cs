@@ -280,11 +280,11 @@ public sealed class CreatedTaskService : ICreatedTaskService
 
             bool isValidUser = _contextAccessor.HttpContext.User.IsInRole("Analyst") || _contextAccessor.HttpContext.User.IsInRole("Product Manager");
 
-            if (!isValidUser)
-            {
-                await _loggerManager.LogWarning($"User Role is not valid enough.");
-                return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.Forbidden, "Unauthorized Access.", null);
-            }
+            //if (!isValidUser)
+            //{
+            //    await _loggerManager.LogWarning($"User Role is not valid enough.");
+            //    return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.Forbidden, "Unauthorized Access.", null);
+            //}
 
             CreatedTask? taskToReassign = await _repositoryManager.CreatedTaskRepository.GetByTaskId(reassignCreatedTaskDto.TaskId, true).SingleOrDefaultAsync();
 
@@ -302,19 +302,22 @@ public sealed class CreatedTaskService : ICreatedTaskService
 
             if(taskToReassign.UserId.ToString() != userIdFromToken)
             {
-                await _loggerManager.LogWarning($"Invalid User Conflict. Initiating User: {taskToReassign.UserId.ToString()}. Logged In User {userIdFromToken}");
-                return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.BadRequest, "Failed Operation", null);
+                if(!isValidUser)
+                {
+                    await _loggerManager.LogWarning($"Invalid User Conflict. Initiating User: {taskToReassign.UserId.ToString()}. Logged In User {userIdFromToken}");
+                    return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.BadRequest, "Failed Operation", null);
+                }
             }
 
             //User? userToAssign = await _repositoryManager.UserRepository.GetById(reassignCreatedTaskDto.UserId, false).SingleOrDefaultAsync();
 
-            bool isUserValid = await _repositoryManager.UserRepository.GetAllUsers().AnyAsync(x => x.AssignedUnit.NormalizedName.Contains(StaticRoles.TaskCreateUnit1.ToUpper()) || x.AssignedUnit.NormalizedName.Contains(StaticRoles.TaskCreateUnit2.ToUpper()));
+            //bool isUserValid = await _repositoryManager.UserRepository.GetAllUsers().AnyAsync(x => x.AssignedUnit.NormalizedName.Contains(StaticRoles.TaskCreateUnit1.ToUpper()) || x.AssignedUnit.NormalizedName.Contains(StaticRoles.TaskCreateUnit2.ToUpper()));
 
-            if(!isUserValid)
-            {
-                await _loggerManager.LogWarning($"Invalid User provided. User is not in the desired role to assign task.");
-                return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.BadRequest, "User Role is not valid.", null);
-            }
+            //if(!isUserValid)
+            //{
+            //    await _loggerManager.LogWarning($"Invalid User provided. User is not in the desired role to assign task.");
+            //    return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.BadRequest, "User Role is not valid.", null);
+            //}
 
             taskToReassign.UserId = reassignCreatedTaskDto.UserId;
 
@@ -336,6 +339,64 @@ public sealed class CreatedTaskService : ICreatedTaskService
         {
             await _loggerManager.LogError(ex, "Internal Server Error Occurred");
             return GenericResponse<string>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Server Error.", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+    }
+
+    public async Task<GenericResponse<CreatedTaskDto>> UpdateCreatedTaskAsync(UpdateCreatedTaskDto updateCreatedTaskDto)
+    {
+        try
+        {
+            await _loggerManager.LogInfo($"Update Created Task - {SerializeObjects(updateCreatedTaskDto)}");
+
+            CreatedTask? createdTaskToUpdate = await _repositoryManager.CreatedTaskRepository.GetById(updateCreatedTaskDto.Id, true).SingleOrDefaultAsync();
+
+            if(createdTaskToUpdate is null)
+            {
+                await _loggerManager.LogInfo($"Created Task with Id: {updateCreatedTaskDto.Id} cannot be found");
+                return GenericResponse<CreatedTaskDto>.Failure(null, HttpStatusCode.NotFound, "", null);
+            }
+
+            if(!createdTaskToUpdate.UserId.ToString().Equals(_contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0"))
+            {
+                await _loggerManager.LogWarning($"Logged in user id is not same as created task user id");
+                return GenericResponse<CreatedTaskDto>.Failure(null, HttpStatusCode.Conflict, "You are not the creator of task", null);
+            }
+
+            if(createdTaskToUpdate.CompletionDate.HasValue)
+            {
+                await _loggerManager.LogWarning($"Task with Id: {updateCreatedTaskDto.Id} is already completed at: {createdTaskToUpdate.CompletionDate}");
+                return GenericResponse<CreatedTaskDto>.Failure(null, HttpStatusCode.BadRequest, "Task already completed.", null);
+            }
+
+            if (createdTaskToUpdate.TaskStage == Stage.Cancelled)
+            {
+                await _loggerManager.LogWarning($"Task with Id: {updateCreatedTaskDto.Id} has an invalid stage: {createdTaskToUpdate.TaskStage.ToString()}");
+                return GenericResponse<CreatedTaskDto>.Failure(null, HttpStatusCode.BadRequest, "Task is already cancelled.", null);
+            }
+
+            createdTaskToUpdate.Title = updateCreatedTaskDto.Title;
+            createdTaskToUpdate.Description = updateCreatedTaskDto.Description;
+            createdTaskToUpdate.ProjectedCompletionDate = updateCreatedTaskDto.ProposedCompletionDate;
+            createdTaskToUpdate.Priority = Enum.Parse<PriorityLevel>(updateCreatedTaskDto.Priority);
+
+            _repositoryManager.CreatedTaskRepository.UpdateTask(createdTaskToUpdate);
+
+            await _repositoryManager.SaveChangesAsync();
+
+            await _loggerManager.LogInfo($"Created Task Updated Successful - {SerializeObjects(updateCreatedTaskDto)}");
+
+            return GenericResponse<CreatedTaskDto>.Success(createdTaskToUpdate.ToDto(), HttpStatusCode.OK, "Created Task Updated Successfully.");
+
+        }
+        catch (DbException ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error Occurred - Database");
+            return GenericResponse<CreatedTaskDto>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Database Server Error.", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error Occurred");
+            return GenericResponse<CreatedTaskDto>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Server Error.", new { ex.Message, Description = ex?.InnerException?.Message });
         }
     }
 

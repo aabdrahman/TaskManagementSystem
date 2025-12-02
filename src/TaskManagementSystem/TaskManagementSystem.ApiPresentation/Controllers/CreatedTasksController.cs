@@ -1,4 +1,5 @@
 ﻿using Contracts.Infrastructure;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Contract;
 using Shared.DataTransferObjects.CreatedTask;
@@ -7,6 +8,7 @@ namespace TaskManagementSystem.ApiPresentation.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class CreatedTasksController : ControllerBase
 {
     private readonly IServiceManager _serviceManager;
@@ -138,6 +140,22 @@ public class CreatedTasksController : ControllerBase
             var reassignTaskResponse = await _serviceManager.CreatedTaskService.ReassignTaskAsync(reassignCreatedTask);
 
             return StatusCode((int)reassignTaskResponse.StatusCode, reassignTaskResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error");
+            return StatusCode(500, "Internal Server Error");
+        }
+    }
+
+    [HttpPut("update-task")]
+    public async Task<IActionResult> UpdateTask([FromBody] UpdateCreatedTaskDto updateCreatedTask)
+    {
+        try
+        {
+            var updateCreatedTaskResponse = await _serviceManager.CreatedTaskService.UpdateCreatedTaskAsync(updateCreatedTask);
+
+            return StatusCode((int)updateCreatedTaskResponse.StatusCode, updateCreatedTaskResponse);
         }
         catch (Exception ex)
         {

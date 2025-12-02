@@ -11,4 +11,5 @@ public interface ITaskUserService
     Task<GenericResponse<string>> RemoveAssignedTask(int Id, bool isSoftDelete = true);
     Task<GenericResponse<string>> ReassignTaskToUser(ReassignTaskUserDto reassignTaskUserDto);
     Task<GenericResponse<string>> CancelTask(CancelUserTaskDto cancelUserTaskDto);
+    Task<GenericResponse<TaskUserDto>> UpdateTaskUserAsync(UpdateTaskUserDto taskUserDto);
 }

@@ -13,4 +13,5 @@ public interface ICreatedTaskService
     Task<GenericResponse<string>> DeleteAsync(int taskId, bool isSoftDelete = true);
     Task<GenericResponse<string>> CancelTaskAsync(CancelCreatedTaskDto cancelCreatedTaskDto);
     Task<GenericResponse<string>> ReassignTaskAsync(ReassignCreatedTaskDto reassignCreatedTaskDto);
+    Task<GenericResponse<CreatedTaskDto>> UpdateCreatedTaskAsync(UpdateCreatedTaskDto updateCreatedTaskDto);
 }
