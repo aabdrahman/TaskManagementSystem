@@ -1,0 +1,85 @@
+﻿using Contracts.Infrastructure;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Service.Contract;
+using Shared.DataTransferObjects.Unit;
+
+namespace TaskManagementSystem.ApiPresentation.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class UnitsController : ControllerBase
+{
+    private readonly IServiceManager _serviceManager;
+    private readonly ILoggerManager _loggerManager;
+
+    public UnitsController(IServiceManager serviceManager, ILoggerManager loggerManager)
+    {
+        _serviceManager = serviceManager;
+        _loggerManager = loggerManager;
+    }
+
+
+    [HttpGet]
+    public async Task<IActionResult> GetAllUnits(bool hasQueryFilter = true)
+    {
+        try
+        {
+            var result = await _serviceManager.UnitService.GetAllUnitsAsync(false, hasQueryFilter);
+
+            return StatusCode((int)result.StatusCode, result);
+                
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
+    }
+
+    [HttpGet("{Id:int}")]
+    public async Task<IActionResult> GetUnitById(int Id, bool hasQueryFilter = true)
+    {
+        try
+        {
+            var result = await _serviceManager.UnitService.GetByIdAsuync(Id);
+
+            return StatusCode((int)result.StatusCode, result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateUnitDto newUnitToCreate)
+    {
+        try
+        {
+            var result = await _serviceManager.UnitService.CreateAsync(newUnitToCreate);
+
+            return StatusCode((int)result.StatusCode, result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
+    }
+
+    [HttpDelete("{Id:int}")]
+    public async Task<IActionResult> Delete(int Id, bool isSoftDelete = false)
+    {
+        try
+        {
+            var result = await _serviceManager.UnitService.DeleteAsync(Id, isSoftDelete);
+
+            return StatusCode((int)result.StatusCode, result);
+        }
+        catch (Exception ex)
+        {
+
+            throw;
+        }
+    }
+}
