@@ -21,9 +21,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Services", "Services\Servic
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TaskManagementSystem.ApiPresentation", "TaskManagementSystem.ApiPresentation\TaskManagementSystem.ApiPresentation.csproj", "{7F5D6E0F-5FC5-4A51-87F9-42916663EF19}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure.Contracts", "Infrastructure.Contracts\Infrastructure.Contracts.csproj", "{2A90973D-279C-4B2D-A669-3923A346E534}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infrastructure.Contracts", "Infrastructure.Contracts\Infrastructure.Contracts.csproj", "{2A90973D-279C-4B2D-A669-3923A346E534}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{5E6CAB18-D741-4839-82BD-99905FA6AECB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{5E6CAB18-D741-4839-82BD-99905FA6AECB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskManagementSystem.Client", "TaskManagementSystem.Client\TaskManagementSystem.Client.csproj", "{3462ED6A-1C03-4C56-8A6B-4C7A14E39D62}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -75,6 +77,10 @@ Global
 		{5E6CAB18-D741-4839-82BD-99905FA6AECB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5E6CAB18-D741-4839-82BD-99905FA6AECB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5E6CAB18-D741-4839-82BD-99905FA6AECB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3462ED6A-1C03-4C56-8A6B-4C7A14E39D62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3462ED6A-1C03-4C56-8A6B-4C7A14E39D62}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3462ED6A-1C03-4C56-8A6B-4C7A14E39D62}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3462ED6A-1C03-4C56-8A6B-4C7A14E39D62}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
