@@ -1,0 +1,36 @@
+﻿@page "/identity/logout"
+@layout CustomLayout
+
+@inject NavigationManager navManager
+@*
+@inject AuthenticationSignoutHandler authenticationSignoutHandler
+*@
+
+<div class="container-fluid d-flex justify-content-center align-items-center w-100 h-100">
+
+    @if (_isLoading)
+    {
+        <div class="spinner-grow" style="width: 15rem; height: 15rem;" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    }
+</div>
+
+
+
+@code {
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(500);
+        // var isLogout = await authenticationSignoutHandler.Handle();
+
+        bool isLogout = true;
+
+        if(isLogout)
+        {
+            navManager.NavigateTo("identity/login");
+        }
+    }
+}

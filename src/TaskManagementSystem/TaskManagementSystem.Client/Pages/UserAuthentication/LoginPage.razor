@@ -1,0 +1,107 @@
+﻿@layout CustomLayout
+@page "/identity/login"
+
+
+<div class="container h-100 d-flex justify-content-center align-items-center">
+	<div class="col-lg-4 col-md-6 col-sm-10">
+		<div class="card shadow-sm rounded-4 p-4">
+			<h3 class="text-center mb-4 fw-bold">Login</h3>
+
+			<EditForm EditContext="_editContext" OnValidSubmit="HandleLogin">
+				<DataAnnotationsValidator />
+
+				<!-- Email -->
+				<div class="form-group my-3">
+					<label class="form-label fw-bold" for="login-email">Email Address</label>
+					<InputText @bind-Value="_loginDetails.EmailAddress"
+							   id="login-email"
+							   class="form-control" />
+					<ValidationMessage For="() => _loginDetails.EmailAddress" />
+				</div>
+
+				<!-- Password -->
+				<div class="form-group">
+
+					<label class="form-label fw-bold" for="login-password">Password</label>
+
+					<div class="input-group p-2">
+
+						<InputText @bind-Value="_loginDetails.Password"
+								   id="login-password"
+								   class="form-control"
+								   type="@PasswordInputType" />
+
+						<button class="btn btn-outline-secondary"
+								type="button"
+								@onclick="TogglePassword"
+								aria-label="Toggle password visibility">
+							<i class="bi @(_showPassword ? "bi-eye-slash" : "bi-eye")"></i>
+						</button>
+					</div>
+
+				</div>
+				
+				<div class="mt-4">
+					<button type="submit" class="btn btn-primary w-100 rounded-3">
+						Login
+					</button>
+				</div>
+			</EditForm>
+		</div>
+	</div>
+</div>
+
+
+
+@code {
+
+	private UserLogin _loginDetails { get; set; }
+	private EditContext _editContext;
+
+	[Parameter]
+	public UserLogin LoginUserDetails { get; set; } = new();
+
+	protected override void OnInitialized()
+	{
+		base.OnInitialized();
+	}
+
+	protected override void OnParametersSet()
+	{
+		if(LoginUserDetails is null)
+		{
+			LoginUserDetails = new();
+			_loginDetails = LoginUserDetails;
+			_editContext = new EditContext(_loginDetails);
+		}
+		else
+		{
+			_loginDetails = LoginUserDetails;
+			_editContext = new EditContext(_loginDetails);
+		}
+
+	}
+
+	private void HandleLogin()
+	{
+		
+	}
+}
+
+
+@code {
+	public class UserLogin
+	{
+		public string EmailAddress { get; set; }
+		public string Password { get; set; }
+	}
+
+	private bool _showPassword = false;
+
+	private string PasswordInputType => _showPassword ? "text" : "password";
+
+	private void TogglePassword()
+	{
+		_showPassword = !_showPassword;
+	}
+}
