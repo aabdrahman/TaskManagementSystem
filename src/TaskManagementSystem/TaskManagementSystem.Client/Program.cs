@@ -19,6 +19,8 @@ builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<AuthenticationStateProvider, AuthStateProvider>();
 builder.Services.AddScoped<RefreshTokenHandler>();
 builder.Services.AddScoped<AuthenticationSignoutHandler>();
+builder.Services.AddScoped<AuthenticationSignInHandler>();
+builder.Services.AddScoped<ChangePasswordHandler>();
 
 //Clients
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });

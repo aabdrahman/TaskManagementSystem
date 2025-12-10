@@ -108,7 +108,7 @@ public sealed class UserService : IUserService
     {
         try
         {
-            await _loggerManager.LogInfo($"Chnage Password for - {SerializeObject(changePasswordDto)}");
+            await _loggerManager.LogInfo($"Change Password for - {SerializeObject(changePasswordDto)}");
 
             User? existingUser = await _repositoryManager.UserRepository.GetByEmail(changePasswordDto.Email, true, false).SingleOrDefaultAsync();
 
@@ -122,7 +122,7 @@ public sealed class UserService : IUserService
 
             if(!isValidOldPassword)
             {
-                await _loggerManager.LogWarning($"User with email does not exist - {changePasswordDto.Email}");
+                await _loggerManager.LogWarning($"User with email does exist but provided password is invalid - {changePasswordDto.Email}");
                 return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.BadRequest, "Invalid Password.", null);
             }
 
@@ -297,16 +297,6 @@ public sealed class UserService : IUserService
                 return GenericResponse<TokenDto>.Failure(null, HttpStatusCode.NotFound, "Invalid Credentials", null);
             }
 
-            int daysToLastPasswordChnage = (int)(DateTime.UtcNow - existingUserToLogin.LastPasswordChangeDate).TotalDays;
-
-            bool maxDaysToChangeFromConfig = int.TryParse(_configuration["UserManagement:MaxDaysToChangePassword"] ?? "30", out int daysToLastPasswordChangeValue);
-
-
-            if (daysToLastPasswordChnage > daysToLastPasswordChangeValue)
-            {
-                return GenericResponse<TokenDto>.Failure(null, HttpStatusCode.Locked, "Password Change required", null);
-            }
-
             bool isValidPassword = BCrypt.Net.BCrypt.EnhancedVerify(userToLogin.Password.Trim(), existingUserToLogin.Password);
 
             if (!isValidPassword)
@@ -315,7 +305,17 @@ public sealed class UserService : IUserService
                 return GenericResponse<TokenDto>.Failure(null, HttpStatusCode.NotFound, "Invalid Credentials", null);
             }
 
-            _loginUser = existingUserToLogin;
+			int daysToLastPasswordChnage = (int)(DateTime.UtcNow - existingUserToLogin.LastPasswordChangeDate).TotalDays;
+
+			bool maxDaysToChangeFromConfig = int.TryParse(_configuration["UserManagement:MaxDaysToChangePassword"] ?? "30", out int daysToLastPasswordChangeValue);
+
+
+			if (daysToLastPasswordChnage > daysToLastPasswordChangeValue)
+			{
+				return GenericResponse<TokenDto>.Failure(null, HttpStatusCode.Locked, "Password Change required", null);
+			}
+
+			_loginUser = existingUserToLogin;
 
             DateTime lastLoginDate = DateTime.Now;
 
