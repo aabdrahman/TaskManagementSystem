@@ -1,10 +1,11 @@
 ﻿@page "/identity/logout"
+@using TaskManagementSystem.Client.Handlers.Authentication
 @layout CustomLayout
 
 @inject NavigationManager navManager
-@*
+
 @inject AuthenticationSignoutHandler authenticationSignoutHandler
-*@
+
 
 <div class="container-fluid d-flex justify-content-center align-items-center w-100 h-100">
 
@@ -24,11 +25,13 @@
     protected override async Task OnInitializedAsync()
     {
         await Task.Delay(500);
-        // var isLogout = await authenticationSignoutHandler.Handle();
-
-        bool isLogout = true;
+        var isLogout = await authenticationSignoutHandler.Handle();
 
         if(isLogout)
+        {
+            navManager.NavigateTo("identity/login");
+        }
+        else
         {
             navManager.NavigateTo("identity/login");
         }
