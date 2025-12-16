@@ -14,6 +14,7 @@
                 <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
             </NavLink>
         </div>
+        @*
         <div class="nav-item px-3" style="padding-left:1rem;">
             <NavLink class="nav-link" href="counter" style="padding-left:1rem;">
                 <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
@@ -24,16 +25,183 @@
                 <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
             </NavLink>
         </div>
+        
+        <div class="nav-item px-3" style="padding-left:1rem;">
+            <NavLink class="nav-link" href="weather" style="padding-left:1rem;">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Task Manager
+            </NavLink>
+        </div>
+        *@
+        @*
+        <div class="nav-item px-3" style="margin-top:@UserManagementMargin;">
+            <NavLink class="nav-link p-2" style="cursor:pointer;" href="javascript:void()" @onclick="ToggleUserManagementSubMenu">
+                <div class="hstack gap-1">
+                    <span class="bi bi-backpack4-fill fs-3 text-center" style="margin-top:-3rem;" aria-hidden="true"></span>
+                    <span>User Management</span>
+                </div>
+            </NavLink>
+            <div class="nav-link p-2 text-white" style="margin-left:1rem; visibility: @UserManagementCssStyle">
+                <ul class="list-group">
+                    <li style="list-style-type:none; cursor:pointer; display:block" class="cusorStyle">
+                        <a class="nav-link p-2 text-white">
+                            <div class="hstack text-wrap">
+                                <span class="bi bi-file-medical fs-5 text-center" aria-hidden="true" style="margin-top:-1.5rem"></span>
+                                <span class="fs-6">Add New User</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li style="list-style-type:none; cursor:pointer">
+                        <a class="nav-link p-2 text-white">
+                            <div class="hstack" style="overflow:hidden; align-items:center; width:100%;">
+                                <span class="bi bi-substack fs-6 text-center" aria-hidden="true" style="margin-top:-1.5rem; flex-shrink:0;"></span>
+                                <span class="fs-6" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;">View All Users</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li style="list-style-type:none; cursor:pointer">
+                        <a class="nav-link p-2 text-white">
+                            <div class="hstack">
+                                <span class="bi bi-chevron-bar-contract fs-6 text-center" aria-hidden="true" style="margin-top:-1.5rem"></span>
+                                <span class="fs-6">Branch</span>
+                            </div>
+                        </a>
+                    </li>
+                    
+                </ul>
+            </div>
+
+
+        </div>
+        *@
+        <div class="nav-item px-3 mt-1">
+
+            <!-- Parent menu -->
+            <div class="nav-link p-2 cursor-pointer" style="cursor:pointer;" @onclick="ToggleUserManagementSubMenu">
+                <div class="d-flex align-items-center text-white gap-1">
+                    <span class="bi bi-backpack4-fill
+                         d-flex align-items-center justify-content-center
+                         flex-shrink-0 fs-4"
+                          style="width:24px;"></span>
+                    <span>User Management</span>
+                </div>
+            </div>
+            <!--SUBMENUS -->
+            @if (_showUserManagementSubMenu)
+            {
+                <ul class="list-unstyled ms-4 mt-1">
+                    <li>
+                        <NavLink class="nav-link text-white py-1 px-1 text-white" href="/users/add">
+                            <div class="d-flex align-items-center gap-1">
+                                <span class="bi bi-file-medical
+                                     d-flex align-items-center justify-content-center
+                                     flex-shrink-0 fs-6"
+                                      style="width:24px;"></span>
+                                <span>Add New User</span>
+                            </div>
+                        </NavLink>
+                    </li>
+
+                    <li>
+                        <NavLink class="nav-link text-white py-1 px-1 text-white" style="padding-left:1rem;" href="/users">
+                            <div class="d-flex align-items-center gap-1">
+                                <span class="bi bi-substack
+                                     d-flex align-items-center justify-content-center
+                                     flex-shrink-0 fs-6"
+                                      style="width:24px;"></span>
+                                <span>View All Users</span>
+                            </div>
+                        </NavLink>
+                    </li>
+                </ul>
+            }
+        </div>
+
+        <div class="nav-item px-3 mt-1">
+
+            <!-- Parent menu -->
+            <div class="nav-link p-2 cursor-pointer" style="cursor:pointer;" @onclick="ToggleTaskSubMenu">
+                <div class="d-flex align-items-center text-white gap-1">
+                    <span class="bi bi-backpack4-fill
+                         d-flex align-items-center justify-content-center
+                         flex-shrink-0 fs-4"
+                          style="width:24px;"></span>
+                    <span>Task Management</span>
+                </div>
+            </div>
+            <!--SUBMENUS -->
+            @if (_showTaskSubMenu)
+            {
+                <ul class="list-unstyled ms-4 mt-1">
+                    <li>
+                        <NavLink class="nav-link text-white py-1 px-1 text-white" href="/tasks">
+                            <div class="d-flex align-items-center gap-1">
+                                <span class="bi bi-file-medical
+                                     d-flex align-items-center justify-content-center
+                                     flex-shrink-0 fs-6"
+                                      style="width:24px;"></span>
+                                <span>My Tasks</span>
+                            </div>
+                        </NavLink>
+                    </li>
+
+                    <li>
+                        <NavLink class="nav-link text-white py-1 px-1 text-white" style="padding-left:1rem;" href="/user-tasks">
+                            <div class="d-flex align-items-center gap-1">
+                                <span class="bi bi-substack
+                                     d-flex align-items-center justify-content-center
+                                     flex-shrink-0 fs-6"
+                                      style="width:24px;"></span>
+                                <span>My User Tasks</span>
+                            </div>
+                        </NavLink>
+                    </li>
+                </ul>
+            }
+        </div>
+
     </nav>
 </div>
 
 @code {
     private bool collapseNavMenu = true;
+    private bool _showTaskSubMenu = false;
+    private bool _showUserManagementSubMenu = false;
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private string UserManagementCssStyle = "hidden";
+    private string UserManagementMargin = "-3.5rem";
 
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+
+    private void ToggleTaskSubMenu()
+    {
+        _showTaskSubMenu = !_showTaskSubMenu;
+        if(_showTaskSubMenu)
+        {
+
+        }
+        else
+        {
+
+        }
+    }
+
+    private void ToggleUserManagementSubMenu()
+    {
+        _showUserManagementSubMenu = !_showUserManagementSubMenu;
+        if (_showUserManagementSubMenu)
+        {
+            UserManagementCssStyle = "visible";
+            UserManagementMargin = "0rem";
+        }
+        else
+        {
+            UserManagementCssStyle = "hiddeh";
+            UserManagementMargin = "-3.5rem";
+        }
     }
 }

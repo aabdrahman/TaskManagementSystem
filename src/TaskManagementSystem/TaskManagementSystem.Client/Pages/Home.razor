@@ -20,8 +20,8 @@
         {
             @*
             <PasswordExpiryNotification DaysToExpire="_loggedInUser.DaysToPasswordExpiry" />
-            *@
-            <div class="sticky-top end-0 float-end w-25 p-3 mb-2 bg-secondary-subtle text-secondary-emphasis" style="display:@(_isOpen ? "" : "none")">
+            
+            <div class="sticky-top end-0 float-end w-25 p-3 mb-2 bg-secondary-subtle text-secondary-emphasis top-0" style="display:@(_isOpen ? "" : "none")">
                 <div class="d-flex justify-content-end">
                     <button class="btn btn-close" @onclick="Close" aria-label="Close"></button>
                 </div>
@@ -29,6 +29,23 @@
                     Your password is due to expire in @_loggedInUser.DaysToPasswordExpiry day(s). Kindly change password before then.
                 </div>
             </div>
+            *@
+
+            <div class="position-sticky top-0 ms-auto p-3 mb-2
+                            bg-secondary-subtle text-secondary-emphasis
+                            col-12 col-md-6 col-lg-4
+                            @(_isOpen ? "d-block" : "d-none")">
+
+                <div class="d-flex justify-content-end">
+                    <button class="btn-close" @onclick="Close" aria-label="Close"></button>
+                </div>
+
+                <p class="mb-0 text-wrap">
+                    Your password is due to expire in @_loggedInUser.DaysToPasswordExpiry
+                    day(s). Kindly change your password before then.
+                </p>
+            </div>
+
         }
 
     </Authorized>
