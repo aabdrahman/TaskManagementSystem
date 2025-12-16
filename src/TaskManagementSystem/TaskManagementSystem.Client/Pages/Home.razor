@@ -1,9 +1,79 @@
 ﻿@page "/"
 
+@using Shared.DataTransferObjects.User
+@using TaskManagementSystem.Client.Handlers.Authentication
+@using TaskManagementSystem.Client.Helper
+
+@inject AuthenticationStateProvider authStateProvider
+@inject GetUserDetailsHander _getUserDetailsHander
+
 @attribute [Authorize]
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<AuthorizeView>
+    <Authorized>
+        <h4> Welcome, @(context.User.FindFirst("FirstName")?.Value ?? "")</h4>
+        <p>Your tasks and summary will appear here.</p>
 
-Welcome to your new app.
+        @if(_loggedInUser is not null && _loggedInUser.DaysToPasswordExpiry <= 10)
+        {
+            @*
+            <PasswordExpiryNotification DaysToExpire="_loggedInUser.DaysToPasswordExpiry" />
+            *@
+            <div class="sticky-top end-0 float-end w-25 p-3 mb-2 bg-secondary-subtle text-secondary-emphasis" style="display:@(_isOpen ? "" : "none")">
+                <div class="d-flex justify-content-end">
+                    <button class="btn btn-close" @onclick="Close" aria-label="Close"></button>
+                </div>
+                <div class="text-wrap">
+                    Your password is due to expire in @_loggedInUser.DaysToPasswordExpiry day(s). Kindly change password before then.
+                </div>
+            </div>
+        }
+
+    </Authorized>
+
+    <NotAuthorized>
+        <TaskManagementSystem.Client.Pages.UserAuthentication.RedirectToUnauthorized />
+    </NotAuthorized>
+</AuthorizeView>
+
+
+@code {
+
+    private UserDto? _loggedInUser;
+    private bool _isOpen = true;
+
+    private int _userId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        _userId = int.Parse(user.FindFirst(c => c.Type.EndsWith("serialnumber"))?.Value ?? "0");
+
+        if (_userId > 0)
+        {
+            _loggedInUser = await _getUserDetailsHander.Handle(_userId);
+        }
+    }
+
+
+    // protected override async Task OnAfterRenderAsync(bool firstRender)
+    // {
+    //     if(_userId > 0 && firstRender)
+    //     {
+    //         _loggedInUser = await _getUserDetailsHander.Handle(_userId);
+    //         StateHasChanged();
+    //     }
+    // }
+
+
+    private void Close()
+    {
+        Console.WriteLine($"Set drawer to close.....");
+        _isOpen = false;
+        Console.WriteLine($"Is Open: {_isOpen}");
+    }
+}
