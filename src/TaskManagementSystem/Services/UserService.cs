@@ -87,9 +87,11 @@ public sealed class UserService : IUserService
 
             await _repositoryManager.SaveChangesAsync();
 
-            await _loggerManager.LogInfo($"User Creation Successful - {SerializeObject(userToInsert.ToDto())}");
+			bool maxDaysToChangeFromConfig = int.TryParse(_configuration["UserManagement:MaxDaysToChangePassword"] ?? "30", out int daysToLastPasswordChangeValue);
 
-            return GenericResponse<UserDto>.Success(userToInsert.ToDto(), HttpStatusCode.Created, $"User creation successful.");
+			await _loggerManager.LogInfo($"User Creation Successful - {SerializeObject(userToInsert.ToDto(daysToLastPasswordChangeValue))}");
+
+            return GenericResponse<UserDto>.Success(userToInsert.ToDto(daysToLastPasswordChangeValue), HttpStatusCode.Created, $"User creation successful.");
 
         }
         catch(DbException ex)
@@ -197,8 +199,10 @@ public sealed class UserService : IUserService
     {
         try
         {
-            UserDto? existingUser = await _repositoryManager.UserRepository.GetById(Id, trackChanges, hasQueryFilter)
-                                                    .Select(x => x.ToDto())
+			bool maxDaysToChangeFromConfig = int.TryParse(_configuration["UserManagement:MaxDaysToChangePassword"] ?? "30", out int daysToLastPasswordChangeValue);
+
+			UserDto? existingUser = await _repositoryManager.UserRepository.GetById(Id, trackChanges, hasQueryFilter)
+                                                    .Select(x => x.ToDto(daysToLastPasswordChangeValue))
                                                     .SingleOrDefaultAsync();
             if (existingUser is null)
             {
@@ -228,9 +232,11 @@ public sealed class UserService : IUserService
         {
             await _loggerManager.LogInfo($"Fetcing Users for unit - {unitId}");
 
-            IEnumerable<UserDto> allUsers = await _repositoryManager.UserRepository.GetAllUsers(trackChanges, hasQueryFilter)
+			bool maxDaysToChangeFromConfig = int.TryParse(_configuration["UserManagement:MaxDaysToChangePassword"] ?? "30", out int daysToLastPasswordChangeValue);
+
+			IEnumerable<UserDto> allUsers = await _repositoryManager.UserRepository.GetAllUsers(trackChanges, hasQueryFilter)
                                         .Where(x => x.UnitId == unitId)
-                                        .Select(x => x.ToDto())
+                                        .Select(x => x.ToDto(daysToLastPasswordChangeValue))
                                         .ToListAsync();
 
             await _loggerManager.LogInfo($"Users with Id: {unitId} fetched successfully - {SerializeObject(allUsers)}");
@@ -256,8 +262,10 @@ public sealed class UserService : IUserService
         {
             await _loggerManager.LogInfo($"Getting User with Username - {Username}");
 
-            UserDto? existingUser = await _repositoryManager.UserRepository.GetByUserName(Username.Trim(), trackChanges, hasQueryFilter)
-                                                    .Select(x => x.ToDto())
+			bool maxDaysToChangeFromConfig = int.TryParse(_configuration["UserManagement:MaxDaysToChangePassword"] ?? "30", out int daysToLastPasswordChangeValue);
+
+			UserDto? existingUser = await _repositoryManager.UserRepository.GetByUserName(Username.Trim(), trackChanges, hasQueryFilter)
+                                                    .Select(x => x.ToDto(daysToLastPasswordChangeValue))
                                                     .FirstOrDefaultAsync();
             if (existingUser is null)
             {

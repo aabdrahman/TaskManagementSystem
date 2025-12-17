@@ -9,4 +9,5 @@ public record class UserDto
     public string FirstName { get; set; }
     public string LastName { get; set; }
     public int DaysToPasswordExpiry { get; set; }
+    public DateTime LastLoginDate { get; set; }
 }

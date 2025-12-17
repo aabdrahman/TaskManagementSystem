@@ -35,7 +35,8 @@
 
 							<button class="btn btn-outline-secondary"
 									type="button"
-									@onclick="TogglePassword"
+									@onpointerdown="TogglePassword"
+									@onpointerup="TogglePassword"
 									aria-label="Toggle password visibility">
 								<i class="bi @(_showPassword ? "bi-eye-slash" : "bi-eye")"></i>
 							</button>

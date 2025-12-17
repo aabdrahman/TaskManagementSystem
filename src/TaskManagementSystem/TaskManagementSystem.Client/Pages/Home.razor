@@ -3,6 +3,8 @@
 @using Shared.DataTransferObjects.User
 @using TaskManagementSystem.Client.Handlers.Authentication
 @using TaskManagementSystem.Client.Helper
+@inject Blazored.LocalStorage.ILocalStorageService _localStorageService
+@inject NavigationManager _navManager
 
 @inject AuthenticationStateProvider authStateProvider
 @inject GetUserDetailsHander _getUserDetailsHander
@@ -12,41 +14,56 @@
 <PageTitle>Home</PageTitle>
 
 <AuthorizeView>
-    <Authorized>
-        <h4> Welcome, @(context.User.FindFirst("FirstName")?.Value ?? "")</h4>
-        <p>Your tasks and summary will appear here.</p>
+    <Authorized Context="context">
 
-        @if(_loggedInUser is not null && _loggedInUser.DaysToPasswordExpiry <= 10)
-        {
-            @*
-            <PasswordExpiryNotification DaysToExpire="_loggedInUser.DaysToPasswordExpiry" />
-            
-            <div class="sticky-top end-0 float-end w-25 p-3 mb-2 bg-secondary-subtle text-secondary-emphasis top-0" style="display:@(_isOpen ? "" : "none")">
-                <div class="d-flex justify-content-end">
-                    <button class="btn btn-close" @onclick="Close" aria-label="Close"></button>
+        <div class="container-fluid d-flex flex-column">
+            <div class="d-flex justify-content-between flex-row gap-2">
+                <div class="flex-column d-flex gap-1">
+                    <h4>
+                        Welcome, @(context.User.FindFirst("FirstName")?.Value ?? "") 👋
+                    </h4>
+                    @if(_loggedInUser is not null)
+                    {
+                        <h5 class="mt-1">
+                            Role: @(context.User.FindFirst(x => x.Type.EndsWith("role"))?.Value ?? "") |
+                            Last Login: @(_loggedInUser.LastLoginDate.Date == DateTime.Now.Date ? "Today," : $"{_loggedInUser.LastLoginDate.Date}") at @(_loggedInUser.LastLoginDate.ToString("HH:mm"))
+                        </h5>
+                    }
+                    
+
+                    <p>Your tasks and summary will appear here.</p>
                 </div>
-                <div class="text-wrap">
-                    Your password is due to expire in @_loggedInUser.DaysToPasswordExpiry day(s). Kindly change password before then.
+                <div class="d-flex">
+                    @if (_loggedInUser is not null && _loggedInUser.DaysToPasswordExpiry <= 10)
+                    {
+                        <div class="d-flex">
+                            <div class="position-sticky top-0 ms-auto p-3 mb-3
+                                @GetExpiryClass()
+                                rounded-3 shadow-sm
+                                col-12 col-md-6 col-lg-4
+                                @(_isOpen ? "d-block" : "d-none")">
+
+                                <div class="d-flex justify-content-end">
+                                    <button class="btn-close" @onclick="Close" aria-label="Close"></button>
+                                </div>
+
+                                <p class="mb-0 text-wrap">
+                                    Your password is due to expire in
+                                    <strong>@GetExpiryDaysDescription()</strong>.
+                                    Kindly change your password before then <a class="link-danger link-hover fst-italic fw-bolder" @onclick="HandleRouteToPasswrdChange" style="text-decoration:none;">
+                                        here
+                                    </a>
+                                    .
+                                </p>
+                            </div>
+                        </div>
+                    }
                 </div>
             </div>
-            *@
+            <div class="d-flex justify-content-between flex-row gap-2">
 
-            <div class="position-sticky top-0 ms-auto p-3 mb-2
-                            bg-secondary-subtle text-secondary-emphasis
-                            col-12 col-md-6 col-lg-4
-                            @(_isOpen ? "d-block" : "d-none")">
-
-                <div class="d-flex justify-content-end">
-                    <button class="btn-close" @onclick="Close" aria-label="Close"></button>
-                </div>
-
-                <p class="mb-0 text-wrap">
-                    Your password is due to expire in @_loggedInUser.DaysToPasswordExpiry
-                    day(s). Kindly change your password before then.
-                </p>
             </div>
-
-        }
+        </div>
 
     </Authorized>
 
@@ -54,6 +71,7 @@
         <TaskManagementSystem.Client.Pages.UserAuthentication.RedirectToUnauthorized />
     </NotAuthorized>
 </AuthorizeView>
+
 
 
 @code {
@@ -77,20 +95,47 @@
     }
 
 
-    // protected override async Task OnAfterRenderAsync(bool firstRender)
-    // {
-    //     if(_userId > 0 && firstRender)
-    //     {
-    //         _loggedInUser = await _getUserDetailsHander.Handle(_userId);
-    //         StateHasChanged();
-    //     }
-    // }
-
-
     private void Close()
     {
-        Console.WriteLine($"Set drawer to close.....");
         _isOpen = false;
-        Console.WriteLine($"Is Open: {_isOpen}");
+    }
+
+    string GetExpiryClass()
+    {
+        if (_loggedInUser is null)
+            return "bg-secondary-subtle text-secondary-emphasis";
+
+        return _loggedInUser.DaysToPasswordExpiry switch
+        {
+            <= 3 => "bg-danger-subtle text-danger-emphasis",
+            <= 7 => "bg-warning-subtle text-warning-emphasis",
+            _ => "bg-secondary-subtle text-secondary-emphasis"
+        };
+    }
+
+    string GetExpiryDaysDescription()
+    {
+        if (_loggedInUser is null)
+            return "";
+
+        return _loggedInUser.DaysToPasswordExpiry switch
+        {
+            0 => "today",
+            1 => "tomorrow",
+            _ => $"in {_loggedInUser.DaysToPasswordExpiry} days"
+        };
+    }
+
+    private async Task HandleRouteToPasswrdChange()
+    {
+        await Task.Delay(150);
+        Shared.DataTransferObjects.User.UserToLoginDto userToChnagePasswordRecord = new Shared.DataTransferObjects.User.UserToLoginDto() { Email = _loggedInUser?.Email };
+        await _localStorageService.SetItemAsync<Shared.DataTransferObjects.User.UserToLoginDto>("UserToChangePassword", userToChnagePasswordRecord);
+        _navManager.NavigateTo("/identity/change-password");
+    }
+
+    void StartTimer()
+    {
+        
     }
 }

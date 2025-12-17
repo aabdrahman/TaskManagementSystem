@@ -5,7 +5,7 @@ namespace Shared.Mapper;
 
 public static class UserMapper
 {
-    public static UserDto ToDto(this User user)
+    public static UserDto ToDto(this User user, int maxDaysToPasswordExpire)
     {
         return new UserDto()
         {
@@ -15,7 +15,8 @@ public static class UserMapper
             Email = user.Email,
             PhoneNumber = user.PhoneNumber,
             Username = user.Username,
-            DaysToPasswordExpiry = (int)(DateTime.Now.Date - user.LastPasswordChangeDate.Date).TotalDays
+            DaysToPasswordExpiry = (int)(maxDaysToPasswordExpire - (DateTime.Now.Date - user.LastPasswordChangeDate.Date).TotalDays),
+            LastLoginDate = user.LastLoginDate ?? DateTime.MinValue
         };
     }
 
