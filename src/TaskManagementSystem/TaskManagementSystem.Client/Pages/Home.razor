@@ -50,7 +50,7 @@
                                 <p class="mb-0 text-wrap">
                                     Your password is due to expire in
                                     <strong>@GetExpiryDaysDescription()</strong>.
-                                    Kindly change your password before then <a class="link-danger link-hover fst-italic fw-bolder" @onclick="HandleRouteToPasswrdChange" style="text-decoration:none;">
+                                    Kindly change your password before then <a class="link-danger link-hover fst-italic fw-bolder" @onclick="HandleRouteToPasswrdChange" style="text-decoration:none;cursor:pointer;">
                                         here
                                     </a>
                                     .
@@ -129,7 +129,7 @@
     private async Task HandleRouteToPasswrdChange()
     {
         await Task.Delay(150);
-        Shared.DataTransferObjects.User.UserToLoginDto userToChnagePasswordRecord = new Shared.DataTransferObjects.User.UserToLoginDto() { Email = _loggedInUser?.Email };
+        Shared.DataTransferObjects.User.UserToLoginDto userToChnagePasswordRecord = new Shared.DataTransferObjects.User.UserToLoginDto() { Email = _loggedInUser?.Email, Password = "" };
         await _localStorageService.SetItemAsync<Shared.DataTransferObjects.User.UserToLoginDto>("UserToChangePassword", userToChnagePasswordRecord);
         _navManager.NavigateTo("/identity/change-password");
     }

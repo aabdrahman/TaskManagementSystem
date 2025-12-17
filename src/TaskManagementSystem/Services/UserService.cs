@@ -293,7 +293,7 @@ public sealed class UserService : IUserService
     {
         try
         {
-            await _loggerManager.LogInfo($"Login Request - {SerializeObject(userToLogin)}. From - {_contextAccessor.HttpContext.Request.Headers["Origin".ToString()]} = {SerializeObject(_jwtConfiguration)}");
+            await _loggerManager.LogInfo($"Login Request - {SerializeObject(userToLogin)}. From - {_contextAccessor.HttpContext.Request.Headers["Origin".ToString()]}");
 
             User? existingUserToLogin = await _repositoryManager.UserRepository.GetByEmail(userToLogin.Email, true, true)
                                                                 .Include(x => x.AssignedUnit)
