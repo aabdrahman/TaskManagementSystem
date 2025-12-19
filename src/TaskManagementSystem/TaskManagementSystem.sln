@@ -25,7 +25,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infrastructure.Contracts", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{5E6CAB18-D741-4839-82BD-99905FA6AECB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskManagementSystem.Client", "TaskManagementSystem.Client\TaskManagementSystem.Client.csproj", "{3462ED6A-1C03-4C56-8A6B-4C7A14E39D62}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TaskManagementSystem.Client", "TaskManagementSystem.Client\TaskManagementSystem.Client.csproj", "{3462ED6A-1C03-4C56-8A6B-4C7A14E39D62}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

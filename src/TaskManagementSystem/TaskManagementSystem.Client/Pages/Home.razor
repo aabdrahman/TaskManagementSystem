@@ -5,6 +5,7 @@
 @using TaskManagementSystem.Client.Helper
 @inject Blazored.LocalStorage.ILocalStorageService _localStorageService
 @inject NavigationManager _navManager
+@inject GetUserDashboardHandler _getUserDashboardHandler
 
 @inject AuthenticationStateProvider authStateProvider
 @inject GetUserDetailsHander _getUserDetailsHander
@@ -60,9 +61,10 @@
                     }
                 </div>
             </div>
-            <div class="d-flex justify-content-between flex-row gap-2">
-
-            </div>
+                @if(_isInitialized)
+                {
+                    <TaskManagementSystem.Client.Pages.UserAuthentication.UserDashboard UserDashboardRecord="_userTaskDashboardDto" />
+                }
         </div>
 
     </Authorized>
@@ -74,12 +76,14 @@
 
 
 
-@code {
+    @code {
 
     private UserDto? _loggedInUser;
     private bool _isOpen = true;
+    private Shared.DataTransferObjects.UserDashboard.UserTaskDashboardDto? _userTaskDashboardDto;
 
     private int _userId;
+    private bool _isInitialized = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -91,6 +95,8 @@
         if (_userId > 0)
         {
             _loggedInUser = await _getUserDetailsHander.Handle(_userId);
+            await GetAnalytics();
+            _isInitialized = true;
         }
     }
 
@@ -136,6 +142,11 @@
 
     void StartTimer()
     {
-        
+
+    }
+
+    private async Task GetAnalytics()
+    {
+        _userTaskDashboardDto = await _getUserDashboardHandler.Handle(_userId);
     }
 }

@@ -22,6 +22,7 @@ builder.Services.AddScoped<AuthenticationSignoutHandler>();
 builder.Services.AddScoped<AuthenticationSignInHandler>();
 builder.Services.AddScoped<ChangePasswordHandler>();
 builder.Services.AddScoped<GetUserDetailsHander>();
+builder.Services.AddScoped<GetUserDashboardHandler>();
 
 //Clients
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });

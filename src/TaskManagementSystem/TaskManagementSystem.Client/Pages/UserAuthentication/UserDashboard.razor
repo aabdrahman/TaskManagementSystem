@@ -1,0 +1,90 @@
+﻿
+@if(_userDashboardRecord is null)
+{
+    <p class="fw-bolder fst-italic fs-5 text-info">
+        User Analytics Dashboard could not be fetched.
+    </p>
+}
+else
+{
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <small class="text-muted">Pending</small>
+                    <h5 class="mb-0">@_userDashboardRecord.PendingTasks</h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <small class="text-muted">Overdue</small>
+                    <h5 class="mb-0 text-danger">@_userDashboardRecord.OverDueTasks</h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <small class="text-muted">Due Today</small>
+                    <h5 class="mb-0">@_userDashboardRecord.DueToday</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- 📝 MY TASKS -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-transparent fw-semibold">
+                    My Tasks
+                </div>
+
+                <div class="list-group list-group-flush">
+                    @foreach (var task in _userDashboardRecord.UserTasks)
+                    {
+                        <a class="list-group-item list-group-item-action d-flex justify-content-between"
+                           href="@($"/tasks/{task.Id}")">
+
+                            <div>
+                                <strong>@task.Title</strong><br />
+                                <small class="text-muted mt-0">
+                                    <strong>Due Date:</strong> @task.DueDate.ToString("d")
+                                </small>
+                            </div>
+                        </a>
+                    }
+
+                    @if (!_userDashboardRecord.UserTasks.Any())
+                    {
+                        <div class="p-3 text-muted">
+                            You have no assigned tasks 🎉
+                        </div>
+                    }
+                </div>
+
+                <div class="card-footer bg-transparent text-end">
+                    <a href="/tasks" class="btn btn-sm btn-outline-primary">
+                        View All Tasks
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private Shared.DataTransferObjects.UserDashboard.UserTaskDashboardDto? _userDashboardRecord;
+
+    [Parameter, EditorRequired]
+    public Shared.DataTransferObjects.UserDashboard.UserTaskDashboardDto? UserDashboardRecord { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _userDashboardRecord = UserDashboardRecord;
+    }
+}
