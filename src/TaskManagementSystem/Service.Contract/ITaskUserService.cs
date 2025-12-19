@@ -1,5 +1,6 @@
 ﻿using Shared.ApiResponse;
 using Shared.DataTransferObjects.TaskUser;
+using Shared.DataTransferObjects.UserDashboard;
 
 namespace Service.Contract;
 
@@ -13,4 +14,5 @@ public interface ITaskUserService
     Task<GenericResponse<string>> CancelTask(CancelUserTaskDto cancelUserTaskDto);
     Task<GenericResponse<TaskUserDto>> UpdateTaskUserAsync(UpdateTaskUserDto taskUserDto);
     Task<GenericResponse<string>> MarkAsCompleteAsync(UpdateUserTaskCompleteStatusDto updateUserTaskCompleteStatus);
+    Task<GenericResponse<UserTaskDashboardDto>> GetUserDashboard(int UserId);
 }

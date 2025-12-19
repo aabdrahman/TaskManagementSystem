@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Net;
 using Shared.Mapper;
 using Microsoft.AspNetCore.Http;
+using Shared.DataTransferObjects.UserDashboard;
 
 namespace Services;
 
@@ -184,7 +185,48 @@ public sealed class TaskUserService : ITaskUserService
         }
     }
 
-    public async Task<GenericResponse<string>> MarkAsCompleteAsync(UpdateUserTaskCompleteStatusDto updateUserTaskCompleteStatus)
+	public async Task<GenericResponse<UserTaskDashboardDto>> GetUserDashboard(int UserId)
+	{
+        try
+        {
+            await _loggerManager.LogInfo($"Fetching User Dashboard for: {UserId}");
+
+			UserTaskDashboardDto output = await _repositoryManager.TaskUserRepository.GetByUserId(UserId)
+                                                                        .Where(x => !x.CompletionDate.HasValue || x.CancelReason == null)
+                                                                        .GroupBy(_ => 1)
+                                                                        .Select(x => new UserTaskDashboardDto()
+                                                                        {
+                                                                            DueToday = x.Count(x => x.ProposedCompletionDate == DateTime.UtcNow.Date),
+                                                                            OverDueTasks = x.Count(x => x.ProposedCompletionDate < DateTime.UtcNow.Date),
+                                                                            PendingTasks = x.Count(x => x.ProposedCompletionDate >= DateTime.UtcNow.Date.AddDays(1)),
+
+                                                                            UserTasks = x.OrderBy(x => x.ProposedCompletionDate).Select(x => new UserTaskSummaryDto() { Id = x.Id, Title = x.Title, DueDate = x.ProposedCompletionDate }).Skip(0).Take(5).ToList()
+                                                                        })
+                                                                        .FirstAsync() ?? new UserTaskDashboardDto();
+
+            //IEnumerable<TaskUserDto> output = await _repositoryManager.TaskUserRepository.GetByUserId(UserId)
+            //                                            .Where(x => !x.CompletionDate.HasValue || string.IsNullOrEmpty(x.CancelReason))
+            //                                            .Select(x => x.ToDto())
+            //                                            .ToListAsync();
+
+            await _loggerManager.LogInfo($"User Dashboard fetched for user: {UserId} - {SerializeObject(output)}");
+
+            return GenericResponse<UserTaskDashboardDto>.Success(output, HttpStatusCode.OK, "Dashboard Fetched.");
+
+        }
+		catch (DbException ex)
+		{
+			await _loggerManager.LogError(ex, "Internal Server Error - Database");
+			return GenericResponse<UserTaskDashboardDto>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Server Error - Database", new { ex.Message, Description = ex?.InnerException?.Message });
+		}
+		catch (Exception ex)
+		{
+			await _loggerManager.LogError(ex, "Internal Server Error");
+			return GenericResponse<UserTaskDashboardDto>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Server Error", new { ex.Message, Description = ex?.InnerException?.Message });
+		}
+	}
+
+	public async Task<GenericResponse<string>> MarkAsCompleteAsync(UpdateUserTaskCompleteStatusDto updateUserTaskCompleteStatus)
     {
         try
         {

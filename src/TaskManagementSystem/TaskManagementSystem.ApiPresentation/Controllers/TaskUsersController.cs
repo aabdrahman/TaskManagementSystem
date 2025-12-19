@@ -36,7 +36,24 @@ public class TaskUsersController : ControllerBase
         }
     }
 
-    [HttpGet("taskid/{taskId:int}")]
+    [AllowAnonymous]
+	[HttpGet("userdashboard/userid/{userId:int}")]
+	public async Task<IActionResult> GetUserDaashboard(int userId)
+	{
+		try
+		{
+			var getByUserDashboardResponse = await _serviceManager.TaskUserService.GetUserDashboard(userId);
+
+			return StatusCode((int)getByUserDashboardResponse.StatusCode, getByUserDashboardResponse);
+		}
+		catch (Exception ex)
+		{
+			await _loggerManager.LogError(ex, ex.Message);
+			return StatusCode(500, ex.Message);
+		}
+	}
+
+	[HttpGet("taskid/{taskId:int}")]
     public async Task<IActionResult> GetByTaskId(int taskId, bool hasQueryFilter = true)
     {
         try
