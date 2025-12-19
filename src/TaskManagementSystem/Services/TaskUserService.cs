@@ -192,7 +192,7 @@ public sealed class TaskUserService : ITaskUserService
             await _loggerManager.LogInfo($"Fetching User Dashboard for: {UserId}");
 
 			UserTaskDashboardDto output = await _repositoryManager.TaskUserRepository.GetByUserId(UserId)
-                                                                        .Where(x => !x.CompletionDate.HasValue || x.CancelReason == null)
+                                                                        .Where(x => !x.CompletionDate.HasValue && x.CancelReason == null)
                                                                         .GroupBy(_ => 1)
                                                                         .Select(x => new UserTaskDashboardDto()
                                                                         {
