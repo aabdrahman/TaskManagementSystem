@@ -25,12 +25,12 @@ public class GetUserDashboardHandler
 
 			if(responseData is null)
 			{
-				return null;
+				return new Shared.DataTransferObjects.UserDashboard.UserTaskDashboardDto();
 			}
 
 			if(!responseData.IsSuccessful)
 			{
-				return null;
+				return new Shared.DataTransferObjects.UserDashboard.UserTaskDashboardDto();
 			}
 
 			return responseData.Data;

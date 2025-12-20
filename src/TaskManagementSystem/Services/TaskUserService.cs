@@ -191,6 +191,15 @@ public sealed class TaskUserService : ITaskUserService
         {
             await _loggerManager.LogInfo($"Fetching User Dashboard for: {UserId}");
 
+            //GET COUNT OF USER TASKS
+            int TotalUserTasks = await _repositoryManager.TaskUserRepository.GetByUserId(UserId).CountAsync(x => !x.CompletionDate.HasValue && x.CancelReason == null);
+
+            if(TotalUserTasks == 0)
+            {
+                await _loggerManager.LogWarning($"No Record Found for - {UserId}");
+                return GenericResponse<UserTaskDashboardDto>.Failure(new UserTaskDashboardDto(), HttpStatusCode.NotFound, "No Pending Record Found."); //This returns a default instance for frontend use
+            }
+
 			UserTaskDashboardDto output = await _repositoryManager.TaskUserRepository.GetByUserId(UserId)
                                                                         .Where(x => !x.CompletionDate.HasValue && x.CancelReason == null)
                                                                         .GroupBy(_ => 1)
