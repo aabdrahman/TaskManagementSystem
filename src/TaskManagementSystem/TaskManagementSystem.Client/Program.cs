@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using TaskManagementSystem.Client;
 using TaskManagementSystem.Client.AuthenticationProvider;
 using TaskManagementSystem.Client.Handlers.Authentication;
+using TaskManagementSystem.Client.Handlers.UserTask;
 using TaskManagementSystem.Client.Helper;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -23,6 +24,8 @@ builder.Services.AddScoped<AuthenticationSignInHandler>();
 builder.Services.AddScoped<ChangePasswordHandler>();
 builder.Services.AddScoped<GetUserDetailsHander>();
 builder.Services.AddScoped<GetUserDashboardHandler>();
+builder.Services.AddScoped<GetUserTasksHandler>();
+builder.Services.AddScoped<MarkUserTaskAsCompleteHandler>();
 
 //Clients
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });

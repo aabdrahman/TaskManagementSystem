@@ -428,7 +428,7 @@ public sealed class UserService : IUserService
         var tokenOptions = new JwtSecurityToken
         (
             issuer: _jwtConfiguration.validIssuer,
-            audience: _contextAccessor.HttpContext.Request.Headers["Origin"].ToString(),
+            audience: _contextAccessor.HttpContext.Request.Headers["Origin"].ToString() ?? "TaskManagementApi",
             claims: claims,
             signingCredentials: credentials,
             expires: DateTime.UtcNow.AddSeconds(Convert.ToDouble(_jwtConfiguration.expireAfter))

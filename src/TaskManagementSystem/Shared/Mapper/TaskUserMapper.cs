@@ -30,7 +30,8 @@ public static class TaskUserMapper
             CompletionDate = taskUser?.CompletionDate,
             AssignedUser = taskUser?.user?.FirstName + " " + taskUser?.user?.LastName ?? "",
             PrimaryTaskId = taskUser.TaskId,
-            ProposedCompletionDate = taskUser.ProposedCompletionDate
+            ProposedCompletionDate = taskUser.ProposedCompletionDate,
+            CancelReason = taskUser?.CancelReason ?? null
         };
     }
 }

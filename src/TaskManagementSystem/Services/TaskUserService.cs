@@ -268,7 +268,7 @@ public sealed class TaskUserService : ITaskUserService
 
             await _repositoryManager.SaveChangesAsync();
 
-            await _loggerManager.LogInfo($"Mark User Task Completion Successfu - {SerializeObject(updateUserTaskCompleteStatus)}");
+            await _loggerManager.LogInfo($"Mark User Task Completion Successful - {SerializeObject(updateUserTaskCompleteStatus)}");
 
             return GenericResponse<string>.Success("Operation Success", HttpStatusCode.OK, $"User Task marked as completed.");
 
