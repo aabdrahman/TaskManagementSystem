@@ -10,5 +10,5 @@ public static class ClientHelper
 
     public static string AuthorizationHeaderKey = "Bearer";
 
-    public static int GetRefreshTokenWindow = 5;
+    public static int GetRefreshTokenWindow = 15;
 }
