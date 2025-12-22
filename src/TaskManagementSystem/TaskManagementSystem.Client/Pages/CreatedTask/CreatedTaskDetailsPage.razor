@@ -57,7 +57,7 @@ else
                 }
                 else
                 {
-                    <AssignedTasksToUsersView TasksAssignedToUser="_userAssignedTasks" HandleShowDetails="HandleShowReadOnly" HandleAddNewUserTask="HandleAddNewUserTask" HandleEditUserTask="HandleEditUserTask" />
+                    <AssignedTasksToUsersView TasksAssignedToUser="_userAssignedTasks" HandleShowDetails="HandleShowReadOnly" HandleAddNewUserTask="HandleAddNewUserTask" HandleEditUserTask="HandleEditUserTask" HandleDeleteUserTask="HandleDeleteUserTask" />
                 }
             }
         }
@@ -77,6 +77,10 @@ else
         else if(_operationToPerform == OperationType.EditUserTask)
         {
             <TaskManagementSystem.Client.Pages.UserTask.EditUserTask UserTaskToUpdate="_selectedTask" HandleClose="OnHandleEditUserTaskClosePopup" />
+        }
+        else if(_operationToPerform == OperationType.DeleteUserTask)
+        {
+            <TaskManagementSystem.Client.Pages.UserTask.CancelUserTask TaskUserToDelete="_selectedTask" HandleClose="OnHandleDeleteUserTaskClosePopup" />
         }
     </Body>
 </Popup>
@@ -189,6 +193,16 @@ else
         popup.Close();
     }
 
+    private async Task OnHandleDeleteUserTaskClosePopup(bool operationDecision)
+    {
+        if (operationDecision)
+        {
+            await GetCreatedTask();
+        }
+        _showCloseButton = true;
+        popup.Close();
+    }
+
     private void HandleAddNewUserTask()
     {
         if(CanAddUserTask())
@@ -210,6 +224,15 @@ else
         popup.Open();
     }
 
+    private void HandleDeleteUserTask(Shared.DataTransferObjects.TaskUser.TaskUserDto userTaskToUpdate)
+    {
+        _selectedTask = userTaskToUpdate;
+        _operationToPerform = OperationType.DeleteUserTask;
+        _showCloseButton = false;
+        _popupTitle = $"Delete User Task For Task - {TaskId}";
+        popup.Open();
+    }
+
     enum OperationType
     {
         None,
@@ -217,6 +240,7 @@ else
         CancelOperation,
         DeleteOperation,
         AddNewUserTask,
-        EditUserTask
+        EditUserTask,
+        DeleteUserTask
     }
 }

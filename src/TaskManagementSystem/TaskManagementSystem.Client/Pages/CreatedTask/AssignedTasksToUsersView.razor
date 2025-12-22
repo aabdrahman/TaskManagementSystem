@@ -111,7 +111,7 @@
 
     private async Task OnHandleDeleteUserTask(Shared.DataTransferObjects.TaskUser.TaskUserDto selectedUserTask)
     {
-        await HandleShowDetails.InvokeAsync(selectedUserTask);
+        await HandleDeleteUserTask.InvokeAsync(selectedUserTask);
     }
 
     private async Task OnHandleEditUserTask(Shared.DataTransferObjects.TaskUser.TaskUserDto selectedUserTask)
