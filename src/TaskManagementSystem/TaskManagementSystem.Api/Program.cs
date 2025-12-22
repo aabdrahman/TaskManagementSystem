@@ -15,7 +15,7 @@ Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()
             .Enrich.FromLogContext()
             .WriteTo.File(Path.Combine(logFolderPath, "log-.txt"), Serilog.Events.LogEventLevel.Debug, 
-                            outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.ff zzz}||{Level:u3}] || [{ClassName}].[{MethodName}] - {Message:lj}{NewLine}{Exception}{Properties}{NewLine}", 
+                            outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}||{Level:u3}] || [{ClassName}].[{MethodName}] - {Message:lj}{NewLine}{Exception}{NewLine}", 
                             fileSizeLimitBytes: 10_000_000, rollOnFileSizeLimit: true,
                             rollingInterval: RollingInterval.Day)
             .CreateLogger();
