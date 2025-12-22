@@ -57,7 +57,7 @@ else
                 }
                 else
                 {
-                    <AssignedTasksToUsersView TasksAssignedToUser="_userAssignedTasks" HandleShowDetails="HandleShowReadOnly" HandleAddNewUserTask="HandleAddNewUserTask" />
+                    <AssignedTasksToUsersView TasksAssignedToUser="_userAssignedTasks" HandleShowDetails="HandleShowReadOnly" HandleAddNewUserTask="HandleAddNewUserTask" HandleEditUserTask="HandleEditUserTask" />
                 }
             }
         }
@@ -73,6 +73,10 @@ else
         else if(_operationToPerform == OperationType.AddNewUserTask)
         {
             <TaskManagementSystem.Client.Pages.UserTask.AddNewUserTaskPage ParentTask="_createdTask" HandleClose="OnHandleAddNewUserTaskClosePopup" />
+        }
+        else if(_operationToPerform == OperationType.EditUserTask)
+        {
+            <TaskManagementSystem.Client.Pages.UserTask.EditUserTask UserTaskToUpdate="_selectedTask" HandleClose="OnHandleEditUserTaskClosePopup" />
         }
     </Body>
 </Popup>
@@ -102,7 +106,6 @@ else
 
     private async Task GetCreatedTask()
     {
-        await Task.Delay(500);
         var response = await getCreatedTaskByTaskIdHandler.Handle(TaskId);
 
         _responseMessage = response.Message; _isSuccessful = response.IsSuccessful;
@@ -172,11 +175,30 @@ else
         popup.Close();
     }
 
+    private async Task OnHandleEditUserTaskClosePopup(bool operationDecision)
+    {
+        if (operationDecision)
+        {
+            await GetCreatedTask();
+        }
+        _showCloseButton = true;
+        popup.Close();
+    }
+
     private void HandleAddNewUserTask()
     {
         _operationToPerform = OperationType.AddNewUserTask;
         _showCloseButton = false;
         _popupTitle = $"Add New User Task To - {TaskId}";
+        popup.Open();
+    }
+
+    private void HandleEditUserTask(Shared.DataTransferObjects.TaskUser.TaskUserDto userTaskToUpdate)
+    {
+        _selectedTask = userTaskToUpdate;
+        _operationToPerform = OperationType.EditUserTask;
+        _showCloseButton = false;
+        _popupTitle = $"Edit User Task For Task - {TaskId}";
         popup.Open();
     }
 
@@ -186,6 +208,7 @@ else
         ReadOnly,
         CancelOperation,
         DeleteOperation,
-        AddNewUserTask
+        AddNewUserTask,
+        EditUserTask
     }
 }

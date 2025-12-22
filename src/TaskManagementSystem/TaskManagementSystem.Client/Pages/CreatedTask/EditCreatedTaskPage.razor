@@ -236,9 +236,9 @@
     {
         _messageStore.Clear(field);
 
-        if (field.FieldName == nameof(CreateTaskDto.ProposedCompletionDate))
+        if (field.FieldName == nameof(UpdateCreatedTaskDto.ProposedCompletionDate))
         {
-            if (_taskToUpdate.ProposedCompletionDate <= DateTime.UtcNow.Date)
+            if (_updateCreatedTaskModel.ProposedCompletionDate <= DateTime.UtcNow.Date)
             {
                 _messageStore.Add(field, "Expected delivery date must be in the future.");
             }
@@ -261,7 +261,7 @@
         // Example: validate date
         if (_taskToUpdate.ProposedCompletionDate <= DateTime.UtcNow.Date)
         {
-            var field = new FieldIdentifier(_taskToUpdate, nameof(CreateTaskDto.ProposedCompletionDate));
+            var field = new FieldIdentifier(_updateCreatedTaskModel, nameof(UpdateCreatedTaskDto.ProposedCompletionDate));
             _messageStore.Add(field, "Expected delivery date must be in the future.");
         }
 
