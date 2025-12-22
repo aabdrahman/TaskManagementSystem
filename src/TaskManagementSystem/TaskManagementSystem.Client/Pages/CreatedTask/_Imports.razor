@@ -1,0 +1,10 @@
+﻿
+@using Shared.DataTransferObjects.CreatedTask
+@using TaskManagementSystem.Client.Handlers.CreatedTask
+@using TaskManagementSystem.Client.SharedContent
+
+@inject AuthenticationStateProvider authStateProvider
+@inject FetchUserCreatedTasksHandler fetchUserCreatedTasksHandler
+@inject GetCreatedTaskByTaskIdHandler getCreatedTaskByTaskIdHandler
+@inject FetchCreatedTaskAssignedTasksHandler fetchCreatedTaskAssignedTasksHandler
+@inject NavigationManager navManager

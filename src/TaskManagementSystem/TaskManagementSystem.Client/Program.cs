@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using TaskManagementSystem.Client;
 using TaskManagementSystem.Client.AuthenticationProvider;
 using TaskManagementSystem.Client.Handlers.Authentication;
+using TaskManagementSystem.Client.Handlers.CreatedTask;
+using TaskManagementSystem.Client.Handlers.Unit;
 using TaskManagementSystem.Client.Handlers.UserTask;
 using TaskManagementSystem.Client.Helper;
 
@@ -26,6 +28,12 @@ builder.Services.AddScoped<GetUserDetailsHander>();
 builder.Services.AddScoped<GetUserDashboardHandler>();
 builder.Services.AddScoped<GetUserTasksHandler>();
 builder.Services.AddScoped<MarkUserTaskAsCompleteHandler>();
+builder.Services.AddScoped<GetCreatedTaskByTaskIdHandler>();
+builder.Services.AddScoped<FetchUserCreatedTasksHandler>();
+builder.Services.AddScoped<FetchCreatedTaskAssignedTasksHandler>();
+builder.Services.AddScoped<GetUnitsHandler>();
+builder.Services.AddScoped<GetUsersByUnitHandler>();
+builder.Services.AddScoped<AddNewUserTaskHandler>();
 
 //Clients
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });

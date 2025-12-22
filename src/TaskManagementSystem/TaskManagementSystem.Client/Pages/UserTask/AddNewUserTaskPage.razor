@@ -1,0 +1,189 @@
+﻿
+@attribute [Authorize]
+
+@inject TaskManagementSystem.Client.Handlers.Unit.GetUnitsHandler getUnitsHandler
+@inject TaskManagementSystem.Client.Handlers.Authentication.GetUsersByUnitHandler getUsersByUnit
+@inject TaskManagementSystem.Client.Handlers.UserTask.AddNewUserTaskHandler addNewUserTaskHandler
+
+@if(_editContext is not null)
+{
+    <div class="container container-fluid container-xxl w-100">
+        @if(_createUserTaskResponseMessage is not null && !_isLoadingCreate)
+        {
+            <div class="alert fst-italic fs-6 fw-bold alert-@(_isCreatedSuccesssfully ? "success" : "danger")" role="alert">
+                @(_isCreatedSuccesssfully ? $"{_createUserTaskResponseMessage} Click on the close button" : _createUserTaskResponseMessage)
+            </div>
+        }
+        <EditForm EditContext="_editContext" OnValidSubmit="OnSubmitHandle" class="w-100">
+            <DataAnnotationsValidator />
+            <div class="d-flex flex-column gap-2">
+                @if(!_availableUnits.Any())
+                {
+                    <span class="text-wrap fst-italic fs-6 fw-bolder text-info">Available Units cannot be fetched</span>
+                }
+                @if(_availableUnits.Any())
+                {
+                    <div class="form-group d-flex flex-column gap-1">
+                        <label class="form-label fw-bolder" for="user-task-responsible-unit">Responsible Unit</label>
+                        <InputSelect class="form-select" @bind-Value="_userTaskToCreate.ResponsibleUnit" id="user-task-responsible-unit" @bind-Value:after="OnChangeResponsibleUnit">
+                            <option value="0" selected></option>
+                            @foreach (var unit in _availableUnits)
+                            {
+                                <option value="@unit.Id">@unit.Name</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="(() => _userTaskToCreate.ResponsibleUnit)" />
+                    </div>
+                }
+                @if(_availableUsers is not null)
+                {
+                    if (_availableUsers.Any())
+                    {
+                        <div class="form-group d-flex flex-column gap-1">
+                            <label class="form-label fw-bolder" for="user-task-assigned-user">Assigned User</label>
+                            <InputSelect class="form-select" @bind-Value="_userTaskToCreate.AssignedUser" id="user-task-assigned-user">
+                                <option value="0" selected></option>
+                                @foreach (var user in _availableUsers)
+                                {
+                                    <option value="@user.Id">@($"{user.FirstName} {user.LastName}")</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="(() => _userTaskToCreate.AssignedUser)" />
+                        </div>
+                        <div class="d-flex flex-column gap-1">
+                            <label class="form-label fw-bolder" for="user-task-title">Title</label>
+                            <InputText @bind-Value="_userTaskToCreate.Title" id="user-task-title" class="form-control" />
+                            <ValidationMessage For="(() => _userTaskToCreate.Title)" />
+                        </div>
+                        <div class="d-flex flex-column gap-1">
+                            <label class="form-label fw-bolder" for="user-task-description">Description</label>
+                            <InputTextArea @bind-Value="_userTaskToCreate.Description" id="user-task-description" class="form-control" />
+                            <ValidationMessage For="(() => _userTaskToCreate.Description)" />
+                        </div>
+                        <div class="d-flex flex-column gap-1">
+                            <label class="form-label fw-bolder" for="user-task-description">Expected Delivery Date</label>
+                            <InputDate class="form-control" id="" @bind-Value="_userTaskToCreate.ProposedCompletionDate" />
+                            <ValidationMessage For="(() => _userTaskToCreate.ProposedCompletionDate)" />
+                        </div>
+
+                    }
+                    else if (!_availableUsers.Any())
+                    {
+                        <span class="text-wrap fst-italic fs-6 fw-bolder text-info">Available Users cannot be fetched</span>
+                    }
+                }
+                
+                
+                <div class="d-flex flex-row justify-content-between">
+                    @if(!_isCreatedSuccesssfully)
+                    {
+                        <button class="btn btn-secondary" type="button" disabled="@_isLoadingCreate" @onclick="(() => OnHandleClose(false))">
+                            Cancel
+                        </button>
+                    }
+                    @if(_isLoadingCreate)
+                    {
+                        <button class="btn btn-primary" type="button" disabled>
+                            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                            <span role="status">Loading...</span>
+                        </button>
+                    }
+                    else
+                    {
+                        if(!_isCreatedSuccesssfully)
+                        {
+                            <button class="btn btn-primary" type="submit" disabled="@(_availableUsers is null || !_availableUsers.Any())">
+                                Submit
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-secondary float-end" type="button" @onclick="(() => OnHandleClose(true))">
+                                Close
+                            </button>
+                        }
+                    }
+
+                </div>
+            </div>
+        </EditForm>
+    </div>
+}
+
+@code {
+
+    private CreateTaskUserDto taskUserToCreate;
+    private Shared.DataTransferObjects.CreatedTask.CreatedTaskDto _parentTask;
+    private IEnumerable<Shared.DataTransferObjects.Unit.UnitDto> _availableUnits;
+    private IEnumerable<Shared.DataTransferObjects.User.UserDto> _availableUsers;
+
+    private bool _isLoadingCreate = false;
+    private bool _isCreatedSuccesssfully;
+    private string _createUserTaskResponseMessage;
+
+    private EditContext _editContext;
+    private CreateTaskUserDto _userTaskToCreate;
+
+    [Parameter, EditorRequired]
+    public Shared.DataTransferObjects.CreatedTask.CreatedTaskDto ParentTask { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<bool> HandleClose { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        //await Task.Delay(500);
+
+        if(ParentTask is not null)
+        {
+            //Fetch Available Units
+            _availableUnits = await getUnitsHandler.Handle();
+
+            _parentTask = ParentTask;
+            _userTaskToCreate = new CreateTaskUserDto() { PrimaryTaskId = _parentTask.Id, TaskId = _parentTask.TaskId, ProposedCompletionDate = DateTime.UtcNow.AddDays(1) };
+            _editContext = new EditContext(_userTaskToCreate);
+        }
+    }
+
+    private async Task OnChangeResponsibleUnit()
+    {
+
+        await Task.Delay(500);
+        Console.WriteLine($"Selected Unit Id: {_userTaskToCreate.ResponsibleUnit}");
+        int unitId = _userTaskToCreate?.ResponsibleUnit ?? 0;
+
+        if(unitId > 0)
+        {
+            _availableUsers = await getUsersByUnit.Handle(unitId);
+        }
+
+    }
+
+    private async Task OnSubmitHandle()
+    {
+        _isLoadingCreate = true;
+        // await Task.Delay(5000);
+        // _isCreatedSuccesssfully = DateTime.Now.Second % 2 == 0;
+        // _createUserTaskResponseMessage = _isCreatedSuccesssfully ? "Successful" : "Failed";
+
+        await Task.Delay(500);
+        var response = await addNewUserTaskHandler.Handle(_userTaskToCreate);
+
+        _isCreatedSuccesssfully = response.isSuccessful;
+        _createUserTaskResponseMessage = response.responseMessage;
+
+        _isLoadingCreate = false;
+    }
+
+    private async Task OnHandleClose(bool operationDecision)
+    {
+        _userTaskToCreate = null;
+        _editContext = null;
+        _parentTask = null;
+        _availableUsers = null;
+        _availableUnits = null;
+        _isCreatedSuccesssfully = default;
+        _createUserTaskResponseMessage = null;
+        await HandleClose.InvokeAsync(operationDecision);
+    }
+}

@@ -1,0 +1,138 @@
+﻿@using Entities.StaticValues
+
+<div class="d-flex flex-column gap-2">
+    <div class="d-flex flex-column justify-content-start  w-100 gap-1 px-2">
+        <span class="fw-bold fs-5 text-start text-black">Title</span>
+        <p class="fs-6 text-start text-wrap">
+            @_createdTask.Title
+        </p>
+    </div>
+    <div class="d-flex flex-column justify-content-start  w-100 gap-1 px-2">
+        <span class="fw-bold fs-5 text-start text-black">Description</span>
+        <p class="fs-6 text-start text-wrap">
+            @_createdTask.Description
+        </p>
+    </div>
+    <div class="d-flex flex-column justify-content-start  w-100 gap-1 px-2">
+        <div class="p-3 w-100 text-start mb-2 bg-primary-subtle text-primary-emphasis">
+            Task Urgency And Status
+        </div>
+        <div class="d-flex flex-row justify-content-between  gap-2">
+            <div class="d-flex flex-column justify-content-start gap-1">
+                <span class="fw-bold fs-5 text-black">Priority</span>
+                <span class="badge rounded-pill @GetPriorityBadgeClass()">
+                    @if (CreatedTask.Priority == "Critical")
+                    {
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                    }
+                    @CreatedTask.Priority
+                </span>
+            </div>
+            <div class="d-flex flex-column justify-content-start gap-1">
+                <span class="fw-bold fs-5 text-black">Stage</span>
+                <span class="badge rounded-pill @GetStageBadgeClass()">
+                    @CreatedTask.Stage
+                </span>
+
+            </div>
+        </div>
+
+    </div>
+    <div class="d-flex flex-column justify-content-between  w-100 gap-1 px-2">
+        <div class="p-3 mb-2 w-100 bg-primary-subtle text-primary-emphasis">
+            Task Completion Timeline
+        </div>
+        <div class="d-flex flex-row justify-content-between  gap-2">
+            <div class="d-flex flex-column justify-content-start align-items-start gap-1">
+                <span class="fw-bold fs-5 text-black">Expected Delivery Date</span>
+                <p class="fs-6 text-wrap">
+                    @_createdTask.ProposedCompletionDate.ToString("dd MMM yyyy")
+                </p>
+            </div>
+            @if (_createdTask.CompletionDate.HasValue)
+            {
+                <div class="d-flex flex-column justify-content-start align-items-start gap-1">
+                    <span class="fw-bold fs-5 text-black">Date Completed</span>
+                    <p class="fs-6 text-wrap">
+                        @_createdTask.CompletionDate?.ToString("dd MMM yyyy")
+                    </p>
+                </div>
+            }
+        </div>
+        
+    </div>
+    @if (!string.IsNullOrEmpty(_createdTask.CancelReason))
+    {
+        <div class="d-flex flex-row justify-content-start  gap-1">
+            <span class="fw-bold fs-5 text-black">Cancel Reason</span>
+            <p class="fs-6 text-wrap">
+                @_createdTask.CancelReason
+            </p>
+        </div>
+    }
+
+</div>
+
+@code {
+    private CreatedTaskDto _createdTask;
+
+    [Parameter, EditorRequired]
+    public CreatedTaskDto CreatedTask { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _createdTask = CreatedTask;
+    }
+
+
+    private string GetPriorityBadgeClass()
+    {
+        if(_createdTask.Priority == Entities.StaticValues.PriorityLevel.Low.ToString())
+        {
+            return "text-bg-secondary";
+        }
+        else if (_createdTask.Priority == Entities.StaticValues.PriorityLevel.Medium.ToString())
+        {
+            return "text-bg-info";
+        }
+        else if (_createdTask.Priority == Entities.StaticValues.PriorityLevel.High.ToString())
+        {
+            return "text-bg-warning";
+        }
+        else if (_createdTask.Priority == Entities.StaticValues.PriorityLevel.Critical.ToString())
+        {
+            return "text-bg-danger";
+        }
+
+        return "text-bg-light";
+    }
+   
+    private string GetStageBadgeClass()
+    {
+        if (_createdTask.Stage == Stage.Review.ToString())
+            return "text-bg-info";
+
+        if (_createdTask.Stage == Stage.Development.ToString())
+            return "text-bg-primary";
+
+        if (_createdTask.Stage == Stage.Testing.ToString())
+            return "text-bg-warning";
+
+        if (_createdTask.Stage == Stage.Deployment.ToString())
+            return "text-bg-dark";
+
+        if (_createdTask.Stage == Stage.ChangeManagement.ToString())
+            return "text-bg-secondary";
+
+        if (_createdTask.Stage == Stage.Completed.ToString())
+            return "text-bg-success";
+
+        if (_createdTask.Stage == Stage.Cancelled.ToString())
+            return "text-bg-danger";
+
+        return "text-bg-light";
+    }
+
+
+
+}

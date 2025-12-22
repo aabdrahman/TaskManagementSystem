@@ -18,7 +18,8 @@ public static class CreatedTaskMapper
             Priority = createdTask.Priority.ToString(),
             Stage = createdTask.TaskStage.ToString(),
             IsActive = !createdTask.IsDeleted,
-            TaskId = createdTask.TaskId
+            TaskId = createdTask.TaskId,
+            CancelReason = createdTask?.CancelReason ?? null,
         };
     }
 
