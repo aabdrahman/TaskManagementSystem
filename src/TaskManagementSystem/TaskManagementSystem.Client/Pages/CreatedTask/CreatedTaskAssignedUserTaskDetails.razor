@@ -85,11 +85,11 @@
     private TaskUserDto _userTask;
 
     [Parameter, EditorRequired]
-    public TaskUserDto UserTask { get; set; }
+    public TaskUserDto AssignedUserTasks { get; set; }
 
     protected override void OnParametersSet()
     {
-        _userTask = UserTask;
+        _userTask = AssignedUserTasks;
     }
 
     private string GetUserTaskStatus()

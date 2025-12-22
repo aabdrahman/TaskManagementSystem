@@ -29,9 +29,11 @@ else
     }
     else
     {
-        <CreatedTaskDetails CreatedTask="_createdTask" />
+        <CreatedTaskDetails CreatedMainTask="_createdTask" />
 
         <hr class="display-1" />
+
+
 
         if(!_isLoadingUserTasks && _responseMessage is not null)
         {
@@ -48,6 +50,10 @@ else
                     <p class="fw-bolder fs-4 fst-italic text-info w-100">
                         You have not assigned any task to users yet.
                     </p>
+
+                    <div class="btn btn-primary my-2 float-start" @onclick="HandleAddNewUserTask">
+                        Assign New Task To User
+                    </div>
                 }
                 else
                 {
@@ -62,7 +68,7 @@ else
     <Body>
         @if(_operationToPerform == OperationType.ReadOnly)
         {
-            <CreatedTaskAssignedUserTaskDetails UserTask="_selectedTask" />
+            <CreatedTaskAssignedUserTaskDetails AssignedUserTasks="_selectedTask" />
         }
         else if(_operationToPerform == OperationType.AddNewUserTask)
         {
