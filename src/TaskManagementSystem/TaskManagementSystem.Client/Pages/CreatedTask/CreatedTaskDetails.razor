@@ -63,7 +63,7 @@
     </div>
     @if (!string.IsNullOrEmpty(_createdTask.CancelReason))
     {
-        <div class="d-flex flex-row justify-content-start mx-3 gap-1">
+        <div class="d-flex flex-column align-items-start justify-content-start mx-3 gap-1">
             <span class="fw-bold fs-5 text-black">Cancel Reason</span>
             <p class="fs-6 text-wrap">
                 @_createdTask.CancelReason

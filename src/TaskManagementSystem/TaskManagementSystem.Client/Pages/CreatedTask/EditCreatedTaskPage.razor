@@ -259,7 +259,7 @@
     private void ValidateAll()
     {
         // Example: validate date
-        if (_taskToUpdate.ProposedCompletionDate <= DateTime.UtcNow.Date)
+        if (_updateCreatedTaskModel.ProposedCompletionDate <= DateTime.UtcNow.Date)
         {
             var field = new FieldIdentifier(_updateCreatedTaskModel, nameof(UpdateCreatedTaskDto.ProposedCompletionDate));
             _messageStore.Add(field, "Expected delivery date must be in the future.");

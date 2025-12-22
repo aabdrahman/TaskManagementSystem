@@ -45,7 +45,7 @@ else
             }
             else
             {
-                if(_userAssignedTasks.Count() == 0)
+                if(_userAssignedTasks.Count() == 0 )
                 {
                     <p class="fw-bolder fs-4 fst-italic text-info w-100">
                         You have not assigned any task to users yet.
@@ -119,6 +119,10 @@ else
         }
     }
 
+    private bool CanAddUserTask()
+    {
+        return (!_createdTask.CompletionDate.HasValue && string.IsNullOrEmpty(_createdTask.CancelReason));
+    }
 
 }
 
@@ -187,10 +191,14 @@ else
 
     private void HandleAddNewUserTask()
     {
-        _operationToPerform = OperationType.AddNewUserTask;
-        _showCloseButton = false;
-        _popupTitle = $"Add New User Task To - {TaskId}";
-        popup.Open();
+        if(CanAddUserTask())
+        {
+            _operationToPerform = OperationType.AddNewUserTask;
+            _showCloseButton = false;
+            _popupTitle = $"Add New User Task To - {TaskId}";
+            popup.Open();
+        }
+
     }
 
     private void HandleEditUserTask(Shared.DataTransferObjects.TaskUser.TaskUserDto userTaskToUpdate)
