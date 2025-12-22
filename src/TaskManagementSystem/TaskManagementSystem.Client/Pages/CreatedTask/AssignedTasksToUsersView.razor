@@ -48,7 +48,7 @@
                     }
                 </td>
                 <td class="d-flex justify-content-between align-content-center">
-                    @if(!assignedTask.CompletionDate.HasValue && !string.IsNullOrEmpty(assignedTask.CancelReason))
+                    @if(!assignedTask.CompletionDate.HasValue && string.IsNullOrEmpty(assignedTask.CancelReason))
                     {
                         <button class="btn btn-outline-primary" type="button" @onclick:stopPropagation="true" @onclick="(() => OnHandleEditUserTask(assignedTask))">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
