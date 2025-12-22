@@ -1,5 +1,7 @@
 ﻿using Contracts;
 using Entities.Models;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 
 namespace Repository;
 
@@ -42,6 +44,23 @@ public sealed class UserRepository : RepositoryBase<User>, IUserRepository
     public IQueryable<User> GetByUserName(string userName, bool trackChanges = true, bool hasQueryFilter = true)
     {
         return FindByCondition(x => x.Username == userName.ToUpper(), trackChanges, hasQueryFilter);
+    }
+
+    public async Task<IQueryable<User>> GetUsersWithSameUnit(int userId)
+    {
+        var unitIdParameter = new SqlParameter("@_userId_0", userId);
+
+        string query = @"SELECT *
+                            FROM dbo.Users
+                            WHERE [Id] != @_userId_0 AND [UnitId] = 
+                            (
+                            SELECT [UnitId]
+                            FROM dbo.Users
+                            WHERE [Id] = @_userId_0)";
+
+        var result = await CustomeDatabaseQuery(query, unitIdParameter);
+
+        return result;
     }
 
     public void UpdateUser(User updatedUser)

@@ -31,7 +31,8 @@ public static class TaskUserMapper
             AssignedUser = taskUser?.user?.FirstName + " " + taskUser?.user?.LastName ?? "",
             PrimaryTaskId = taskUser.TaskId,
             ProposedCompletionDate = taskUser.ProposedCompletionDate,
-            CancelReason = taskUser?.CancelReason ?? null
+            CancelReason = taskUser?.CancelReason ?? null,
+            UserId = taskUser.UserId
         };
     }
 }

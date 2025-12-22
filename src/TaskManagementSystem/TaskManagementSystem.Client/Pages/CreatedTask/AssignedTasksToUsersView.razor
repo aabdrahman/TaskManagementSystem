@@ -121,7 +121,7 @@
 
     private async Task OnHandleReassignUserTask(Shared.DataTransferObjects.TaskUser.TaskUserDto selectedUserTask)
     {
-        await HandleShowDetails.InvokeAsync(selectedUserTask);
+        await HandleReassignUserTask.InvokeAsync(selectedUserTask);
     }
 
     private async Task OnHandleAddNewUserTask()

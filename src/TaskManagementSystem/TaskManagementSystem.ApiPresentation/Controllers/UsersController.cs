@@ -65,6 +65,22 @@ public class UsersController : ControllerBase
         }
     }
 
+    [HttpGet("getUnitMember/{UserId:int}")]
+    public async Task<IActionResult> GetUnitMember(int UserId)
+    {
+        try
+        {
+            var getUnitMemberResponse = await _serviceManager.UserService.GetUsersWithSameUnit(UserId);
+
+            return StatusCode((int)getUnitMemberResponse.StatusCode, getUnitMemberResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "An Error Occurred.");
+            return StatusCode(500, ex.Message);
+        }
+    }
+
     [HttpPost]
     public async Task<IActionResult> Register([FromBody] CreateUserDto createUser)
     {

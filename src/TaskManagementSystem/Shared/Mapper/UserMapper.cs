@@ -34,4 +34,14 @@ public static class UserMapper
             RoleLink = new List<UserRole>() { new UserRole() { CreatedBy = "", RoleId = createUserDto.AssignedRole } }
         };
     }
+
+    public static UserSummaryDto ToSummaryDto(this User user)
+    {
+        return new UserSummaryDto()
+        {
+            Id = user.Id,
+            Email = user.Email.Trim(),
+            FullName = string.Concat(user.FirstName, " ", user.LastName)
+        };
+    }
 }

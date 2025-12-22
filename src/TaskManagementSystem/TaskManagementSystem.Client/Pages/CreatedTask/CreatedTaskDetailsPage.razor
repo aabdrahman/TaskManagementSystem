@@ -57,7 +57,7 @@ else
                 }
                 else
                 {
-                    <AssignedTasksToUsersView TasksAssignedToUser="_userAssignedTasks" HandleShowDetails="HandleShowReadOnly" HandleAddNewUserTask="HandleAddNewUserTask" HandleEditUserTask="HandleEditUserTask" HandleDeleteUserTask="HandleDeleteUserTask" />
+                    <AssignedTasksToUsersView TasksAssignedToUser="_userAssignedTasks" HandleShowDetails="HandleShowReadOnly" HandleAddNewUserTask="HandleAddNewUserTask" HandleEditUserTask="HandleEditUserTask" HandleDeleteUserTask="HandleDeleteUserTask" HandleReassignUserTask="HandleReassigneUserTask" />
                 }
             }
         }
@@ -81,6 +81,10 @@ else
         else if(_operationToPerform == OperationType.DeleteUserTask)
         {
             <TaskManagementSystem.Client.Pages.UserTask.CancelUserTask TaskUserToDelete="_selectedTask" HandleClose="OnHandleDeleteUserTaskClosePopup" />
+        }
+        else if(_operationToPerform == OperationType.ReassignUserTask)
+        {
+            <TaskManagementSystem.Client.Pages.UserTask.ReassignUserTask_ TaskUserToReassign="_selectedTask" HandleClose="OnHandleReassignUserTaskClosePopup" />
         }
     </Body>
 </Popup>
@@ -193,6 +197,16 @@ else
         popup.Close();
     }
 
+    private async Task OnHandleReassignUserTaskClosePopup(bool operationDecision)
+    {
+        if (operationDecision)
+        {
+            await GetCreatedTask();
+        }
+        _showCloseButton = true;
+        popup.Close();
+    }
+
     private async Task OnHandleDeleteUserTaskClosePopup(bool operationDecision)
     {
         if (operationDecision)
@@ -233,6 +247,15 @@ else
         popup.Open();
     }
 
+    private void HandleReassigneUserTask(Shared.DataTransferObjects.TaskUser.TaskUserDto userTaskToUpdate)
+    {
+        _selectedTask = userTaskToUpdate;
+        _operationToPerform = OperationType.ReassignUserTask;
+        _showCloseButton = false;
+        _popupTitle = $"Reassign User Task For Task - {TaskId}";
+        popup.Open();
+    }
+
     enum OperationType
     {
         None,
@@ -241,6 +264,7 @@ else
         DeleteOperation,
         AddNewUserTask,
         EditUserTask,
-        DeleteUserTask
+        DeleteUserTask,
+        ReassignUserTask
     }
 }

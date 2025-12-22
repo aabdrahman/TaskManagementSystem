@@ -24,7 +24,9 @@ public abstract class RepositoryBase<T> : IRepositoryBase<T> where T : class
 
     public async Task<IQueryable<T>> CustomeDatabaseQuery(string command, params object[] parameters)
     {
-        return await Task.FromResult(_repositoryContext.Database.SqlQueryRaw<T>(command, parameters));
+        //return await Task.FromResult(_repositoryContext.Database.SqlQueryRaw<T>(command, parameters));
+
+        return await Task.FromResult(_repositoryContext.Set<T>().FromSqlRaw(command, parameters));
     }
 
     public void DeleteEntity(T entity)

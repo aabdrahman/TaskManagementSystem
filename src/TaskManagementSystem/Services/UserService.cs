@@ -195,6 +195,32 @@ public sealed class UserService : IUserService
         }
     }
 
+    public async Task<GenericResponse<IEnumerable<UserSummaryDto>>> GetUsersWithSameUnit(int userId)
+    {
+        try
+        {
+            await _loggerManager.LogInfo($"Getting Users with same unit as - {userId}");
+
+            bool maxDaysToChangeFromConfig = int.TryParse(_configuration["UserManagement:MaxDaysToChangePassword"] ?? "30", out int daysToLastPasswordChangeValue);
+
+            IQueryable<User> result = await _repositoryManager.UserRepository.GetUsersWithSameUnit(userId);
+
+            List<UserSummaryDto> users = await result.Select(x => x.ToSummaryDto()).ToListAsync();
+
+            return GenericResponse<IEnumerable<UserSummaryDto>>.Success(users, HttpStatusCode.OK, "Users Fetched Successfully.");
+        }
+        catch (DbException ex)
+        {
+            await _loggerManager.LogError(ex, $"Internal Server Error - Database");
+            return GenericResponse<IEnumerable<UserSummaryDto>>.Failure(null, HttpStatusCode.InternalServerError, $"An Error Occurred - Database", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, $"Internal Server Error");
+            return GenericResponse<IEnumerable<UserSummaryDto>>.Failure(null, HttpStatusCode.InternalServerError, $"An Error Occurred - Database", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+    }
+
     public async Task<GenericResponse<UserDto>> GetByIdAsync(int Id, bool trackChanges = false, bool hasQueryFilter = true)
     {
         try
@@ -518,4 +544,6 @@ public sealed class UserService : IUserService
 
         return new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
     }
+
+    
 }

@@ -438,6 +438,7 @@ public sealed class TaskUserService : ITaskUserService
 
             taskUserToUpdate.Title = taskUserDto.Title;
             taskUserToUpdate.Description = taskUserDto.Description;
+            taskUserToUpdate.ProposedCompletionDate = taskUserDto.ProposedCompletionDate.Date;
 
             _repositoryManager.TaskUserRepository.UpdateTaskUser(taskUserToUpdate);
 
