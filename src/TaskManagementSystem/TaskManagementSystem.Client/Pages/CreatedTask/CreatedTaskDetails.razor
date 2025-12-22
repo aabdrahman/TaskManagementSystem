@@ -1,23 +1,23 @@
 ﻿@using Entities.StaticValues
 
 <div class="d-flex flex-column gap-2">
-    <div class="d-flex flex-column justify-content-start  w-100 gap-1 px-2">
+    <div class="d-flex flex-column justify-content-start w-100 gap-1 px-2">
         <span class="fw-bold fs-5 text-start text-black">Title</span>
         <p class="fs-6 text-start text-wrap">
             @_createdTask.Title
         </p>
     </div>
-    <div class="d-flex flex-column justify-content-start  w-100 gap-1 px-2">
+    <div class="d-flex flex-column justify-content-start w-100 gap-1 px-2">
         <span class="fw-bold fs-5 text-start text-black">Description</span>
         <p class="fs-6 text-start text-wrap">
             @_createdTask.Description
         </p>
     </div>
-    <div class="d-flex flex-column justify-content-start  w-100 gap-1 px-2">
+    <div class="d-flex flex-column justify-content-start w-100 gap-1 px-2">
         <div class="p-3 w-100 text-start mb-2 bg-primary-subtle text-primary-emphasis">
             Task Urgency And Status
         </div>
-        <div class="d-flex flex-row justify-content-between  gap-2">
+        <div class="d-flex flex-row justify-content-between mx-3 gap-2">
             <div class="d-flex flex-column justify-content-start gap-1">
                 <span class="fw-bold fs-5 text-black">Priority</span>
                 <span class="badge rounded-pill @GetPriorityBadgeClass()">
@@ -38,11 +38,11 @@
         </div>
 
     </div>
-    <div class="d-flex flex-column justify-content-between  w-100 gap-1 px-2">
+    <div class="d-flex flex-column justify-content-between w-100 gap-1 px-2">
         <div class="p-3 mb-2 w-100 bg-primary-subtle text-primary-emphasis">
             Task Completion Timeline
         </div>
-        <div class="d-flex flex-row justify-content-between  gap-2">
+        <div class="d-flex flex-row justify-content-between mx-3  gap-2">
             <div class="d-flex flex-column justify-content-start align-items-start gap-1">
                 <span class="fw-bold fs-5 text-black">Expected Delivery Date</span>
                 <p class="fs-6 text-wrap">
@@ -63,7 +63,7 @@
     </div>
     @if (!string.IsNullOrEmpty(_createdTask.CancelReason))
     {
-        <div class="d-flex flex-row justify-content-start  gap-1">
+        <div class="d-flex flex-row justify-content-start mx-3 gap-1">
             <span class="fw-bold fs-5 text-black">Cancel Reason</span>
             <p class="fs-6 text-wrap">
                 @_createdTask.CancelReason

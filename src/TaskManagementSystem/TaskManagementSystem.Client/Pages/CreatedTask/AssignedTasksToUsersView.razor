@@ -42,6 +42,10 @@
                     {
                         <span class="badge rounded-pill text-bg-warning">Due Today</span>
                     }
+                    else
+                    {
+                        <span class="badge rounded-pill text-bg-info">Pending</span>
+                    }
                 </td>
                 <td class="d-flex justify-content-between align-content-center">
                     @if(!assignedTask.CompletionDate.HasValue && !string.IsNullOrEmpty(assignedTask.CancelReason))
