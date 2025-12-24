@@ -32,6 +32,8 @@ public sealed class TaskUserService : ITaskUserService
         {
             await _loggerManager.LogInfo($"Creating Task User: {SerializeObject(taskUserDto)}");
 
+            string loggedInUserId = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("serialnumber"))?.Value ?? "0";
+
             CreatedTask? existingTask = await _repositoryManager.CreatedTaskRepository.GetById(taskUserDto.PrimaryTaskId, false, true)
                                             .SingleOrDefaultAsync();
             if(existingTask is null)
@@ -44,6 +46,12 @@ public sealed class TaskUserService : ITaskUserService
             {
                 await _loggerManager.LogWarning($"Task Id mismatch existing Task Id.");
                 return GenericResponse<TaskUserDto>.Failure(null, HttpStatusCode.NotFound, $"Invalid Task Credentials.",null);
+            }
+
+            if(taskUserDto.AssignedUser.ToString().Equals(existingTask.UserId))
+            {
+                await _loggerManager.LogWarning($"Task created by: {existingTask.UserId} cannot be assigned a user task.");
+                return GenericResponse<TaskUserDto>.Failure(null, HttpStatusCode.Conflict, $"User Task cannot be assigned to selected user.", null);
             }
 
             if(existingTask.ProjectedCompletionDate.Date < taskUserDto.ProposedCompletionDate.Date)
@@ -59,7 +67,12 @@ public sealed class TaskUserService : ITaskUserService
             
             TaskUser taskUserToInsert = taskUserDto.ToEntity();
 
+            var createdByEmail = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("emailaddress"))?.Value ?? "anonymous";
+
+            taskUserToInsert.CreatedBy = $"{createdByEmail}-{loggedInUserId}";
+
             await _repositoryManager.TaskUserRepository.CreateTaskUser(taskUserToInsert);
+
 
             await _repositoryManager.SaveChangesAsync();
 
@@ -254,6 +267,12 @@ public sealed class TaskUserService : ITaskUserService
                 return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.Conflict, $"User Task already completed at: {taskUserToUpdate.CompletionDate.Value.Date}", null);
             }
 
+            if(!string.IsNullOrEmpty(taskUserToUpdate.CancelReason))
+            {
+                await _loggerManager.LogWarning($"Task is already cancelled with reason: {taskUserToUpdate.CancelReason}");
+                return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.Conflict, $"User Task already cancelled.", null);
+            }
+
             string loggedInUserId = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0";
 
             if(!string.Equals(loggedInUserId, taskUserToUpdate.task.UserId.ToString(), StringComparison.OrdinalIgnoreCase) && !string.Equals(loggedInUserId, taskUserToUpdate.UserId.ToString(), StringComparison.OrdinalIgnoreCase))
@@ -307,6 +326,12 @@ public sealed class TaskUserService : ITaskUserService
             {
                 await _loggerManager.LogWarning($"Logged in user and created task user mismatch. Logged in user: {loggedInUserId}. Created Task User Id: {taskUserToReassign.UserId}");
                 return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.Conflict, "Invalid Credentials.", null);
+            }
+
+            if(reassignTaskUserDto.UserId.ToString().Equals(taskUserToReassign.task.UserId.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
+                await _loggerManager.LogWarning($"Parent Task Createdd By: {taskUserToReassign.task.UserId} is the same as the newly assigned user: {reassignTaskUserDto.UserId}");
+                return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.Conflict, "Invalid Credentials.Created By User cannot be a recipient.", null);
             }
 
             User? userToAssignTask = await _repositoryManager.UserRepository.GetById(reassignTaskUserDto.UserId, false)

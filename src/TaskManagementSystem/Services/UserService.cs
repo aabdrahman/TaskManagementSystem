@@ -129,7 +129,7 @@ public sealed class UserService : IUserService
             }
 
             existingUser.LastPasswordChangeDate = DateTime.UtcNow;
-            existingUser.Password = BCrypt.Net.BCrypt.EnhancedHashPassword(changePasswordDto.Password);
+            existingUser.Password = BCrypt.Net.BCrypt.EnhancedHashPassword(changePasswordDto.NewPassword);
             existingUser.IsActive = true;
 
             _repositoryManager.UserRepository.UpdateUser(existingUser);

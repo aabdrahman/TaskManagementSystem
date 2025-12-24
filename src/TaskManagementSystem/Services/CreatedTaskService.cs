@@ -11,7 +11,6 @@ using System.Text.Json;
 using System.Net;
 using Entities.StaticValues;
 using Microsoft.AspNetCore.Http;
-using Shared.StaticValues;
 
 namespace Services;
 
@@ -34,7 +33,7 @@ public sealed class CreatedTaskService : ICreatedTaskService
         {
             await _loggerManager.LogInfo($"Cancel Task Request - {SerializeObjects(cancelCreatedTaskDto)}");
 
-            CreatedTask? taskToCancel = await _repositoryManager.CreatedTaskRepository.GetById(cancelCreatedTaskDto.TaskPrimaryId, true).SingleOrDefaultAsync();
+            CreatedTask? taskToCancel = await _repositoryManager.CreatedTaskRepository.GetById(cancelCreatedTaskDto.TaskPrimaryId, true).Include(x => x.UserLink).SingleOrDefaultAsync();
 
             if(taskToCancel is null)
             {
@@ -48,7 +47,15 @@ public sealed class CreatedTaskService : ICreatedTaskService
                 return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.Conflict, $"Task Status: {taskToCancel.TaskStage.ToString()}", null);
             }
 
-            if(taskToCancel.UserId != cancelCreatedTaskDto.ReqesterId || taskToCancel.TaskId != cancelCreatedTaskDto.TaskId)
+            bool anyPendingRequest = taskToCancel.UserLink.Any(x => !x.CompletionDate.HasValue && string.IsNullOrEmpty(x.CancelReason));
+
+            if (anyPendingRequest)
+            {
+                await _loggerManager.LogWarning($"One or more user task are still pending completion or cancellation.");
+                return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.Conflict, $"One or more user tasks are still pending.", null);
+            }
+
+            if (taskToCancel.UserId != cancelCreatedTaskDto.ReqesterId || taskToCancel.TaskId != cancelCreatedTaskDto.TaskId)
             {
                 await _loggerManager.LogWarning($"Request Mismatch with the existing id: {SerializeObjects(taskToCancel)}");
                 return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.BadRequest, "Request Mismatch.", null);
@@ -422,7 +429,7 @@ public sealed class CreatedTaskService : ICreatedTaskService
                 return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.NotFound, "Failed.", null);
             }
 
-            bool anyPendingRequest = taskToUpdate.UserLink.Any(x => !x.CompletionDate.HasValue);
+            bool anyPendingRequest = taskToUpdate.UserLink.Any(x => !x.CompletionDate.HasValue && string.IsNullOrEmpty(x.CancelReason));
 
             if(anyPendingRequest)
             {
