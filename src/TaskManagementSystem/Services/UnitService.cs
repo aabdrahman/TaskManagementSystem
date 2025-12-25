@@ -9,6 +9,7 @@ using Shared.Mapper;
 using System.Net;
 using System.Text.Json;
 using Entities.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace Services;
 
@@ -16,10 +17,12 @@ public sealed class UnitService : IUnitService
 {
     private readonly ILoggerManager _loggerManager;
     private readonly IRepositoryManager _repositoryManager;
-    public UnitService(ILoggerManager loggerManager, IRepositoryManager repositoryManager)
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    public UnitService(ILoggerManager loggerManager, IRepositoryManager repositoryManager, IHttpContextAccessor httpContextAccessor)
     {
         _loggerManager = loggerManager;
         _repositoryManager = repositoryManager;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<GenericResponse<UnitDto>> CreateAsync(CreateUnitDto newUnitToCreate)
@@ -36,6 +39,7 @@ public sealed class UnitService : IUnitService
         }
 
         Unit unitToInsert = newUnitToCreate.ToEntity();
+        unitToInsert.CreatedBy = $"{_httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value}-{_httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value}";
 
         await _repositoryManager.UnitRepository.CreateUnit(unitToInsert);
 
@@ -67,6 +71,14 @@ public sealed class UnitService : IUnitService
             {
                 await _loggerManager.LogWarning($"Unit with specified Id: {UnitId} does not exist");
                 return GenericResponse<string>.Failure($"No Unit with specified Id exists: {UnitId}", HttpStatusCode.NotFound, "No Unit exists with specified Id", null);
+            }
+
+            bool existsUserLinkedToUnit = await _repositoryManager.UserRepository.GetByUnitId(existingUnit.Id, false, true).AnyAsync();
+
+            if(existsUserLinkedToUnit)
+            {
+                await _loggerManager.LogWarning($"Unit with specified Id: {UnitId} has one or more users still linked to it.");
+                return GenericResponse<string>.Failure($"Operation Failed.", HttpStatusCode.Conflict, "Unit has one or more users linked to it.", null);
             }
 
             if(isSoftDelete)

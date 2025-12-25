@@ -14,5 +14,6 @@ public interface IUserService
     Task<GenericResponse<TokenDto>> RefreshTokenAsync(TokenDto tokenDto);
     Task<GenericResponse<string>> ChangePasswordAsync(ChangeUserPasswordDto changePasswordDto);
     Task<GenericResponse<IEnumerable<UserSummaryDto>>> GetUsersWithSameUnit(int userId);
+    Task<GenericResponse<IEnumerable<UserSummaryDto>>> GetAllUsers(bool hasQueryFilter = true);
     //Task<GenericResponse<string>> ValidateUser();
 }

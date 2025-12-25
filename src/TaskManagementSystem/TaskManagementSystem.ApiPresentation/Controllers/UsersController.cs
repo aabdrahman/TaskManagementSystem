@@ -49,6 +49,21 @@ public class UsersController : ControllerBase
         }
     }
 
+    [HttpGet("getUserSummaryDetails")]
+    public async Task<IActionResult> GetUserSummaryDetails(bool hasQueryFilter = true)
+    {
+        try
+        {
+            var getUserResponse = await _serviceManager.UserService.GetAllUsers(hasQueryFilter);
+            return StatusCode((int)getUserResponse.StatusCode, getUserResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "An Error Occurred.");
+            return StatusCode(500, ex.Message);
+        }
+    }
+
     [HttpGet("{Id:int}")]
     public async Task<IActionResult> GetById(int Id, bool hasQueryFilter = true)
     {

@@ -375,6 +375,29 @@ public sealed class UserService : IUserService
         }
     }
 
+    public async Task<GenericResponse<IEnumerable<UserSummaryDto>>> GetAllUsers(bool hasQueryFilter = true)
+    {
+        try
+        {
+            await _loggerManager.LogInfo($"Fetching Users summary record.");
+
+            IEnumerable<UserSummaryDto> users = await _repositoryManager.UserRepository.GetAllUsers(false, hasQueryFilter).Select(x => x.ToSummaryDto()).ToListAsync();
+
+            await _loggerManager.LogInfo($"Fetched User Summary records - {SerializeObject(users)}");
+
+            return GenericResponse<IEnumerable<UserSummaryDto>>.Success(users, HttpStatusCode.OK, "Users summary details fetched.");
+        }
+        catch (DbException ex)
+        {
+            await _loggerManager.LogError(ex, $"Internal Server Error - Database");
+            return GenericResponse<IEnumerable<UserSummaryDto>>.Failure(null, HttpStatusCode.InternalServerError, $"An Error Occurred - Database", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, $"Internal Server Error");
+            return GenericResponse<IEnumerable<UserSummaryDto>>.Failure(null, HttpStatusCode.InternalServerError, $"An Error Occurred - Database", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+    }
 
     public async Task<GenericResponse<TokenDto>> RefreshTokenAsync(TokenDto tokenDto)
     {
@@ -545,5 +568,5 @@ public sealed class UserService : IUserService
         return new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
     }
 
-    
+
 }

@@ -1,0 +1,121 @@
+﻿@page "/Units"
+@attribute [Authorize]
+
+@if(_isAllowed)
+{
+    if(_isLoading)
+    {
+        
+    }
+    else
+    {
+        <div class="container-fluid container-xxl w-100">
+            <div class="d-flex flex-row justify-content-between mb-2 mb-sm-1 align-content-center w-100 gap-2">
+                <div>
+                </div>
+                <div class="btn btn-lg btn-primary" role="button" @onclick="OnHandleUnit">
+                    Create New Unit
+                </div>
+            </div>
+            <div class="d-flex flex-column justify-content-center w-100 mt-2 align-items-center">
+                <hr class="display-1" />
+                <UnitsView Units="_fetchedUnits" />
+            </div>
+        </div>
+    }
+
+}
+else
+{
+    <span class="fst-italic fs-4 text-info fw-bolder">
+        Oops...
+        Operation could not be completed.
+    </span>
+}
+
+<TaskManagementSystem.Client.SharedContent.Popup @ref="popup" Title="@_title" ShowCloseButton="@_showCloseButton" SaveChanges="HandleClose">
+    <Body>
+        @if (_operationToPerform == OperationType.AddNewUnit)
+        {
+            <AddUnit HandleClose="OnHandleAddUnitClose" />
+        }
+    </Body>
+</TaskManagementSystem.Client.SharedContent.Popup>
+
+@code {
+
+    //BASE PROPERTY
+    private IEnumerable<UnitDto> _fetchedUnits;
+    private int _loggedInUserId;
+    private bool _isAllowed = false;
+
+    //FETCH OPERATION VARIABLES
+    private bool _isLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isLoading = true;
+        var authState = await authStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        _loggedInUserId = int.Parse(user.FindFirst(x => x.Type.EndsWith("serialnumber"))?.Value ?? "0");
+
+        if(_loggedInUserId == 0)
+        {
+            _isAllowed = false;
+            _isLoading = false;
+            return;
+        }
+
+        _isAllowed = true;
+        await FetchUnits();
+        _isLoading = false;
+    }
+
+    private async Task FetchUnits()
+    {
+        _fetchedUnits = await getUnitsHandler.Handle();
+    }
+}
+
+@code{
+
+    private TaskManagementSystem.Client.SharedContent.Popup popup;
+
+    private OperationType _operationToPerform;
+    private string _title;
+    private bool _showCloseButton = false;
+
+    enum OperationType
+    {
+        None,
+        AddNewUnit,
+        UpdateUnit
+    }
+
+    private void HandleClose()
+    {
+        _title = null;
+        _showCloseButton = false;
+        _operationToPerform = OperationType.None;
+        popup.Close();
+    }
+
+    private async Task OnHandleAddUnitClose(bool refreshDecision)
+    {
+        if(refreshDecision)
+        {
+            await FetchUnits();
+        }
+
+        HandleClose();
+    }
+
+    private void OnHandleUnit()
+    {
+        _operationToPerform = OperationType.AddNewUnit;
+        _title = "Add New Unit";
+        _showCloseButton = false;
+        popup.Open();
+    }
+}

@@ -1,0 +1,129 @@
+﻿@attribute [Authorize]
+
+@inject TaskManagementSystem.Client.Handlers.Authentication.GetUsersHandler getUsersHandler
+
+@if(_editContext is not null)
+{
+    <div class="d-flex flex-column p-2 justify-content-center">
+        @if (_responseMessage is not null && !_isLoading)
+        {
+            <div class="alert fst-italic text-center fs-6 fw-bold alert-@(_isSuccessful ? "success" : "danger")" role="alert">
+                @(_isSuccessful ? $"{_responseMessage} Click Close Button" : _responseMessage)
+            </div>
+        }
+        <EditForm class="w-100" EditContext="_editContext" OnValidSubmit="OnHandleSubmit">
+            <DataAnnotationsValidator />
+            <div class="d-flex flex-column justify-content-center gap-2 w-100">
+                <div class="d-flex flex-column justify-content-start">
+                    <label class="fw-bold form-label">Name</label>
+                    <InputText class="form-control" @bind-Value="_unitToCreate.Name" />
+                    <ValidationMessage For="(() => _unitToCreate.Name)" />
+                </div>
+                @if(_users.Any())
+                {
+                    <div class="d-flex flex-column justify-content-start">
+                        <label class="fw-bold form-label">Unit Head Name</label>
+                        <InputSelect class="form-select" @bind-Value="_unitToCreate.UnitHeadName">
+                            <option value="0" selected></option>
+                            @foreach (var user in _users)
+                            {
+                                <option value="@user.FullName">@user.FullName</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="(() => _unitToCreate.UnitHeadName)" />
+                    </div>
+                }
+                else
+                {
+                    <p class="fw-bold text-danger fs-6">
+                        Users could not be fetched
+                    </p>
+                }
+                <div class="d-flex flex-row justify-content-between">
+                    @if (!_isSuccessful)
+                    {
+                        <button class="btn btn-secondary" type="button" disabled="@_isLoading" @onclick="(() => OnHandleClose(false))">
+                            Cancel
+                        </button>
+                    }
+                    @if (_isLoading)
+                    {
+                        <button class="btn btn-primary" type="button" disabled>
+                            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                            <span role="status">Loading...</span>
+                        </button>
+                    }
+                    else
+                    {
+                        if (!_isSuccessful)
+                        {
+                            <button class="btn btn-primary" type="submit">
+                                Submit
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-secondary float-end" type="button" disabled="@(!_users.Any())" @onclick="(() => OnHandleClose(true))">
+                                Close
+                            </button>
+                        }
+                    }
+                </div>
+            </div>
+            
+        </EditForm>
+    </div>
+}
+
+@code {
+    //MODEL VARIABLES
+    private EditContext _editContext;
+    private CreateUnitDto _unitToCreate;
+    private IEnumerable<Shared.DataTransferObjects.User.UserSummaryDto> _users;
+
+    //HANDLE OPERATION VARIABLES
+    private bool _isLoading;
+    private bool _isSuccessful;
+    private string _responseMessage;
+
+    //PARAMETERS
+    [Parameter, EditorRequired]
+    public EventCallback<bool> HandleClose { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(150);
+        await FetchUsers();
+        _unitToCreate = new();
+        _editContext = new EditContext(_unitToCreate);
+    }
+
+    private async Task FetchUsers()
+    {
+        _users = await getUsersHandler.Handle();
+    }
+
+    private async Task OnHandleSubmit()
+    {
+        _isLoading = true;
+        // await Task.Delay(5000);
+        // _isSuccessful = DateTime.Now.Second % 2 == 0;
+        // _responseMessage = _isSuccessful ? "Success" : "Failed";
+
+        var response = await addUnitHandler.Handle(_unitToCreate);
+
+        _isSuccessful = response.isSuccessful; _responseMessage = response.responseMessage;
+
+        _isLoading = false;
+    }
+
+    private async Task OnHandleClose(bool refreshDecision = false)
+    {
+        _unitToCreate = null;
+        _editContext = null;
+        _users = default;
+        _responseMessage = null;
+        _isSuccessful = false;
+        await HandleClose.InvokeAsync(refreshDecision);
+    }
+}
