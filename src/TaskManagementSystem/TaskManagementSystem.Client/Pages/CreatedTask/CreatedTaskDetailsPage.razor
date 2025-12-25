@@ -29,6 +29,17 @@ else
     }
     else
     {
+        <div class="d-flex flex-row justify-content-between align-items-center mb-1 mb-lg-1 gap-5">
+            <div class="btn btn-lg btn-primary" role="button" @onclick="NavigateToTaskLists">
+                Back To Tasks List
+            </div>
+            <div class="btn btn-primary btn-lg" role="button" @onclick="HandleUpdateCreatedTaskStatus">
+                Update Task Status
+            </div>
+        </div>
+
+        <hr class="display-1" />
+
         <CreatedTaskDetails CreatedMainTask="_createdTask" />
 
         <hr class="display-1" />
@@ -85,6 +96,10 @@ else
         else if(_operationToPerform == OperationType.ReassignUserTask)
         {
             <TaskManagementSystem.Client.Pages.UserTask.ReassignUserTask_ TaskUserToReassign="_selectedTask" HandleClose="OnHandleReassignUserTaskClosePopup" />
+        }
+        else if(_operationToPerform == OperationType.UpdateCreatedTaskStatus)
+        {
+            <UpdateCreatedTaskStatus TaskToUpdateStatus="_createdTask" HandleClose="OnHandleUpdateCreatedTaskStatusClosePopup" />
         }
     </Body>
 </Popup>
@@ -153,6 +168,10 @@ else
         _isLoadingUserTasks = false;
     }
 
+    private void NavigateToTaskLists()
+    {
+        navManager.NavigateTo("tasks");
+    }
 }
 
 @code{
@@ -174,6 +193,7 @@ else
     {
         _selectedTask = null;
         _showCloseButton = true;
+        _operationToPerform = OperationType.None;
         popup.Close();
     }
 
@@ -184,6 +204,7 @@ else
             await GetCreatedTask();
         }
         _showCloseButton = true;
+        _operationToPerform = OperationType.None;
         popup.Close();
     }
 
@@ -193,6 +214,7 @@ else
         {
             await GetCreatedTask();
         }
+        _operationToPerform = OperationType.None;
         _showCloseButton = true;
         popup.Close();
     }
@@ -204,6 +226,7 @@ else
             await GetCreatedTask();
         }
         _showCloseButton = true;
+        _operationToPerform = OperationType.None;
         popup.Close();
     }
 
@@ -214,6 +237,7 @@ else
             await GetCreatedTask();
         }
         _showCloseButton = true;
+        _operationToPerform = OperationType.None;
         popup.Close();
     }
 
@@ -256,6 +280,25 @@ else
         popup.Open();
     }
 
+    private void HandleUpdateCreatedTaskStatus()
+    {
+        _operationToPerform = OperationType.UpdateCreatedTaskStatus;
+        _showCloseButton = false;
+        _popupTitle = $"Update Created Task Status - {TaskId}";
+        popup.Open();
+    }
+
+    private async Task OnHandleUpdateCreatedTaskStatusClosePopup(bool operationDecision)
+    {
+        if (operationDecision)
+        {
+            await GetCreatedTask();
+        }
+        _showCloseButton = true;
+        _operationToPerform = OperationType.None;
+        popup.Close();
+    }
+
     enum OperationType
     {
         None,
@@ -265,6 +308,7 @@ else
         AddNewUserTask,
         EditUserTask,
         DeleteUserTask,
-        ReassignUserTask
+        ReassignUserTask,
+        UpdateCreatedTaskStatus
     }
 }

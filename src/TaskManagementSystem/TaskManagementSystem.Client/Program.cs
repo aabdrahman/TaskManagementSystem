@@ -41,6 +41,7 @@ builder.Services.AddScoped<CancelCreatedTaskHandler>();
 builder.Services.AddScoped<CancelUserTaskHandler>();
 builder.Services.AddScoped<GetUnitMemberHandler>();
 builder.Services.AddScoped<ReassignUserTaskHandler>();
+builder.Services.AddScoped<UpdateCreatedTaskStatusHandler>();
 
 //Clients
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
