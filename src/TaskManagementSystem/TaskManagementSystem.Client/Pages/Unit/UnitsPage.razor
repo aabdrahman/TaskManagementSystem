@@ -19,7 +19,7 @@
             </div>
             <div class="d-flex flex-column justify-content-center w-100 mt-2 align-items-center">
                 <hr class="display-1" />
-                <UnitsView Units="_fetchedUnits" />
+                <UnitsView Units="_fetchedUnits" HandleEdit="OnHandleEditUnit" />
             </div>
         </div>
     }
@@ -33,11 +33,15 @@ else
     </span>
 }
 
-<TaskManagementSystem.Client.SharedContent.Popup @ref="popup" Title="@_title" ShowCloseButton="@_showCloseButton" SaveChanges="HandleClose">
+<TaskManagementSystem.Client.SharedContent.Popup @ref="popup" Title="@_title" ShowCloseButton="@_showCloseButton" SaveChanges="(() => HandleClose())">
     <Body>
         @if (_operationToPerform == OperationType.AddNewUnit)
         {
             <AddUnit HandleClose="OnHandleAddUnitClose" />
+        }
+        else if(_operationToPerform == OperationType.UpdateUnit)
+        {
+            <EditUnit UnitToEdit="_selectedUnit" HandleClose="OnHandleEditUnitClose" />
         }
     </Body>
 </TaskManagementSystem.Client.SharedContent.Popup>
@@ -86,6 +90,9 @@ else
     private string _title;
     private bool _showCloseButton = false;
 
+    //Selected Unit To Perform Operation
+    private UnitDto _selectedUnit;
+
     enum OperationType
     {
         None,
@@ -103,18 +110,41 @@ else
 
     private async Task OnHandleAddUnitClose(bool refreshDecision)
     {
+        HandleClose();
+
         if(refreshDecision)
         {
             await FetchUnits();
         }
 
+
+    }
+
+    private async Task OnHandleEditUnitClose(bool refreshDecision)
+    {
         HandleClose();
+
+        if (refreshDecision)
+        {
+            await FetchUnits();
+        }
+
+
     }
 
     private void OnHandleUnit()
     {
         _operationToPerform = OperationType.AddNewUnit;
         _title = "Add New Unit";
+        _showCloseButton = false;
+        popup.Open();
+    }
+
+    private void OnHandleEditUnit(UnitDto selectedUnit)
+    {
+        _selectedUnit = selectedUnit;
+        _operationToPerform = OperationType.UpdateUnit;
+        _title = $"Edit Unit - {_selectedUnit.Name}";
         _showCloseButton = false;
         popup.Open();
     }

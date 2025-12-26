@@ -33,6 +33,7 @@ public class UnitsController : ControllerBase
         }
         catch (Exception ex)
         {
+            await _loggerManager.LogError(ex, "An Error Occurred.");
             return StatusCode(500, ex.Message);
         }
     }
@@ -48,6 +49,23 @@ public class UnitsController : ControllerBase
         }
         catch (Exception ex)
         {
+            await _loggerManager.LogError(ex, "An Error Occurred.");
+            return StatusCode(500, ex.Message);
+        }
+    }
+
+    [HttpPut]
+    public async Task<IActionResult> UpdateUnit([FromBody] UpdateUnitDto updateUnit)
+    {
+        try
+        {
+            var updateUnitResponse = await _serviceManager.UnitService.UpdateUnitAsync(updateUnit);
+
+            return StatusCode((int)updateUnitResponse.StatusCode, updateUnitResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "An Error Occurred.");
             return StatusCode(500, ex.Message);
         }
     }
@@ -63,6 +81,7 @@ public class UnitsController : ControllerBase
         }
         catch (Exception ex)
         {
+            await _loggerManager.LogError(ex, "An Error Occurred.");
             return StatusCode(500, ex.Message);
         }
     }
@@ -78,8 +97,8 @@ public class UnitsController : ControllerBase
         }
         catch (Exception ex)
         {
-
-            throw;
+            await _loggerManager.LogError(ex, "An Error Occurred.");
+            return StatusCode(500, ex.Message);
         }
     }
 }

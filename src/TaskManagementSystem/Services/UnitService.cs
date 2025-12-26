@@ -27,35 +27,43 @@ public sealed class UnitService : IUnitService
 
     public async Task<GenericResponse<UnitDto>> CreateAsync(CreateUnitDto newUnitToCreate)
     {
-        await _loggerManager.LogInfo($"Creating Unit: {SerializeObjectToString(newUnitToCreate)}");
-
-        bool existingUnitWithName = await _repositoryManager.UnitRepository.GetAllUnits(false, false)
-                                                              .AnyAsync(x => x.NormalizedName == newUnitToCreate.Name.ToUpper());
-
-        if(existingUnitWithName)
-        {
-            await _loggerManager.LogWarning($"Unit with Name: {newUnitToCreate.Name} already exists.");
-            return GenericResponse<UnitDto>.Failure(null, HttpStatusCode.Conflict, $"Unit with Name: {newUnitToCreate.Name} already exists.", null);
-        }
-
-        Unit unitToInsert = newUnitToCreate.ToEntity();
-        unitToInsert.CreatedBy = $"{_httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value}-{_httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value}";
-
-        await _repositoryManager.UnitRepository.CreateUnit(unitToInsert);
-
         try
         {
-            await _repositoryManager.SaveChangesAsync();
-            await _loggerManager.LogInfo($"Unit Creation Successful - {SerializeObjectToString(unitToInsert)}");
+            await _loggerManager.LogInfo($"Creating Unit: {SerializeObjectToString(newUnitToCreate)}");
 
-            return GenericResponse<UnitDto>.Success(unitToInsert.ToDto(), HttpStatusCode.Created, "Unit Created Successfully");
+            bool existingUnitWithName = await _repositoryManager.UnitRepository.GetAllUnits(false, false)
+                                                                  .AnyAsync(x => x.NormalizedName == newUnitToCreate.Name.ToUpper());
+
+            if (existingUnitWithName)
+            {
+                await _loggerManager.LogWarning($"Unit with Name: {newUnitToCreate.Name} already exists.");
+                return GenericResponse<UnitDto>.Failure(null, HttpStatusCode.Conflict, $"Unit with Name: {newUnitToCreate.Name} already exists.", null);
+            }
+
+            Unit unitToInsert = newUnitToCreate.ToEntity();
+            unitToInsert.CreatedBy = $"{_httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value}-{_httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value}";
+
+            await _repositoryManager.UnitRepository.CreateUnit(unitToInsert);
+
+            try
+            {
+                await _repositoryManager.SaveChangesAsync();
+                await _loggerManager.LogInfo($"Unit Creation Successful - {SerializeObjectToString(unitToInsert)}");
+
+                return GenericResponse<UnitDto>.Success(unitToInsert.ToDto(), HttpStatusCode.Created, "Unit Created Successfully");
+            }
+            catch (DbUpdateException ex)
+            {
+                await _loggerManager.LogError(ex, $"A Database Error Occurred Creating Unit: {ex.Message}");
+                return GenericResponse<UnitDto>.Failure(null, HttpStatusCode.InternalServerError, "Unit Creation Failed.", new { Message = ex.Message, Description = ex?.InnerException?.Message });
+            }
+
         }
-        catch (DbUpdateException ex)
+        catch (Exception ex)
         {
-            await _loggerManager.LogError(ex,$"An Error Occurred Creating Unit: {ex.Message}");
+            await _loggerManager.LogError(ex, $"An Error Occurred Creating Unit: {ex.Message}");
             return GenericResponse<UnitDto>.Failure(null, HttpStatusCode.InternalServerError, "Unit Creation Failed.", new { Message = ex.Message, Description = ex?.InnerException?.Message });
         }
-
        
     }
 
@@ -155,6 +163,45 @@ public sealed class UnitService : IUnitService
         {
             await _loggerManager.LogError(ex, "An Error Occurred Fetching Unit");
             return GenericResponse<UnitDto>.Failure(null, HttpStatusCode.InternalServerError, $"An Error Occurred Fetching Unit Details", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+    }
+
+    public async Task<GenericResponse<UnitDto>> UpdateUnitAsync(UpdateUnitDto updatedUnit)
+    {
+        try
+        {
+            string loggedInUser = $"{_httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value}-{_httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value}";
+            await _loggerManager.LogInfo($"Update Unit - {SerializeObjectToString(updatedUnit)}. From - {loggedInUser}");
+
+            Unit? unitToUpdate = await _repositoryManager.UnitRepository.GetById(updatedUnit.UnitId).SingleOrDefaultAsync();
+
+            if(unitToUpdate is null)
+            {
+                await _loggerManager.LogWarning($"Unit with Id; {updatedUnit.UnitId} does not exist.");
+                return GenericResponse<UnitDto>.Failure(null, HttpStatusCode.NotFound, "Unit does not exist");
+            }
+
+            unitToUpdate.UnitHeadName = updatedUnit.UnitHeadName;
+            unitToUpdate.Name = updatedUnit.Name;
+            //unitToUpdate.NormalizedName = updatedUnit.Name.ToUpper();
+
+            _repositoryManager.UnitRepository.UpdateUnit(unitToUpdate);
+
+            await _repositoryManager.SaveChangesAsync();
+
+            await _loggerManager.LogInfo($"Update Unit Successful - {SerializeObjectToString(unitToUpdate.ToDto())} by: {loggedInUser}");
+
+            return GenericResponse<UnitDto>.Success(unitToUpdate.ToDto(), HttpStatusCode.OK, "Unit Updated Successfully.");
+        }
+        catch (DbUpdateException ex)
+        {
+            await _loggerManager.LogError(ex, $"An Error Occurred Deleting Unit - {SerializeObjectToString(updatedUnit)}");
+            return GenericResponse<UnitDto>.Failure(null, HttpStatusCode.InternalServerError, ex.Message, null);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, $"An Error Occurred Deleting Unit -  {SerializeObjectToString(updatedUnit)}");
+            return GenericResponse<UnitDto>.Failure(null, HttpStatusCode.InternalServerError, ex.Message, null);
         }
     }
 
