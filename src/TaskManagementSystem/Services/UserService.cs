@@ -205,7 +205,7 @@ public sealed class UserService : IUserService
 
             IQueryable<User> result = await _repositoryManager.UserRepository.GetUsersWithSameUnit(userId);
 
-            List<UserSummaryDto> users = await result.Select(x => x.ToSummaryDto()).ToListAsync();
+            List<UserSummaryDto> users = await result.Select(UserMapper.ToSummaryDtoExpression()).ToListAsync();
 
             return GenericResponse<IEnumerable<UserSummaryDto>>.Success(users, HttpStatusCode.OK, "Users Fetched Successfully.");
         }
@@ -228,7 +228,8 @@ public sealed class UserService : IUserService
 			bool maxDaysToChangeFromConfig = int.TryParse(_configuration["UserManagement:MaxDaysToChangePassword"] ?? "30", out int daysToLastPasswordChangeValue);
 
 			UserDto? existingUser = await _repositoryManager.UserRepository.GetById(Id, trackChanges, hasQueryFilter)
-                                                    .Select(x => x.ToDto(daysToLastPasswordChangeValue))
+                                                    //.Select(x => x.ToDto(daysToLastPasswordChangeValue))
+                                                    .Select(UserMapper.ToDtoExpression(daysToLastPasswordChangeValue))
                                                     .SingleOrDefaultAsync();
             if (existingUser is null)
             {
@@ -262,7 +263,8 @@ public sealed class UserService : IUserService
 
 			IEnumerable<UserDto> allUsers = await _repositoryManager.UserRepository.GetAllUsers(trackChanges, hasQueryFilter)
                                         .Where(x => x.UnitId == unitId)
-                                        .Select(x => x.ToDto(daysToLastPasswordChangeValue))
+                                        //.Select(x => x.ToDto(daysToLastPasswordChangeValue))
+                                        .Select(UserMapper.ToDtoExpression(daysToLastPasswordChangeValue))
                                         .ToListAsync();
 
             await _loggerManager.LogInfo($"Users with Id: {unitId} fetched successfully - {SerializeObject(allUsers)}");
@@ -291,7 +293,8 @@ public sealed class UserService : IUserService
 			bool maxDaysToChangeFromConfig = int.TryParse(_configuration["UserManagement:MaxDaysToChangePassword"] ?? "30", out int daysToLastPasswordChangeValue);
 
 			UserDto? existingUser = await _repositoryManager.UserRepository.GetByUserName(Username.Trim(), trackChanges, hasQueryFilter)
-                                                    .Select(x => x.ToDto(daysToLastPasswordChangeValue))
+                                                    //.Select(x => x.ToDto(daysToLastPasswordChangeValue))
+                                                    .Select(UserMapper.ToDtoExpression(daysToLastPasswordChangeValue))
                                                     .FirstOrDefaultAsync();
             if (existingUser is null)
             {
@@ -381,7 +384,10 @@ public sealed class UserService : IUserService
         {
             await _loggerManager.LogInfo($"Fetching Users summary record.");
 
-            IEnumerable<UserSummaryDto> users = await _repositoryManager.UserRepository.GetAllUsers(false, hasQueryFilter).Select(x => x.ToSummaryDto()).ToListAsync();
+            IEnumerable<UserSummaryDto> users = await _repositoryManager.UserRepository.GetAllUsers(false, hasQueryFilter)
+                                                                            .Select(UserMapper.ToSummaryDtoExpression())
+                                                                            //.Select(x => x.ToSummaryDto())
+                                                                            .ToListAsync();
 
             await _loggerManager.LogInfo($"Fetched User Summary records - {SerializeObject(users)}");
 
@@ -522,7 +528,7 @@ public sealed class UserService : IUserService
             claims.Add(new Claim(ClaimTypes.Role, role.role.NormalizedName));
         }
         
-        if(_loginUser.AssignedUnit.UnitHeadName.Equals(_loginUser.AssignedUnit.UnitHeadName, StringComparison.OrdinalIgnoreCase))
+        if(_loginUser.AssignedUnit.UnitHeadName.Equals(string.Concat(_loginUser.FirstName, " ", _loginUser.LastName), StringComparison.OrdinalIgnoreCase))
         {
             claims.Add(new Claim("isUnitHead", "true"));
         }

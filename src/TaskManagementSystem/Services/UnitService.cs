@@ -102,7 +102,7 @@ public sealed class UnitService : IUnitService
 
             await _repositoryManager.SaveChangesAsync();
             await _loggerManager.LogInfo(isSoftDelete ? $"Unit with Id: {UnitId} marked as inactive successfully" : $"Unit wit Id: {UnitId} deleted successfully.");
-            return GenericResponse<string>.Success($"", HttpStatusCode.OK, $"");
+            return GenericResponse<string>.Success($"Operation Successful", HttpStatusCode.OK, $"{(isSoftDelete ? "User marked as inactive successfully." : "User Deletion Successful")}");
 
         }
         catch(DbUpdateException ex)
@@ -124,7 +124,8 @@ public sealed class UnitService : IUnitService
             await _loggerManager.LogInfo($"Fetching All Units....");
 
             List<UnitDto> allExistingUnits = await _repositoryManager.UnitRepository.GetAllUnits(trackChanges, hasQueryFilter)
-                                               .Select(x => x.ToDto())
+                                               //.Select(x => x.ToDto())
+                                               .Select(UnitMapper.ToDtoExpression())
                                                .ToListAsync();
 
             await _loggerManager.LogInfo($"Units Fetched Successfully: {SerializeObjectToString(allExistingUnits)}");
@@ -150,7 +151,8 @@ public sealed class UnitService : IUnitService
         try
         {
             UnitDto? existingUnit = await _repositoryManager.UnitRepository.GetById(UnitId, false)
-                                                        .Select(x => x.ToDto())
+                                                        //.Select(x => x.ToDto())
+                                                        .Select(UnitMapper.ToDtoExpression())
                                                         .SingleOrDefaultAsync();
 
             await _loggerManager.LogInfo(existingUnit is null ? $"Unit fetched successfully for Id: {UnitId} - {SerializeObjectToString(existingUnit)}" : $"No Unit exists for Id: {UnitId}");

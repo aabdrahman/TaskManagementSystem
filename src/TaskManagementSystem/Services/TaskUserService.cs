@@ -153,7 +153,8 @@ public sealed class TaskUserService : ITaskUserService
 
             IEnumerable<TaskUserDto> assignedTasksToUsers = await _repositoryManager.TaskUserRepository.GetByTaskId(TaskId, false, true)
                                                                             .Include(X => X.user).Include(x => x.task)
-                                                                            .Select(x => x.ToDto())
+                                                                            //.Select(x => x.ToDto())
+                                                                            .Select(TaskUserMapper.ToDtoExpression())
                                                                             .ToListAsync();
 
             await _loggerManager.LogInfo($"Assigned User Tasks Fetched - {SerializeObject(assignedTasksToUsers)}");
@@ -180,7 +181,8 @@ public sealed class TaskUserService : ITaskUserService
 
             IEnumerable<TaskUserDto> assignedTasksToUser = await _repositoryManager.TaskUserRepository.GetByUserId(UserId, false, true)
                                                                                     .Include(x => x.user).Include(x => x.task)
-                                                                                    .Select(x => x.ToDto())
+                                                                                    //.Select(x => x.ToDto())
+                                                                                    .Select(TaskUserMapper.ToDtoExpression())
                                                                                     .ToListAsync();
             await _loggerManager.LogInfo($"User Tasks fetched successfully - {SerializeObject(assignedTasksToUser)}");
 

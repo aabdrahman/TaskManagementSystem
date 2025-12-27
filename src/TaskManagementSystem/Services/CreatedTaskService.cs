@@ -171,7 +171,8 @@ public sealed class CreatedTaskService : ICreatedTaskService
             await _loggerManager.LogInfo($"Get Tasks by User Id - {taskId}");
 
             CreatedTaskDto? task = await _repositoryManager.CreatedTaskRepository.GetByTaskId(taskId, trackChanges, hasQueryFilter)
-                                                                    .Select(x => x.ToDto())
+                                                                    //.Select(x => x.ToDto())
+                                                                    .Select(CreatedTaskMapper.ToDtoExpression())
                                                                     .SingleOrDefaultAsync();
 
             await _loggerManager.LogInfo($"Taks fetched By status: {taskId} - {SerializeObjects(task)}");
@@ -203,7 +204,8 @@ public sealed class CreatedTaskService : ICreatedTaskService
             }
 
             IEnumerable<CreatedTaskDto> userTasks = await _repositoryManager.CreatedTaskRepository.GetByPriority(priority, trackChanges, hasQueryFilter)
-                                                                    .Select(x => x.ToDto())
+                                                                    //.Select(x => x.ToDto())
+                                                                    .Select(CreatedTaskMapper.ToDtoExpression())
                                                                     .ToListAsync();
             
             await _loggerManager.LogInfo($"Taks fetched By status: {taskPriority} - {SerializeObjects(userTasks)}");
@@ -235,7 +237,8 @@ public sealed class CreatedTaskService : ICreatedTaskService
             }
 
             IEnumerable<CreatedTaskDto> userTasks = await _repositoryManager.CreatedTaskRepository.GetByStatus(stage, trackChanges, hasQueryFilter)
-                                                                    .Select(x => x.ToDto())
+                                                                    //.Select(x => x.ToDto())
+                                                                    .Select(CreatedTaskMapper.ToDtoExpression())
                                                                     .ToListAsync();
             await _loggerManager.LogInfo($"Taks fetched By status: {taskStatus} - {SerializeObjects(userTasks)}");
 
@@ -261,7 +264,8 @@ public sealed class CreatedTaskService : ICreatedTaskService
 
             IEnumerable<CreatedTaskDto> userTasks = await _repositoryManager.CreatedTaskRepository.GetAllTasks(trackChanges, hasQueryFilter)
                                                                     .Where(x => x.UserId == UserId)
-                                                                    .Select(x => x.ToDto())
+                                                                    //.Select(x => x.ToDto())
+                                                                    .Select(CreatedTaskMapper.ToDtoExpression())
                                                                     .ToListAsync();
             return GenericResponse<IEnumerable<CreatedTaskDto>>.Success(userTasks, HttpStatusCode.OK, "User tasks fetched successfully");
         }

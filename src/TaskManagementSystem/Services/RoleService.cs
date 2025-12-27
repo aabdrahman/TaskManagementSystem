@@ -111,7 +111,8 @@ public sealed class RoleService : IRoleService
             await _loggerManager.LogInfo($"Fetching All Existing Roles.....");
 
             IEnumerable<RoleDto> allExistingRoles = await _repositoryManager.RoleRepository.GetAllRoles(trackChnages, hasQueryFilter)
-                                                .Select(x => x.ToDto())
+                                                //.Select(x => x.ToDto())
+                                                .Select(RoleMapper.ToDtoExpression())
                                                 .ToListAsync();
 
             await _loggerManager.LogInfo($"Roles Fetched Successfully - {SerializeObjects(allExistingRoles)}");
@@ -137,7 +138,8 @@ public sealed class RoleService : IRoleService
             await _loggerManager.LogInfo($"Fetching Role with Id: {Id}");
 
             RoleDto? existingRole = await _repositoryManager.RoleRepository.GetById(Id, trackChanges, hasQueryFilter)
-                                            .Select(x => x.ToDto())
+                                            //.Select(x => x.ToDto())
+                                            .Select(RoleMapper.ToDtoExpression())
                                             .SingleOrDefaultAsync();
 
             if(existingRole == null)
