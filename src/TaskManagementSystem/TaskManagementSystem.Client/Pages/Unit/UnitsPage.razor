@@ -19,7 +19,7 @@
             </div>
             <div class="d-flex flex-column justify-content-center w-100 mt-2 align-items-center">
                 <hr class="display-1" />
-                <UnitsView Units="_fetchedUnits" HandleEdit="OnHandleEditUnit" />
+                <UnitsView Units="_fetchedUnits" HandleEdit="OnHandleEditUnit" HandleDelete="OnHandleDeleteUnit" />
             </div>
         </div>
     }
@@ -42,6 +42,10 @@ else
         else if(_operationToPerform == OperationType.UpdateUnit)
         {
             <EditUnit UnitToEdit="_selectedUnit" HandleClose="OnHandleEditUnitClose" />
+        }
+        else if(_operationToPerform == OperationType.DeleteUnit)
+        {
+            <DeleteUnit UnitToDelete="_selectedUnit" HandleClose="OnHandleDeleteUnitClose" />
         }
     </Body>
 </TaskManagementSystem.Client.SharedContent.Popup>
@@ -97,7 +101,8 @@ else
     {
         None,
         AddNewUnit,
-        UpdateUnit
+        UpdateUnit,
+        DeleteUnit
     }
 
     private void HandleClose()
@@ -116,8 +121,6 @@ else
         {
             await FetchUnits();
         }
-
-
     }
 
     private async Task OnHandleEditUnitClose(bool refreshDecision)
@@ -128,8 +131,16 @@ else
         {
             await FetchUnits();
         }
+    }
 
+    private async Task OnHandleDeleteUnitClose(bool refreshDecision)
+    {
+        HandleClose();
 
+        if (refreshDecision)
+        {
+            await FetchUnits();
+        }
     }
 
     private void OnHandleUnit()
@@ -145,6 +156,15 @@ else
         _selectedUnit = selectedUnit;
         _operationToPerform = OperationType.UpdateUnit;
         _title = $"Edit Unit - {_selectedUnit.Name}";
+        _showCloseButton = false;
+        popup.Open();
+    }
+
+    private void OnHandleDeleteUnit(UnitDto selectedUnit)
+    {
+        _selectedUnit = selectedUnit;
+        _operationToPerform = OperationType.DeleteUnit;
+        _title = $"Delete Unit - {_selectedUnit.Name}";
         _showCloseButton = false;
         popup.Open();
     }

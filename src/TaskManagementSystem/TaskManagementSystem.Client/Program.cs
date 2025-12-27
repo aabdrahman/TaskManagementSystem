@@ -46,6 +46,7 @@ builder.Services.AddScoped<GetUnitsHandler>();
 builder.Services.AddScoped<GetUsersHandler>();
 builder.Services.AddScoped<AddUnitHandler>();
 builder.Services.AddScoped<EditUnitHandler>();
+builder.Services.AddScoped<DeleteUnitHandler>();
 
 //Clients
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
