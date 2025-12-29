@@ -6,7 +6,9 @@ using TaskManagementSystem.Client;
 using TaskManagementSystem.Client.AuthenticationProvider;
 using TaskManagementSystem.Client.Handlers.Authentication;
 using TaskManagementSystem.Client.Handlers.CreatedTask;
+using TaskManagementSystem.Client.Handlers.Role;
 using TaskManagementSystem.Client.Handlers.Unit;
+using TaskManagementSystem.Client.Handlers.User;
 using TaskManagementSystem.Client.Handlers.UserTask;
 using TaskManagementSystem.Client.Helper;
 
@@ -47,6 +49,8 @@ builder.Services.AddScoped<GetUsersHandler>();
 builder.Services.AddScoped<AddUnitHandler>();
 builder.Services.AddScoped<EditUnitHandler>();
 builder.Services.AddScoped<DeleteUnitHandler>();
+builder.Services.AddScoped<GetRolesHandler>();
+builder.Services.AddScoped<CreateUserHandler>();
 
 //Clients
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });

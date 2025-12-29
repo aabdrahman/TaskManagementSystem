@@ -1,0 +1,260 @@
+﻿@page "/users/add"
+@attribute [Authorize]
+
+<PageTitle>Add New User</PageTitle>
+
+@if(!_isRendered)
+{
+    <TaskManagementSystem.Client.SharedContent.LoadingSpinner IsVisible="@(!_isRendered)" />
+}
+else
+{
+    if (_editContext is not null)
+    {
+        <div class="container container-fluid container-xxl">
+            <div class="d-flex flex-row justify-content-start">
+                <h3>Add New User</h3>
+            </div>
+            <div class="row">
+                <div class="col-lg-1 col-1"></div>
+                <div class="col-lg-10 col-10">
+                    <div class="d-flex flex-column w-100 gap-2 justify-content-center align-items-center w-100 p-2">
+                        @if (_responseMessage is not null && !_isLoading)
+                        {
+                            <div class="alert fst-italic fst-italic w-100 text-center fs-6 fw-bold alert-@(_isSuccessful ? "success" : "danger")" role="alert">
+                                @(_isSuccessful ? $"{_responseMessage}" : _responseMessage)
+                            </div>
+                        }
+                        <EditForm EditContext="_editContext" OnValidSubmit="HandleSubmit" class="w-100">
+                            <DataAnnotationsValidator />
+                            <div class="d-flex flex-row mb-2 gap-1 gap-lg-1 w-100 justify-content-between align-items-center">
+                                <div class="d-flex flex-column gap-1 gap-lg-1 w-50 justify-content-start">
+                                    <label class="form-label fw-bold">User Name</label>
+                                    <InputText class="form-control" @bind-Value="_userToCreate.Username" />
+                                    <ValidationMessage For="(() => _userToCreate.Username)" />
+                                </div>
+                                <div class="d-flex flex-column gap-1 w-50 gap-lg-1 justify-content-start">
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column mb-2 gap-1 w-100 gap-lg-1">
+                                <div class="p-3 w-100 text-start w-100 mb-2 bg-primary-subtle text-primary-emphasis">
+                                    User Information Details
+                                </div>
+                                <div class="d-flex flex-row mb-2 gap-5 gap-lg-5 justify-content-between">
+                                    <div class="d-flex flex-column gap-1 w-50 gap-lg-1 justify-content-start">
+                                        <label class="form-label fw-bold">First Name</label>
+                                        <InputText @bind-Value="_userToCreate.FirstName" class="form-control" />
+                                        <ValidationMessage For="(() => _userToCreate.FirstName)" />
+                                    </div>
+                                    <div class="d-flex flex-column gap-1 w-50 gap-lg-1 justify-content-start">
+                                        <label class="form-label fw-bold">Last Name</label>
+                                        <InputText class="form-control" @bind-Value="_userToCreate.LastName" />
+                                        <ValidationMessage For="(() => _userToCreate.LastName)" />
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="d-flex flex-column mb-2 gap-1 w-100 gap-lg-1">
+                                <div class="p-3 w-100 text-start mb-2 bg-primary-subtle text-primary-emphasis">
+                                    User Contact Details
+                                </div>
+                                <div class="d-flex flex-row gap-5 gap-lg-5 w-100 justify-content-between">
+                                    <div class="d-flex flex-column gap-1 w-50 gap-lg-1 justify-content-start">
+                                        <label class="form-label fw-bold">Email Address</label>
+                                        <InputText type="email" @bind-Value="_userToCreate.Email" class="form-control" />
+                                        <ValidationMessage For="(() => _userToCreate.Email)" />
+                                    </div>
+                                    <div class="d-flex flex-column gap-1 w-50 gap-lg-1 justify-content-start">
+                                        <label class="form-label fw-bold">Phone Number</label>
+                                        <InputText class="form-control" @bind-Value="_userToCreate.PhoneNumber" type="phone" />
+                                        <ValidationMessage For="(() => _userToCreate.PhoneNumber)" />
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="d-flex flex-column mb-2 gap-1 w-100 gap-lg-1">
+                                <div class="p-3 w-100 text-start mb-2 bg-primary-subtle text-primary-emphasis">
+                                    User Permission Details
+                                </div>
+                                <div class="d-flex flex-row gap-5 w-100 gap-lg-5 justify-content-between">
+                                    <div class="d-flex flex-column gap-1  w-50 gap-lg-1 justify-content-start">
+                                        @if (_availableUnits.Any())
+                                        {
+                                            <label class="form-label fw-bold">Unit To Assign</label>
+                                            <InputSelect class="form-select" @bind-Value="_userToCreate.AssignedUnit">
+                                                <option value="0"></option>
+                                                @foreach (var unit in _availableUnits)
+                                                {
+                                                    <option value="@unit.Id">@unit.Name</option>
+                                                }
+                                            </InputSelect>
+                                            <ValidationMessage For="(() => _userToCreate.AssignedUnit)" />
+                                        }
+                                        else
+                                        {
+                                            <span class="text-info fst-italic fs-5 text-nowrap w-100">No available unit to assign user</span>
+                                        }
+                                    </div>
+                                    <div class="d-flex flex-column gap-1 w-50 gap-lg-1 justify-content-start">
+                                        @if (_availableRoles.Any())
+                                        {
+                                            <label class="form-label fw-bold">Role To Assign</label>
+                                            <InputSelect class="form-select" @bind-Value="_userToCreate.AssignedRole">
+                                                <option value="0"></option>
+                                                @foreach (var role in _availableRoles)
+                                                {
+                                                    <option value="@role.RoleId">@role.RoleName</option>
+                                                }
+                                            </InputSelect>
+                                            <ValidationMessage For="(() => _userToCreate.AssignedRole)" />
+                                        }
+                                        else
+                                        {
+                                            <span class="text-info fst-italic fs-5 text-nowrap w-100">No available role to assign user</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column mb-2- w-100 gap-1 gap-lg-1">
+                                <div class="p-3 w-100 text-start mb-2 bg-primary-subtle text-primary-emphasis">
+                                    User Password Details
+                                </div>
+                                <div class="d-flex flex-row gap-5 gap-lg-5 w-100 justify-content-between">
+                                    <div class="d-flex flex-column gap-1 w-50 gap-lg-1 justify-content-start">
+                                        <label class="form-label fw-bold">Password</label>
+                                        <InputText type="password" @bind-Value="_userToCreate.Password" class="form-control" />
+                                        <ValidationMessage For="(() => _userToCreate.Password)" />
+                                    </div>
+                                    <div class="d-flex flex-column gap-1 w-50 gap-lg-1 justify-content-start">
+                                        <label class="form-label fw-bold">Confirm Password</label>
+                                        <InputText class="form-control" @bind-Value="_userToCreate.ConfirmPassword" type="password" />
+                                        <ValidationMessage For="(() => _userToCreate.ConfirmPassword)" />
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="d-flex flex-row justify-content-between mt-2 align-items-center">
+                                <button class="btn btn-secondary" type="button" @onclick="ResetForm" disabled="@(_isLoading)">Cancel</button>
+                                @if (_isLoading)
+                                {
+                                    <button class="btn btn-primary" type="button" disabled>
+                                        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                                        <span role="status">Loading...</span>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary" type="submit">Create User</button>
+                                }
+
+                            </div>
+
+                        </EditForm>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-1 col-1"></div>
+        </div>
+    }
+}
+
+
+
+
+
+@code {
+    //MODEL PARAMETERS
+    private CreateUserDto _userToCreate;
+    private EditContext _editContext;
+    private IEnumerable<Shared.DataTransferObjects.Unit.UnitDto> _availableUnits = [];
+    private IEnumerable<Shared.DataTransferObjects.Role.RoleDto> _availableRoles = [];
+
+    private int _loggedInUserId;
+
+    //OPERATION PARAMETERS
+    private bool _isLoading;
+    private string _responseMessage;
+    private bool _isSuccessful;
+
+    private bool _isRendered = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        _loggedInUserId = int.Parse(user.FindFirst(x => x.Type.EndsWith("serialnumber"))?.Value ?? "0");
+
+        if(_loggedInUserId == 0)
+        {
+            return;
+        }
+
+        var getUnitResp = getUnitsHandler.Handle();
+        var getRolesResp = getRolesHandler.Handle();
+
+        await Task.WhenAll(getUnitResp, getRolesResp);
+
+        _availableUnits = await getUnitResp;
+        _availableRoles = await getRolesResp;
+        _userToCreate = new CreateUserDto();
+        _editContext = new EditContext(_userToCreate);
+        _isRendered = true;
+    }
+
+    private async Task HandleSubmit()
+    {
+        _isLoading = true;
+        // await Task.Delay(5000);
+        // _isSuccessful = DateTime.Now.Second % 2 == 0;
+        // _responseMessage = _isSuccessful ? "Successful" : "Failed";
+
+        var response = await createUserHandler.Handle(_userToCreate);
+        _isSuccessful = response.isSuccessful; _responseMessage = response.responseMessage;
+
+
+
+        _isLoading = false;
+
+        if(_isSuccessful)
+        {
+
+            await ResetForm();
+            StateHasChanged();
+
+            Console.WriteLine($"Successful at: {DateTime.Now}");
+            await Task.Delay(15000);
+            Console.WriteLine($"Successful after elapsed: {DateTime.Now}");
+
+            _responseMessage = null;
+            _isSuccessful = default;
+            StateHasChanged();
+        }
+    }
+
+
+    private async Task ResetForm()
+    {
+        _isRendered = false;
+        var authState = await authStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        _loggedInUserId = int.Parse(user.FindFirst(x => x.Type.EndsWith("serialnumber"))?.Value ?? "0");
+
+        if(_loggedInUserId == 0)
+        {
+            return;
+        }
+
+        var getUnitResp = getUnitsHandler.Handle();
+        var getRolesResp = getRolesHandler.Handle();
+
+        await Task.WhenAll(getUnitResp, getRolesResp);
+
+        _availableUnits = getUnitResp.Result;
+        _availableRoles = getRolesResp.Result;
+        _userToCreate = new CreateUserDto();
+        _editContext = new EditContext(_userToCreate);
+        _isRendered = true;
+    }
+}
