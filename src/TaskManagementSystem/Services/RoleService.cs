@@ -75,6 +75,14 @@ public sealed class RoleService : IRoleService
                 return GenericResponse<string>.Failure(string.Empty, HttpStatusCode.NotFound, $"Role with Id: {Id} does not exist", null);
             }
 
+            bool userRoleExists = await _repositoryManager.UserRoleRepository.GetByRoleId(Id, false).AnyAsync();
+
+            if(userRoleExists)
+            {
+                await _loggerManager.LogWarning($"Role: {Id} has one or more users assigned to it.");
+                return GenericResponse<string>.Failure(string.Empty, HttpStatusCode.NotFound, $"Role with Id: {Id} has one or more users assigned.", null);
+            }
+
             if(isSofDelete)
             {
                 await _loggerManager.LogInfo($"Marking Role as inactive. Id - {Id}");
