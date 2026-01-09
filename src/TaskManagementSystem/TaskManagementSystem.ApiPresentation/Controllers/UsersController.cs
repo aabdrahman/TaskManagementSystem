@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Service.Contract;
 using Shared.DataTransferObjects.User;
+using Shared.RequestParameters;
+using System.Text.Json;
 
 namespace TaskManagementSystem.ApiPresentation.Controllers;
 
@@ -50,11 +52,14 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("getUserSummaryDetails")]
-    public async Task<IActionResult> GetUserSummaryDetails(bool hasQueryFilter = true)
+    public async Task<IActionResult> GetUserSummaryDetails([FromQuery] UsersRequestParameter usersRequestParameter, bool hasQueryFilter = true)
     {
         try
         {
-            var getUserResponse = await _serviceManager.UserService.GetAllUsers(hasQueryFilter);
+            var getUserResponse = await _serviceManager.UserService.GetAllUsers(usersRequestParameter, hasQueryFilter);
+            if(getUserResponse.IsSuccessful)
+                Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(getUserResponse?.Data?.metaData ?? null));
+
             return StatusCode((int)getUserResponse.StatusCode, getUserResponse);
         }
         catch (Exception ex)

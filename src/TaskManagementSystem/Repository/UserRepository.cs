@@ -2,6 +2,8 @@
 using Entities.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Repository.QueryExtensions;
+using Shared.RequestParameters;
 
 namespace Repository;
 
@@ -21,9 +23,12 @@ public sealed class UserRepository : RepositoryBase<User>, IUserRepository
         DeleteEntity(deletedUser);
     }
 
-    public IQueryable<User> GetAllUsers(bool trackChanges = true, bool hasQueryFilter = true)
+    public IQueryable<User> GetAllUsers(UsersRequestParameter usersRequestParameter, bool trackChanges = true, bool hasQueryFilter = true)
     {
-        return FindAll(trackChanges, hasQueryFilter);
+        return FindAll(trackChanges, hasQueryFilter)
+                        .SearchByEmail(usersRequestParameter)
+                        .SearchByName(usersRequestParameter)
+                        .SearchByUnitId(usersRequestParameter);
     }
 
     public IQueryable<User> GetByEmail(string email, bool trackChanges = true, bool hasQueryFilter = true)

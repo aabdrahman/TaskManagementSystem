@@ -9,7 +9,6 @@ using System.Text.Json;
 using System.Net;
 using Entities.Models;
 using Shared.Mapper;
-using BCrypt.Net;
 using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Configuration;
@@ -19,6 +18,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Entities.ConfigurationModels;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Http;
+using Shared.RequestParameters;
 
 namespace Services;
 
@@ -261,8 +261,7 @@ public sealed class UserService : IUserService
 
 			bool maxDaysToChangeFromConfig = int.TryParse(_configuration["UserManagement:MaxDaysToChangePassword"] ?? "30", out int daysToLastPasswordChangeValue);
 
-			IEnumerable<UserDto> allUsers = await _repositoryManager.UserRepository.GetAllUsers(trackChanges, hasQueryFilter)
-                                        .Where(x => x.UnitId == unitId)
+			IEnumerable<UserDto> allUsers = await _repositoryManager.UserRepository.GetByUnitId(unitId, trackChanges, hasQueryFilter)
                                         //.Select(x => x.ToDto(daysToLastPasswordChangeValue))
                                         .Select(UserMapper.ToDtoExpression(daysToLastPasswordChangeValue))
                                         .ToListAsync();
@@ -378,30 +377,42 @@ public sealed class UserService : IUserService
         }
     }
 
-    public async Task<GenericResponse<IEnumerable<UserSummaryDto>>> GetAllUsers(bool hasQueryFilter = true)
+    public async Task<GenericResponse<PagedItemList<UserDto>>> GetAllUsers(UsersRequestParameter usersRequestParameter, bool hasQueryFilter = true)
     {
         try
         {
             await _loggerManager.LogInfo($"Fetching Users summary record.");
 
-            IEnumerable<UserSummaryDto> users = await _repositoryManager.UserRepository.GetAllUsers(false, hasQueryFilter)
-                                                                            .Select(UserMapper.ToSummaryDtoExpression())
-                                                                            //.Select(x => x.ToSummaryDto())
-                                                                            .ToListAsync();
+            bool maxDaysToChangeFromConfig = int.TryParse(_configuration["UserManagement:MaxDaysToChangePassword"] ?? "30", out int daysToLastPasswordChangeValue);
+
+            var usersAsQueryable = _repositoryManager.UserRepository.GetAllUsers(usersRequestParameter, false, hasQueryFilter);
+
+            //IEnumerable<UserSummaryDto> users = await _repositoryManager.UserRepository.GetAllUsers(usersRequestParameter, false, hasQueryFilter)
+            //                                                                .Skip((usersRequestParameter.PageNumber - 1) * usersRequestParameter.PageSize)
+            //                                                                .Take(usersRequestParameter.PageSize)
+            //                                                                .Select(UserMapper.ToSummaryDtoExpression())
+            //                                                                //.Select(x => x.ToSummaryDto())
+            //                                                                .ToListAsync();
+
+            IEnumerable<UserDto> users = await usersAsQueryable.Skip((usersRequestParameter.PageNumber - 1) * usersRequestParameter.PageSize).Take(usersRequestParameter.PageSize).Select(UserMapper.ToDtoExpression(daysToLastPasswordChangeValue)).ToListAsync();
+
+            int userCount = await usersAsQueryable.CountAsync();
+
+            var usersListItem = PagedItemList<UserDto>.ToPagedListItems(users, userCount, usersRequestParameter.PageSize, usersRequestParameter.PageNumber);
 
             await _loggerManager.LogInfo($"Fetched User Summary records - {SerializeObject(users)}");
 
-            return GenericResponse<IEnumerable<UserSummaryDto>>.Success(users, HttpStatusCode.OK, "Users summary details fetched.");
+            return GenericResponse<PagedItemList<UserDto>>.Success(usersListItem, HttpStatusCode.OK, "Users summary details fetched.");
         }
         catch (DbException ex)
         {
             await _loggerManager.LogError(ex, $"Internal Server Error - Database");
-            return GenericResponse<IEnumerable<UserSummaryDto>>.Failure(null, HttpStatusCode.InternalServerError, $"An Error Occurred - Database", new { ex.Message, Description = ex?.InnerException?.Message });
+            return GenericResponse<PagedItemList<UserDto>>.Failure(null, HttpStatusCode.InternalServerError, $"An Error Occurred - Database", new { ex.Message, Description = ex?.InnerException?.Message });
         }
         catch (Exception ex)
         {
             await _loggerManager.LogError(ex, $"Internal Server Error");
-            return GenericResponse<IEnumerable<UserSummaryDto>>.Failure(null, HttpStatusCode.InternalServerError, $"An Error Occurred - Database", new { ex.Message, Description = ex?.InnerException?.Message });
+            return GenericResponse<PagedItemList<UserDto>>.Failure(null, HttpStatusCode.InternalServerError, $"An Error Occurred - Database", new { ex.Message, Description = ex?.InnerException?.Message });
         }
     }
 

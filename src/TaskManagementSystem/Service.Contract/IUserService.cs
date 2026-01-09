@@ -1,5 +1,6 @@
 ﻿using Shared.ApiResponse;
 using Shared.DataTransferObjects.User;
+using Shared.RequestParameters;
 
 namespace Service.Contract;
 
@@ -14,6 +15,6 @@ public interface IUserService
     Task<GenericResponse<TokenDto>> RefreshTokenAsync(TokenDto tokenDto);
     Task<GenericResponse<string>> ChangePasswordAsync(ChangeUserPasswordDto changePasswordDto);
     Task<GenericResponse<IEnumerable<UserSummaryDto>>> GetUsersWithSameUnit(int userId);
-    Task<GenericResponse<IEnumerable<UserSummaryDto>>> GetAllUsers(bool hasQueryFilter = true);
+    Task<GenericResponse<PagedItemList<UserDto>>> GetAllUsers(UsersRequestParameter usersRequestParameter, bool hasQueryFilter = true);
     //Task<GenericResponse<string>> ValidateUser();
 }
