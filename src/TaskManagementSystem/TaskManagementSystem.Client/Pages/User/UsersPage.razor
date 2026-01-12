@@ -71,7 +71,7 @@ else
             <div class="d-flex mt-2 border-top mx-2 p-2 flex-column">
                 @if (_users.Any())
                 {
-                    <UsersView UsersToView="_users" UserMetaData="_metaData" OnHandleNextPage="HandleNextPage" OnHandlePreviousPage="HandlePreviousPage" HandleDeleteOperation="HandleShowDelete" />
+                    <UsersView UsersToView="_users" UserMetaData="_metaData" OnHandleNextPage="HandleNextPage" OnHandlePreviousPage="HandlePreviousPage" HandleDeleteOperation="HandleShowDelete" HandleShowDetailsOperation="HandleShowDetails" />
                 }
                 else
                 {
@@ -90,11 +90,15 @@ else
     }
 }
 
-<TaskManagementSystem.Client.SharedContent.Popup @ref="popup" Title="@_title">
+<TaskManagementSystem.Client.SharedContent.Popup @ref="popup" Title="@_title" ShowCloseButton="@_showCloseButton" >
     <Body>
         @if(_operationToPerform == OperationType.DeleteUser)
         {
             <DeleteUserView UserToDelete="_selectedUser" HandleClose="OnHandleClose" />
+        }
+        else if(_operationToPerform == OperationType.ShowDetails)
+        {
+            <UserDetails UserToView="_selectedUser" />
         }
     </Body>
 </TaskManagementSystem.Client.SharedContent.Popup>
@@ -111,6 +115,8 @@ else
     private string _title = "";
     private OperationType _operationToPerform;
     private UserDto _selectedUser;
+    private bool _showCloseButton = false;
+
 
     //OPERATION VARIABLES
     private bool _isLoading = false;
@@ -185,20 +191,29 @@ else
     enum OperationType
     {
         None,
-        DeleteUser
+        DeleteUser,
+        ShowDetails
     }
 
     private void HandleShowDelete(UserDto selectedUser)
     {
         _operationToPerform = OperationType.DeleteUser;
-        _selectedUser = selectedUser;
+        _selectedUser = selectedUser;_showCloseButton = false;
         _title = $"Delete User - {_selectedUser.Username}";
+        popup.Open();
+    }
+
+    private void HandleShowDetails(UserDto selectedUser)
+    {
+        _operationToPerform = OperationType.ShowDetails;
+        _selectedUser = selectedUser;_showCloseButton = true;
+        _title = $"User Details - {_selectedUser.Username}";
         popup.Open();
     }
 
     private async Task OnHandleClose(bool refreshDecision)
     {
-        _title = "";
+        _title = "";_showCloseButton = false;
         _operationToPerform = OperationType.None;
         if(refreshDecision)
         {

@@ -22,9 +22,12 @@
             <strong>Phone:</strong>
             <div>@_userToView.PhoneNumber</div>
         </div>
-        <div class="d-flex flex-row justify-content-between">
-            <label class="fw-bold"></label>
+
+        <div class="flex-fill">
+            <strong>Assigned Unit:</strong>
+            <div>@(_userToView?.AssignedUnit ?? "")</div>
         </div>
+
         <div class="flex-fill">
             <strong>Last Login:</strong>
             <div>

@@ -17,7 +17,8 @@ public static class UserMapper
             PhoneNumber = user.PhoneNumber,
             Username = user.Username,
             DaysToPasswordExpiry = (int)(maxDaysToPasswordExpire - (DateTime.Now.Date - user.LastPasswordChangeDate.Date).TotalDays),
-            LastLoginDate = user.LastLoginDate ?? DateTime.MinValue
+            LastLoginDate = user.LastLoginDate ?? DateTime.MinValue,
+            AssignedUnit = user?.AssignedUnit?.NormalizedName ?? ""
         };
     }
 
@@ -57,7 +58,8 @@ public static class UserMapper
             PhoneNumber = user.PhoneNumber,
             Username = user.Username,
             DaysToPasswordExpiry = (int)(maxDaysToPasswordExpire - (DateTime.Now.Date - user.LastPasswordChangeDate.Date).TotalDays),
-            LastLoginDate = user.LastLoginDate ?? DateTime.MinValue
+            LastLoginDate = user.LastLoginDate ?? DateTime.MinValue,
+            AssignedUnit = user.AssignedUnit.NormalizedName
         };
     }
 
