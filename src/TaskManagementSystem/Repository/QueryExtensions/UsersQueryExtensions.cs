@@ -10,7 +10,8 @@ internal static class UsersQueryExtensions
     {
         if(!string.IsNullOrEmpty(usersRequestParameter.Name))
         {
-            return users.Where(x => EF.Functions.Like(x.FirstName, usersRequestParameter.Name) || EF.Functions.Like(x.LastName, usersRequestParameter.Name));
+            string searchTerm = $"%{usersRequestParameter.Name}%";
+            return users.Where(x => EF.Functions.Like(x.FirstName, searchTerm) || EF.Functions.Like(x.LastName, searchTerm));
         }
         else
         {
