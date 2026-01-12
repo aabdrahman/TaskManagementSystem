@@ -160,7 +160,7 @@ public sealed class UserService : IUserService
 
             User? existingUser = await _repositoryManager.UserRepository.GetByUserName(Username, true, false)
                                                 .SingleOrDefaultAsync();
-            if (existingUser is not null)
+            if (existingUser is null)
             {
                 await _loggerManager.LogWarning($"User with specified username does not exist - {Username}");
                 return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.NotFound, $"User with provided username does not exist.", null);

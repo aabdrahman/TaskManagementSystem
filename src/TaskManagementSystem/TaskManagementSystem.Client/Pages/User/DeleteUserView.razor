@@ -1,0 +1,97 @@
+﻿
+<div class="container-fluid container-xxl">
+    @if (_responseMessage is not null && !_isLoading)
+    {
+        <div class="alert w-100 fst-italic text-center fs-6 fw-bold alert-@(_isSuccessful ? "success" : "danger")" role="alert">
+            @(_isSuccessful ? $"{_responseMessage} Click Close Button" : _responseMessage)
+        </div>
+    }
+    <UserDetails UserToView="_userToDelete" />
+
+    <div class="d-flex flex-row justify-content-between gap-2 mb-2">
+        <label class="fw-bold w-25 form-label">Is Soft Delete? </label>
+        <input type="checkbox" @bind="_isSoftDelete" class="form-check-input"  />
+    </div>
+
+    <div class="d-flex flex-row justify-content-between border-3">
+        @if (!_isSuccessful)
+        {
+            <button class="btn btn-secondary" type="button" disabled="@_isLoading" @onclick="(() => OnHandleClose(false))">
+                Cancel
+            </button>
+        }
+        @if (_isLoading)
+        {
+            <button class="btn btn-danger" type="button" disabled>
+                <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                <span role="status">Loading...</span>
+            </button>
+        }
+        else
+        {
+            if (!_isSuccessful)
+            {
+                <button class="btn btn-danger" type="button" @onclick="OnHandleDelete">
+                    Submit
+                </button>
+            }
+            else
+            {
+                <button class="btn btn-secondary float-end" type="button" @onclick="(() => OnHandleClose(true))">
+                    Close
+                </button>
+            }
+        }
+    </div>
+
+</div>
+
+@code {
+    private UserDto _userToDelete;
+    private bool _isSoftDelete = true;
+
+    //OPERATION VARIABLES
+    private bool _isSuccessful;
+    private bool _isLoading;
+    private string _responseMessage;
+
+    [Parameter, EditorRequired]
+    public UserDto UserToDelete { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<bool> HandleClose { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _userToDelete = UserToDelete;
+    }
+
+    private async Task OnHandleClose(bool routeDecision)
+    {
+        _userToDelete = null;
+        _isSuccessful = default;
+        _isLoading = default;
+        _responseMessage = null;
+        await HandleClose.InvokeAsync(routeDecision);
+    }
+
+    private async Task OnHandleDelete()
+    {
+        _isLoading = true;
+        Console.WriteLine($"Is Soft Delete Decision: {_isSoftDelete}");
+        // await Task.Delay(5000);
+        // _isSuccessful = DateTime.Now.Second % 2 == 0;
+        // _responseMessage = _isSuccessful ? "Successful" : "Failed";
+
+        var deleteUserResponse = await deleteUserHandler.Handle(_userToDelete.Username, _isSoftDelete);
+        _isSuccessful = deleteUserResponse.isSuccessful; _responseMessage = deleteUserResponse.responseMessage;
+
+        _isLoading = false;
+    }
+
+    private void OnChangeSoftDelete()
+    {
+        _isSoftDelete = !_isSoftDelete;
+        Console.WriteLine($"Is Soft Delete Decision: {_isSoftDelete}");
+    }
+}

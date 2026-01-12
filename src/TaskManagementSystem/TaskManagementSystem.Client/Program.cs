@@ -54,6 +54,7 @@ builder.Services.AddScoped<CreateUserHandler>();
 builder.Services.AddScoped<AddRoleHandler>();
 builder.Services.AddScoped<DeleteRoleHandler>();
 builder.Services.AddScoped<GetUsersSummaryHandler>();
+builder.Services.AddScoped<DeleteUserHandler>();
 
 //Clients
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });

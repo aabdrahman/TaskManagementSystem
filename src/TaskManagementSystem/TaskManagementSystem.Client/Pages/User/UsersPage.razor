@@ -71,7 +71,7 @@ else
             <div class="d-flex mt-2 border-top mx-2 p-2 flex-column">
                 @if (_users.Any())
                 {
-                    <UsersView UsersToView="_users" UserMetaData="_metaData" OnHandleNextPage="HandleNextPage" OnHandlePreviousPage="HandlePreviousPage" />
+                    <UsersView UsersToView="_users" UserMetaData="_metaData" OnHandleNextPage="HandleNextPage" OnHandlePreviousPage="HandlePreviousPage" HandleDeleteOperation="HandleShowDelete" />
                 }
                 else
                 {
@@ -90,12 +90,29 @@ else
     }
 }
 
+<TaskManagementSystem.Client.SharedContent.Popup @ref="popup" Title="@_title">
+    <Body>
+        @if(_operationToPerform == OperationType.DeleteUser)
+        {
+            <DeleteUserView UserToDelete="_selectedUser" HandleClose="OnHandleClose" />
+        }
+    </Body>
+</TaskManagementSystem.Client.SharedContent.Popup>
+
 @code {
+    //MODEL AND FUNCTIONALITES VARIABLES
     private IEnumerable<UserDto> _users;
     private MetaData? _metaData;
     private Shared.RequestParameters.UsersRequestParameter _usersRequestParameter;
     private IEnumerable<Shared.DataTransferObjects.Unit.UnitDto> _availableUnits = [];
 
+    //POPUP VARAIBALES
+    private SharedContent.Popup popup;
+    private string _title = "";
+    private OperationType _operationToPerform;
+    private UserDto _selectedUser;
+
+    //OPERATION VARIABLES
     private bool _isLoading = false;
     private bool _isSuccessful;
     private string _responseMesssage;
@@ -159,5 +176,34 @@ else
         _usersRequestParameter.PageNumber = _usersRequestParameter.PageNumber - 1;
         await HandleSpoolRequest();
         StateHasChanged();
+    }
+}
+
+
+@code{
+
+    enum OperationType
+    {
+        None,
+        DeleteUser
+    }
+
+    private void HandleShowDelete(UserDto selectedUser)
+    {
+        _operationToPerform = OperationType.DeleteUser;
+        _selectedUser = selectedUser;
+        _title = $"Delete User - {_selectedUser.Username}";
+        popup.Open();
+    }
+
+    private async Task OnHandleClose(bool refreshDecision)
+    {
+        _title = "";
+        _operationToPerform = OperationType.None;
+        if(refreshDecision)
+        {
+            await HandleSpoolRequest();
+        }
+        popup.Close();
     }
 }
