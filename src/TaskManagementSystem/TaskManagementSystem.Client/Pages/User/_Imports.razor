@@ -2,8 +2,11 @@
 @using TaskManagementSystem.Client.Handlers.Unit
 @using TaskManagementSystem.Client.Handlers.Role
 @using TaskManagementSystem.Client.Handlers.User
+@using Shared.RequestParameters
 
 @inject AuthenticationStateProvider authStateProvider
 @inject GetUnitsHandler getUnitsHandler
 @inject GetRolesHandler getRolesHandler
 @inject CreateUserHandler createUserHandler
+@inject GetUsersSummaryHandler getUsersSummaryHandler
+@inject NavigationManager navManager

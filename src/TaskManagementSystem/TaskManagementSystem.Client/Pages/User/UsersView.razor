@@ -1,0 +1,101 @@
+﻿
+<table class="table table-striped w-100 table-hover table-responsive-sm table-sm">
+    <thead>
+        <tr>
+            <th>User Name</th>
+            <th>Email</th>
+            <th>Name</th>
+            <th>Last Login Date</th>
+            <th>Status</th>
+            <td>Operation</td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var user in _users)
+        {
+            <tr>
+                <td>@user.Username</td>
+                <td>@user.Email</td>
+                <td>
+                    @(string.Concat(user.FirstName, " ", user.LastName))
+                </td>
+                <td>@user.LastLoginDate.ToString("F")</td>
+                <td>
+                    @if (user.DaysToPasswordExpiry <= 0)
+                    {
+                        <span class="badge bg-danger">Expired</span>
+                    }
+                    else if (user.DaysToPasswordExpiry <= 5)
+                    {
+                        <span class="badge bg-warning text-dark">Expiring Soon</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">Active</span>
+                    }
+                </td>
+                <td>
+
+                </td>
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        @if (_userMetaData is not null)
+        {
+            <tr>
+                <td colspan="5">
+                    <div class="d-flex align-items-center justify-content-center border-top border-bottom mt-1 gap-3">
+                        <button class="btn btn-primary rounded-pill"
+                                disabled="@(!_userMetaData.hasPrevious)"
+                                @onclick="PrevPage">
+                            <i class="bi bi-arrow-left"></i>
+                        </button>
+
+                        <span>
+                            Page @_userMetaData.currentPage of @_userMetaData.totalPages
+                        </span>
+
+                        <button class="btn btn-primary rounded-pill"
+                                disabled="@(!_userMetaData.hasNext)"
+                                @onclick="NextPage">
+                            <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tfoot>
+
+</table>
+
+@code {
+    private List<UserDto> _users;
+    private MetaData _userMetaData;
+
+    [Parameter, EditorRequired]
+    public IEnumerable<UserDto> UsersToView { get; set; }
+
+    [Parameter]
+    public MetaData UserMetaData { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback OnHandleNextPage { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback OnHandlePreviousPage { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _users = UsersToView.ToList();
+        _userMetaData = UserMetaData;
+    }
+    private async Task NextPage()
+    {
+        await OnHandleNextPage.InvokeAsync();
+    }
+    private async Task PrevPage()
+    {
+        await OnHandlePreviousPage.InvokeAsync();
+    }
+}

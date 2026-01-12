@@ -28,7 +28,7 @@ internal static class ApplicationServiceExtensions
             {
                 policy.AllowAnyHeader()
                     .AllowAnyMethod()
-                    .AllowAnyOrigin();
+                    .AllowAnyOrigin().WithExposedHeaders("X-Pagination");
             });
         });
     }

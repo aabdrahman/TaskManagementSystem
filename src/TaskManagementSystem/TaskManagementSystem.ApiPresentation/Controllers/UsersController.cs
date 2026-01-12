@@ -1,4 +1,5 @@
 ﻿using Contracts.Infrastructure;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service.Contract;
 using Shared.DataTransferObjects.User;
@@ -58,7 +59,12 @@ public class UsersController : ControllerBase
         {
             var getUserResponse = await _serviceManager.UserService.GetAllUsers(usersRequestParameter, hasQueryFilter);
             if(getUserResponse.IsSuccessful)
-                Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(getUserResponse?.Data?.metaData ?? null));
+            {
+                //Response.Headers.Append("X-Pagination", JsonSerializer.Serialize(getUserResponse!.Data!.metaData));
+                //Response.Headers.Append("X-Pagination", JsonSerializer.Serialize(getUserResponse.Data!.metaData));
+                Response.HttpContext.Response.Headers.Append("X-Pagination", JsonSerializer.Serialize(getUserResponse.Data!.metaData));
+            }
+                
 
             return StatusCode((int)getUserResponse.StatusCode, getUserResponse);
         }

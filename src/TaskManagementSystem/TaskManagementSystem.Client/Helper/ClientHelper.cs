@@ -11,4 +11,6 @@ public static class ClientHelper
     public static string AuthorizationHeaderKey = "Bearer";
 
     public static int GetRefreshTokenWindow = 15;
+
+    public static string PaginationKey = "X-Pagination";
 }

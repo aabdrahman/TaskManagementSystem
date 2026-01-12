@@ -1,0 +1,163 @@
+﻿@page "/users"
+
+<PageTitle>Users Information Page</PageTitle>
+
+
+
+<div class="d-flex flex-row justify-content-between align-items-baseline w-100 px-2 py-1 mx-3 border-bottom">
+    <h3 class="display-6 fw-semibold">
+        Users Information Details
+    </h3>
+    <div>
+        <button class="btn btn-primary rounded-3" type="button" role="button" @onclick="NavigateToAddUser">
+            Add New User
+        </button>
+    </div>
+</div>
+
+@if(_isLoading)
+{
+    <TaskManagementSystem.Client.SharedContent.LoadingSpinner IsVisible="@(_isLoading)" />
+}
+else
+{
+    if(!_isLoading && _usersRequestParameter is not null)
+    {
+        <EditForm Model="_usersRequestParameter" OnSubmit="HandleSpoolRequest" class="mt-2">
+            <DataAnnotationsValidator />
+            <div class="d-flex mx-2 flex-row gap-2 justify-content-between">
+                <div class="d-flex flex-column gap-1 justify-content-start">
+                    <label class="form-label fw-bold">Name</label>
+                    <InputText class="form-control" @bind-Value="_usersRequestParameter.Name" />
+                    <ValidationMessage  For="(() => _usersRequestParameter.Name)"/>
+                </div>
+                <div class="d-flex flex-column gap-1 justify-content-start">
+                    <label class="form-label fw-bold">User Email</label>
+                    <InputText class="form-control" @bind-Value="_usersRequestParameter.Email" />
+                    <ValidationMessage For="(() => _usersRequestParameter.Email)" />
+                </div>
+                <div class="d-flex flex-column gap-1 justify-content-start">
+                    <label class="form-label fw-bold">Page Number</label>
+                    <InputNumber min="1" class="form-control" @bind-Value="_usersRequestParameter.PageNumber" />
+                    <ValidationMessage For="(() => _usersRequestParameter.PageNumber)" />
+                </div>
+                <div class="d-flex flex-column gap-1 justify-content-start">
+                    <label class="form-label fw-bold">Page Size</label>
+                    <InputNumber min="1" class="form-control" @bind-Value="_usersRequestParameter.PageSize" />
+                    <ValidationMessage For="(() => _usersRequestParameter.PageSize)" />
+                </div>
+                @if(_availableUnits.Count() > 0)
+                {
+                    <div class="d-flex flex-column gap-1 justify-content-start">
+                        <label class="form-label fw-bold">Unit</label>
+                        <InputSelect class="form-select" @bind-Value="_usersRequestParameter.UnitId">
+                            <option value=""></option>
+                            @foreach(var unit in _availableUnits)
+                            {
+                                <option value="@unit.Id">@unit.Name</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="(() => _usersRequestParameter.UnitId)" />
+                    </div>
+                }
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-primary rounded-3" type="submit">Spool Users</button>
+                </div>
+            </div>
+        </EditForm>
+
+        @if (_isFetched && _users is not null)
+        {
+            <div class="d-flex mt-2 border-top mx-2 p-2 flex-column">
+                @if (_users.Any())
+                {
+                    <UsersView UsersToView="_users" UserMetaData="_metaData" OnHandleNextPage="HandleNextPage" OnHandlePreviousPage="HandlePreviousPage" />
+                }
+                else
+                {
+                    <div class="no-trails" style="text-align:center;margin-top:100px;">
+                        <svg viewBox="0 0 16 16" class="bi bi-tree" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style="width:200px;">
+                            <path fill-rule="evenodd" d="M8 0a.5.5 0 0 1 .416.223l3 4.5A.5.50 0 1 11 5.5h-.098l2.022 3.235a.5.5 0 0 1-.424.765h-.191l1.638 3.276a.5.50 0 1-.447.724h-11a.5.5 0 0 1-.447-.724L3.69 9.5H3.5a.5.5 0 01-.424-.765L5.098 5.5H5a.5.5 0 0 1-.416-.777l3-4.5A.5.5 0 0 1 8 0zM5.9344.5H6a.5.5 0 0 1 .424.765L4.402 8.5H4.5a.5.5 0 0 1 .447.724L3.3112.5h9.382l-1.638-3.276A.5.5 0 0 1 11.5 8.5h.098L9.576 5.265A.5.5 0 0 110 4.5h.066L8 1.401 5.934 4.5z" />
+                            <path d="M7 13.5h2V16H7v-2.5z" />
+                        </svg>
+                        <h3 class="text-muted fw-light">
+                            No Users Found.
+                        </h3>
+                    </div>
+                }
+            </div>
+        }
+    }
+}
+
+@code {
+    private IEnumerable<UserDto> _users;
+    private MetaData? _metaData;
+    private Shared.RequestParameters.UsersRequestParameter _usersRequestParameter;
+    private IEnumerable<Shared.DataTransferObjects.Unit.UnitDto> _availableUnits = [];
+
+    private bool _isLoading = false;
+    private bool _isSuccessful;
+    private string _responseMesssage;
+    private bool _isFetched = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isLoading = true;
+        await Task.Delay(500);
+
+        await SpoolAvailableUnits();
+
+        _usersRequestParameter = new UsersRequestParameter();
+
+        _isLoading = false;
+    }
+
+    private void NavigateToAddUser()
+    {
+        navManager.NavigateTo("users/add");
+    }
+
+    private async Task HandleSpoolRequest()
+    {
+        _isFetched = false;_isLoading = true;
+        var response = await getUsersSummaryHandler.Handle2(_usersRequestParameter)!;
+        Console.WriteLine($"{System.Text.Json.JsonSerializer.Serialize(response)}");
+        _metaData = response.fetchedUsersMetaData; _users = response.fetchedUsers;
+
+        // if(response is null)
+        // {
+        //     _responseMesssage = "An Error Occurred";
+        //     _isSuccessful = false;
+        //     _users = default;
+        //     _metaData = null;
+        // }
+        // else
+        // {
+        //     _isSuccessful = response.IsSuccessful; _responseMesssage = response.Message;
+        //     _users = response.IsSuccessful ? response.Data : default;
+        //     _metaData = response.IsSuccessful ? response.Data.metaData : default;
+        // }
+
+        _isFetched = true;_isLoading = false;
+    }
+
+    private async Task SpoolAvailableUnits()
+    {
+        _availableUnits = await getUnitsHandler.Handle();
+    }
+
+    private async Task HandleNextPage()
+    {
+        _usersRequestParameter.PageNumber = _usersRequestParameter.PageNumber + 1;
+        await HandleSpoolRequest();
+        StateHasChanged();
+    }
+
+    private async Task HandlePreviousPage()
+    {
+        _usersRequestParameter.PageNumber = _usersRequestParameter.PageNumber - 1;
+        await HandleSpoolRequest();
+        StateHasChanged();
+    }
+}
