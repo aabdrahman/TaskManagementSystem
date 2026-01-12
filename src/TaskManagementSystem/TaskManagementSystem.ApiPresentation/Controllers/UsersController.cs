@@ -186,4 +186,36 @@ public class UsersController : ControllerBase
             return StatusCode(500, ex.Message);
         }
     }
+
+    [HttpGet("getUserDetailsToUpdate/{Id:int}")]
+    public async Task<IActionResult> GetUserDetailsToUpdate(int Id)
+    {
+        try
+        {
+            var getDetailsResponse = await _serviceManager.UserService.GetUserToUpdateByIdAsync(Id);
+
+            return StatusCode((int)getDetailsResponse.StatusCode, getDetailsResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "An Error Occurred.");
+            return StatusCode(500, ex.Message);
+        }
+    }
+
+    [HttpPut]
+    public async Task<IActionResult> UpdateUserDetails([FromBody] UpdateUserDto updateUserDto)
+    {
+        try
+        {
+            var updateUserResponse = await _serviceManager.UserService.UpdateUserDetailsAsync(updateUserDto);
+
+            return StatusCode((int)updateUserResponse.StatusCode, updateUserResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "An Error Occurred.");
+            return StatusCode(500, ex.Message);
+        }
+    }
 }

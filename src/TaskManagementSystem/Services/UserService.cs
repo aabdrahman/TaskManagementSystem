@@ -585,5 +585,85 @@ public sealed class UserService : IUserService
         return new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
     }
 
+    public async Task<GenericResponse<UpdateUserDto>> GetUserToUpdateByIdAsync(int Id, bool trackChanges = false, bool hasQueryFilter = true)
+    {
+        try
+        {
+            await _loggerManager.LogInfo($"Fetching User Details to update - {Id}");
 
+            UpdateUserDto? userToUpdate = await _repositoryManager.UserRepository.GetById(Id, trackChanges, hasQueryFilter).Select(UserMapper.ToUpdateDtoExpression()).SingleOrDefaultAsync();
+
+            if(userToUpdate == null)
+            {
+                await _loggerManager.LogInfo($"User details could not be fetched. User with Id does not exist: {Id}");
+                return GenericResponse<UpdateUserDto>.Failure(null, HttpStatusCode.NotFound, $"No User found with Id: {Id}");
+            }
+
+            await _loggerManager.LogInfo($"User Details to update fetched successfully - {SerializeObject(userToUpdate)}");
+
+            return GenericResponse<UpdateUserDto>.Success(userToUpdate, HttpStatusCode.OK, "User Details Fetched Successfully.");
+        }
+        catch(DbException ex)
+        {
+            await _loggerManager.LogError(ex, $"Database Error: {ex.Message}");
+            return GenericResponse<UpdateUserDto>.Failure(null, HttpStatusCode.InternalServerError, ex.Message);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, ex.Message);
+            return GenericResponse<UpdateUserDto>.Failure(null, HttpStatusCode.InternalServerError, ex.Message);
+        }
+    }
+
+    public async Task<GenericResponse<string>> UpdateUserDetailsAsync(UpdateUserDto updateUserDto)
+    {
+        try
+        {
+            await _loggerManager.LogInfo($"Update User Details - {SerializeObject(updateUserDto)}");
+
+            bool isSelectedUnitExist = await _repositoryManager.UnitRepository.GetById(updateUserDto.AssignedUnit, false).AnyAsync(); //Check if unit id exists
+
+            if(!isSelectedUnitExist)
+            {
+                await _loggerManager.LogWarning($"Update User Details Failed. Unit with Id: {updateUserDto.AssignedUnit} does not exist.");
+                return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.BadRequest, "Selcted Unit does not exist");
+            }
+
+            bool isSelectedRoleExist = await _repositoryManager.RoleRepository.GetById(updateUserDto.AssignedRole, false).AnyAsync(); //Check if role exists
+
+            if(!isSelectedRoleExist)
+            {
+                await _loggerManager.LogWarning($"Update User Details Failed. Role with Id: {updateUserDto.AssignedRole} does not exist.");
+                return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.BadRequest, "Selcted Role does not exist");
+            }
+
+            User? userToUpdate = await _repositoryManager.UserRepository.GetById(updateUserDto.Id, true, false).Include(x => x.RoleLink).SingleOrDefaultAsync(); //Load the user details including the roles
+
+            if(userToUpdate == null)
+            {
+                await _loggerManager.LogWarning($"Update User Details Failed. User with Id: {updateUserDto.Id} does not exist.");
+                return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.NotFound, "Selcted User does not exist");
+            }
+
+            userToUpdate = updateUserDto.ToEntity(userToUpdate);
+            //User updatedUserDetails = updateUserDto.ToEntity(userToUpdate);
+            _repositoryManager.UserRepository.UpdateUser(userToUpdate);
+
+            await _repositoryManager.SaveChangesAsync();
+
+            await _loggerManager.LogInfo($"User Updated Successfully - {SerializeObject(updateUserDto)}");
+
+            return GenericResponse<string>.Success("Operaion Successful.", HttpStatusCode.OK, "User Details Successfully Updated.");
+        }
+        catch (DbException ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error - Database");
+            return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.InternalServerError, $"An Error Occurred - Database", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "Internal Server Error");
+            return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.InternalServerError, $"An Error Occurred.", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+    }
 }

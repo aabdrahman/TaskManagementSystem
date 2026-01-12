@@ -72,4 +72,33 @@ public static class UserMapper
             FullName = string.Concat(user.FirstName, " ", user.LastName)
         };
     }
+
+    public static Expression<Func<User, UpdateUserDto>> ToUpdateDtoExpression()
+    {
+        return user => new UpdateUserDto()
+        {
+            Id = user.Id,
+            Email = user.Email,
+            PhoneNumber= user.PhoneNumber,
+            FirstName= user.FirstName,
+            LastName= user.LastName,
+            Username= user.Username,
+            AssignedUnit = user.UnitId,
+            AssignedRole = user.RoleLink.First().RoleId
+        };
+    }
+
+    public static User ToEntity(this UpdateUserDto updatedUserDetails, User existingUser)
+    {
+        existingUser.IsActive = true;
+        existingUser.UnitId = updatedUserDetails.AssignedUnit;
+        existingUser.FirstName = updatedUserDetails.FirstName.Trim();
+        existingUser.LastName = updatedUserDetails.LastName.Trim();
+        existingUser.Username = updatedUserDetails.Username.Trim().ToUpper();
+        existingUser.PhoneNumber = updatedUserDetails.PhoneNumber;
+        existingUser.Email = updatedUserDetails.Email.Trim().ToUpper();
+        existingUser.RoleLink.ToList().ForEach(x => x.RoleId = updatedUserDetails.AssignedRole);
+
+        return existingUser;
+    }
 }
