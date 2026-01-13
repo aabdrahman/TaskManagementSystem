@@ -1,4 +1,5 @@
 ﻿@page "/users"
+@attribute [Authorize]
 
 <PageTitle>Users Information Page</PageTitle>
 
@@ -71,7 +72,7 @@ else
             <div class="d-flex mt-2 border-top mx-2 p-2 flex-column">
                 @if (_users.Any())
                 {
-                    <UsersView UsersToView="_users" UserMetaData="_metaData" OnHandleNextPage="HandleNextPage" OnHandlePreviousPage="HandlePreviousPage" HandleDeleteOperation="HandleShowDelete" HandleShowDetailsOperation="HandleShowDetails" />
+                    <UsersView UsersToView="_users" UserMetaData="_metaData" OnHandleNextPage="HandleNextPage" OnHandlePreviousPage="HandlePreviousPage" HandleDeleteOperation="HandleShowDelete" HandleShowDetailsOperation="HandleShowDetails" HandleEditDetailsOperation="HandleEditDetails" />
                 }
                 else
                 {
@@ -99,6 +100,10 @@ else
         else if(_operationToPerform == OperationType.ShowDetails)
         {
             <UserDetails UserToView="_selectedUser" />
+        }
+        else if(_operationToPerform == OperationType.EditUser)
+        {
+            <UpdateUserView UserToUpdate="_selectedUser" HandleClose="OnHandleClose" />
         }
     </Body>
 </TaskManagementSystem.Client.SharedContent.Popup>
@@ -192,7 +197,8 @@ else
     {
         None,
         DeleteUser,
-        ShowDetails
+        ShowDetails,
+        EditUser
     }
 
     private void HandleShowDelete(UserDto selectedUser)
@@ -208,6 +214,14 @@ else
         _operationToPerform = OperationType.ShowDetails;
         _selectedUser = selectedUser;_showCloseButton = true;
         _title = $"User Details - {_selectedUser.Username}";
+        popup.Open();
+    }
+
+    private void HandleEditDetails(UserDto selectedUser)
+    {
+        _operationToPerform = OperationType.EditUser;
+        _selectedUser = selectedUser; _showCloseButton = false;
+        _title = $"Update User Details - {_selectedUser.Username}";
         popup.Open();
     }
 

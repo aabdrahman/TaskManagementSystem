@@ -1,0 +1,205 @@
+﻿@using Shared.DataTransferObjects.Role
+@using Shared.DataTransferObjects.Unit
+@inject Handlers.Role.GetRolesHandler getRolesHandler
+@inject Handlers.Unit.GetUnitsHandler getUnitsHandler
+
+@attribute [Authorize]
+
+@if(_isInitialized)
+{
+    <div class="d-flex flex-column flex-wrap justify-content-center w-100 px-2">
+        @if (_responseMessage is not null && !_isLoading)
+        {
+            <div class="alert w-100 fst-italic text-center fs-6 fw-bold alert-@(_isSuccessful ? "success" : "danger")" role="alert">
+                @(_isSuccessful ? $"{_responseMessage} Click Close Button" : _responseMessage)
+            </div>
+        }
+        @if(_userUpdateDetails is null)
+        {
+            <div class="d-flex flex-column flex-wrap justify-content-center align-items-center">
+                <h4>Oops....</h4>
+                <p class="fst-italic text-danger fs-6">
+                    @_fetchUserEditDetailsResponseMessage
+                </p>
+            </div>
+        }
+        else
+        {
+            <EditForm Model="_userUpdateDetails" OnValidSubmit="HandleSubmit">
+                <DataAnnotationsValidator />
+                <div class="mb-3 d-flex flex-column gap-1 w-100">
+                    <label class="fw-bold">User Name</label>
+                    <InputText class="form-control" @bind-Value="_userUpdateDetails.Username" />
+                    <ValidationMessage For="(() => _userUpdateDetails.Username)" />
+                </div>
+                <div class="mb-3 d-flex flex-column gap-1 w-100">
+                    <label class="fw-bold">First Name</label>
+                    <InputText class="form-control" @bind-Value="_userUpdateDetails.FirstName" />
+                    <ValidationMessage For="(() => _userUpdateDetails.FirstName)" />
+                </div>
+                <div class="mb-3 d-flex flex-column gap-1 w-100">
+                    <label class="fw-bold">Last Name</label>
+                    <InputText class="form-control" @bind-Value="_userUpdateDetails.LastName" />
+                    <ValidationMessage For="(() => _userUpdateDetails.LastName)" />
+                </div>
+                <div class="mb-3 d-flex flex-column gap-1 w-100">
+                    <label class="fw-bold">Phone Number</label>
+                    <InputText class="form-control" @bind-Value="_userUpdateDetails.PhoneNumber" />
+                    <ValidationMessage For="(() => _userUpdateDetails.PhoneNumber)" />
+                </div>
+                <div class="mb-3 d-flex flex-column gap-1 w-100">
+                    <label class="fw-bold">Email Address</label>
+                    <InputText class="form-control" @bind-Value="_userUpdateDetails.Email" />
+                    <ValidationMessage For="(() => _userUpdateDetails.Email)" />
+                </div>
+                @if(_availableRoles.Any())
+                {
+                    <div class="mb-3 d-flex flex-column gap-1 w-100">
+                        <label class="fw-bold">Assigned Role</label>
+                        <InputSelect class="form-control" @bind-Value="_userUpdateDetails.AssignedRole">
+                            <option value="0"></option>
+                            @foreach(var role in _availableRoles)
+                            {
+                                <option value="@role.RoleId">@role.RoleName</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="(() => _userUpdateDetails.AssignedRole)" />
+                    </div>
+                }
+                @if (_availableUnits.Any())
+                {
+                    <div class="mb-3 d-flex flex-column gap-1 w-100">
+                        <label class="fw-bold">Assigned Unit</label>
+                        <InputSelect class="form-control" @bind-Value="_userUpdateDetails.AssignedUnit">
+                            <option value="0"></option>
+                            @foreach (var unit in _availableUnits)
+                            {
+                                <option value="@unit.Id">@unit.Name</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="(() => _userUpdateDetails.AssignedUnit)" />
+                    </div>
+                }
+                <div class="d-flex flex-row justify-content-between">
+                    @if (!_isSuccessful)
+                    {
+                        <button class="btn btn-secondary" type="button" disabled="@_isLoading" @onclick="(() => OnHandleClose(false))">
+                            Cancel
+                        </button>
+                    }
+                    @if (_isLoading)
+                    {
+                        <button class="btn btn-primary" type="button" disabled>
+                            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                            <span role="status">Loading...</span>
+                        </button>
+                    }
+                    else
+                    {
+                        if (!_isSuccessful)
+                        {
+                            <button class="btn btn-primary" type="submit">
+                                Submit
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-secondary float-end" type="button" disabled="@(!_availableRoles.Any() || !_availableUnits.Any())" @onclick="(() => OnHandleClose(true))">
+                                Close
+                            </button>
+                        }
+                    }
+                </div>
+            </EditForm>
+        }
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-center align-items-center">
+        <strong class="text-primary">Loading Form Parameters...</strong>
+        <div class="spinner-border ml-auto text-primary" role="status" aria-hidden="true"></div>
+    </div>
+}
+
+@code {
+    //MODEL PARAMETERS
+    private UserDto _userToUpdate { get; set; }
+    private IEnumerable<RoleDto> _availableRoles;
+    private IEnumerable<UnitDto> _availableUnits;
+    private UpdateUserDto _userUpdateDetails;
+
+    //OPERATION PARAMETERS
+    private string _fetchUserEditDetailsResponseMessage;
+    private bool _isInitialized = false;
+    private bool _isLoading = false;
+    private bool _isSuccessful;private string _responseMessage;
+
+    //PARAMETERS
+    [Parameter, EditorRequired]
+    public UserDto UserToUpdate { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<bool> HandleClose { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+
+        var authState = await authStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if(user is null)
+        {
+            _isInitialized = true;
+            _fetchUserEditDetailsResponseMessage = "User Authentication Failed.";
+            return;
+        }
+
+        if(UserToUpdate is null)
+        {
+            _isInitialized = true;
+            _fetchUserEditDetailsResponseMessage = "User Details To Update could not be fetched.";
+            return;
+        }
+
+        await Task.Delay(500);
+
+        _userToUpdate = UserToUpdate;
+        var getUserToUpdateResponse = await getUserEditDetailsHandler.Handle(_userToUpdate.Id);
+        _fetchUserEditDetailsResponseMessage = getUserToUpdateResponse.responseMessage; _userUpdateDetails = getUserToUpdateResponse.userDetailsToUpdate;
+
+        if(_userUpdateDetails is null)
+        {
+            _isInitialized = true;
+            return;
+        }
+
+        _availableRoles = await getRolesHandler.Handle();
+        _availableUnits = await getUnitsHandler.Handle();
+        _isInitialized = true;
+    }
+
+    private async Task OnHandleClose(bool refreshDecision)
+    {
+        _fetchUserEditDetailsResponseMessage = null;
+        _userToUpdate = null;
+        _isSuccessful = default;
+        _isLoading = false;_isInitialized = false;
+        _userUpdateDetails = null;
+        _availableRoles = default;_availableUnits = default;
+        await HandleClose.InvokeAsync(refreshDecision);
+    }
+
+    private async Task HandleSubmit()
+    {
+        _isLoading = true;
+        // await Task.Delay(5000);
+        // _isSuccessful = DateTime.Now.Second % 2 == 0;
+        // _responseMessage = _isSuccessful ? "Reqesut Successful" : "Request Not Successful.";
+
+        var response = await updateUserDetailsHandler.Handle(_userUpdateDetails);
+        _isSuccessful = response.isSuccessful; _responseMessage = response.responseMessage;
+
+        _isLoading = false;
+    }
+}
