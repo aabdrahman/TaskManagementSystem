@@ -41,7 +41,7 @@ var app = builder.Build();
 
 app.CongigureExceptionHandler();
 
-app.UseCors();
+app.UseCors("FrontEndPolicy");
 
 app.ConfigureSwaggerDefinition();
 

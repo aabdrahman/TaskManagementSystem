@@ -12,9 +12,7 @@ using Microsoft.OpenApi.Models;
 using Repository;
 using Service.Contract;
 using Services;
-using Shared.ApiResponse;
 using System.Text;
-using System.Text.Json;
 
 namespace TaskManagementSystem.Api.ServiceExtensions;
 
@@ -29,6 +27,19 @@ internal static class ApplicationServiceExtensions
                 policy.AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowAnyOrigin().WithExposedHeaders("X-Pagination");
+            });
+
+            var corsConfig = configuration.GetSection("CorsPolicy");
+            string allowedOrigins = configuration.GetValue<string>("CorsPolicy:AllowedOrigins") ?? "";
+            string allowedMethods = configuration.GetValue<string>("CorsPolicy:AllowedMethods") ?? "";
+            string allowedHeaders = configuration.GetValue<string>("CorsPolicy:AllowHeaders") ?? "";
+
+            opts.AddPolicy("FrontEndPolicy", opts =>
+            {
+                opts.WithMethods(allowedMethods.Split(",", StringSplitOptions.TrimEntries))
+                    .WithOrigins(allowedOrigins.Split(",", StringSplitOptions.TrimEntries))
+                    .AllowAnyHeader()
+                    .WithExposedHeaders(allowedHeaders.Split(",", StringSplitOptions.TrimEntries));
             });
         });
     }
