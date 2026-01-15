@@ -55,7 +55,9 @@ public class UsersController : ControllerBase
         }
     }
 
+
     [HttpGet("getUserSummaryDetails")]
+    [Authorize]
     public async Task<IActionResult> GetUserSummaryDetails([FromQuery] UsersRequestParameter usersRequestParameter, bool hasQueryFilter = true)
     {
         try
@@ -78,8 +80,25 @@ public class UsersController : ControllerBase
         }
     }
 
+    [HttpGet]
+    [Authorize]
+    public async Task<IActionResult> GetUserSummary(bool trackChanges = false, bool hasQueryFilter = true)
+    {
+        try
+        {
+            var getUserSummaryResponse = await _serviceManager.UserService.GetUsersSummaryDetails(trackChanges, hasQueryFilter);
+
+            return StatusCode((int)getUserSummaryResponse.StatusCode, getUserSummaryResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "An Error Occurred.");
+            return StatusCode(500, ex.Message);
+        }
+    }
+
     [HttpGet("{Id:int}")]
-    [Authorize(Policy = "AdminPolicy")]
+    [Authorize]
     public async Task<IActionResult> GetById(int Id, bool hasQueryFilter = true)
     {
         try

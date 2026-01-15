@@ -8,12 +8,13 @@
                     <TaskManagementSystem.Client.Pages.UserAuthentication.RedirectToUnauthorized />
                 </NotAuthorized>
                 <Authorizing>
-                    <p class="fw-bolder fst-italic display-1 text-start text-info">
-                        Determining session state.......
-                    </p>
+                    <div class="loading-overlay fade-in">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="loading-text">Determining session state, please wait...</p>
+                    </div>
                 </Authorizing>
             </AuthorizeRouteView>
-            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+            <FocusOnNavigate RouteData="@routeData" Selector="h0" />
         </Found>
         <NotFound>
             <PageTitle>Not found</PageTitle>

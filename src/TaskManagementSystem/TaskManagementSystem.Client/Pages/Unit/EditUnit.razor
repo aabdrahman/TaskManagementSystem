@@ -1,6 +1,6 @@
 ﻿@attribute [Authorize(Roles = "ADMIN,ITGOVERNANCE")]
 
-@inject TaskManagementSystem.Client.Handlers.Authentication.GetUsersHandler getUsersHandler
+@inject TaskManagementSystem.Client.Handlers.User.GetUserSummaryDetailsHandler getUsersHandler
  
 @if(_editContext is not null)
 {

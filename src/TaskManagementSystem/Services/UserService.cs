@@ -666,4 +666,28 @@ public sealed class UserService : IUserService
             return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.InternalServerError, $"An Error Occurred.", new { ex.Message, Description = ex?.InnerException?.Message });
         }
     }
+
+    public async Task<GenericResponse<IEnumerable<UserSummaryDto>>> GetUsersSummaryDetails(bool trackChanges = true, bool hasQueryFilter = true)
+    {
+        try
+        {
+            await _loggerManager.LogInfo($"Fetching Users summary details");
+
+            List<UserSummaryDto> users = await _repositoryManager.UserRepository.GetAll(false, true).Select(UserMapper.ToSummaryDtoExpression()).ToListAsync();
+
+            await _loggerManager.LogInfo($"Users summary Details Fetched Successfully - {SerializeObject(users)}");
+
+            return GenericResponse<IEnumerable<UserSummaryDto>>.Success(users, HttpStatusCode.OK, $"Users summary details fetched successfully.");
+        }
+        catch (DbException ex)
+        {
+            await _loggerManager.LogError(ex, $"Internal Server Error - Database");
+            return GenericResponse<IEnumerable<UserSummaryDto>>.Failure(null, HttpStatusCode.InternalServerError, $"An Error Occurred - Database", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, $"Internal Server Error");
+            return GenericResponse<IEnumerable<UserSummaryDto>>.Failure(null, HttpStatusCode.InternalServerError, $"An Error Occurred - Database", new { ex.Message, Description = ex?.InnerException?.Message });
+        }
+    }
 }

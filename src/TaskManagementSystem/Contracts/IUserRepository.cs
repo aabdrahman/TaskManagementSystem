@@ -13,5 +13,6 @@ public interface IUserRepository
     IQueryable<User> GetByEmail(string email, bool trackChanges = true, bool hasQueryFilter = true);
     IQueryable<User> GetByUnitId(int unitId, bool trackChanges = true, bool hasQueryFilter = true);
     IQueryable<User> GetById(int Id, bool trackChanges = true, bool hasQueryFilter = true);
+    IQueryable<User> GetAll(bool trackChanges = true, bool hasQueryFilter = true);
     Task<IQueryable<User>> GetUsersWithSameUnit(int userId);
 }

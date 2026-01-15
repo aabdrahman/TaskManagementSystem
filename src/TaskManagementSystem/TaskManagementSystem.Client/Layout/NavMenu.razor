@@ -18,82 +18,84 @@
                     </NavLink>
                 </div>
 
-                @if (context.User.IsInRole("ADMIN,ITGOVERNANCE") || context.User.HasClaim("", "true"))
-                {
                     <div class="nav-item px-3 mt-1">
 
-                        <!-- Parent menu -->
-                        <div class="nav-link p-2 cursor-pointer" style="cursor:pointer;" @onclick="ToggleUserManagementSubMenu">
-                            <div class="d-flex align-items-center text-white gap-1">
-                                <span class="bi bi-backpack4-fill
-                             d-flex align-items-center justify-content-center
-                             flex-shrink-0 fs-4"
-                                      style="width:24px;"></span>
-                                <span>User Management</span>
-                            </div>
-                        </div>
-                        <!--SUBMENUS -->
-                        @if (_showUserManagementSubMenu)
+                    @if (context.User.IsInRole("ADMIN") || context.User.IsInRole("ITGOVERNANCE") || context.User.HasClaim("isUnitHead", "true"))
                         {
-                            
-                            <ul class="list-unstyled ms-4 mt-1">
-                                @if (context.User.IsInRole("ADMIN,ITGOVERNANCE"))
-                                {
-                                    <li>
-                                        <NavLink class="nav-link text-white py-1 px-1 text-white" href="/users/add">
-                                            <div class="d-flex align-items-center gap-1">
-                                                <span class="bi bi-file-medical
-                                                             d-flex align-items-center justify-content-center
-                                                             flex-shrink-0 fs-6"
-                                                      style="width:24px;"></span>
-                                                <span>Add New User</span>
-                                            </div>
-                                        </NavLink>
-                                    </li>
+                            <!-- Parent menu -->
+                            <div class="nav-link p-2 cursor-pointer" style="cursor:pointer;" @onclick="ToggleUserManagementSubMenu">
+                                <div class="d-flex align-items-center text-white gap-1">
+                                    <span class="bi bi-backpack4-fill
+                                     d-flex align-items-center justify-content-center
+                                     flex-shrink-0 fs-4"
+                                          style="width:24px;"></span>
+                                    <span>User Management</span>
+                                </div>
+                            </div>
+                            <!--SUBMENUS -->
+                            @if (_showUserManagementSubMenu)
+                            {
 
-                                    <li>
-                                        <NavLink class="nav-link text-white py-1 px-1 text-white" style="padding-left:1rem;" href="/users">
-                                            <div class="d-flex align-items-center gap-1">
-                                                <span class="bi bi-substack
-                                                             d-flex align-items-center justify-content-center
-                                                             flex-shrink-0 fs-6"
-                                                      style="width:24px;"></span>
-                                                <span>View All Users</span>
-                                            </div>
-                                        </NavLink>
-                                    </li>
+                                <ul class="list-unstyled ms-4 mt-1">
+                                    @if (context.User.IsInRole("ADMIN") || context.User.IsInRole("ITGOVERNANCE") || context.User.IsInRole("ITGOVERNANCE"))
+                                    {
+                                        <li>
+                                            <NavLink class="nav-link text-white py-1 px-1 text-white" href="/users/add">
+                                                <div class="d-flex align-items-center gap-1">
+                                                    <span class="bi bi-file-medical
+                                                                             d-flex align-items-center justify-content-center
+                                                                             flex-shrink-0 fs-6"
+                                                          style="width:24px;"></span>
+                                                    <span>Add New User</span>
+                                                </div>
+                                            </NavLink>
+                                        </li>
 
-                                    <li>
-                                        <NavLink class="nav-link text-white py-1 px-1 text-white" style="padding-left:1rem;" href="/roles">
-                                            <div class="d-flex align-items-center gap-1">
-                                                <span class="bi bi-substack
-                                                             d-flex align-items-center justify-content-center
-                                                             flex-shrink-0 fs-6"
-                                                      style="width:24px;"></span>
-                                                <span>Manage Role</span>
-                                            </div>
-                                        </NavLink>
-                                    </li>
-                                }
-                                
-                                @if (context.User.IsInRole("ADMIN,ITGOVERNANCE") || context.User.HasClaim("isUnitHead", "true"))
-                                {
-                                    <li>
-                                        <NavLink class="nav-link text-white py-1 px-1 text-white" style="padding-left:1rem;" href="/units">
-                                            <div class="d-flex align-items-center gap-1">
-                                                <span class="bi bi-substack
-                                                             d-flex align-items-center justify-content-center
-                                                             flex-shrink-0 fs-6"
-                                                      style="width:24px;"></span>
-                                                <span>Manage Unit</span>
-                                            </div>
-                                        </NavLink>
-                                    </li>
-                                }  
-                            </ul>
+                                        <li>
+                                            <NavLink class="nav-link text-white py-1 px-1 text-white" style="padding-left:1rem;" href="/users">
+                                                <div class="d-flex align-items-center gap-1">
+                                                    <span class="bi bi-substack
+                                                                             d-flex align-items-center justify-content-center
+                                                                             flex-shrink-0 fs-6"
+                                                          style="width:24px;"></span>
+                                                    <span>View All Users</span>
+                                                </div>
+                                            </NavLink>
+                                        </li>
+
+                                        <li>
+                                            <NavLink class="nav-link text-white py-1 px-1 text-white" style="padding-left:1rem;" href="/roles">
+                                                <div class="d-flex align-items-center gap-1">
+                                                    <span class="bi bi-substack
+                                                                             d-flex align-items-center justify-content-center
+                                                                             flex-shrink-0 fs-6"
+                                                          style="width:24px;"></span>
+                                                    <span>Manage Role</span>
+                                                </div>
+                                            </NavLink>
+                                        </li>
+                                    }
+
+                                    @if (context.User.IsInRole("ADMIN") || context.User.IsInRole("ITGOVERNANCE") || context.User.HasClaim("isUnitHead", "true"))
+                                    {
+                                        <li>
+                                            <NavLink class="nav-link text-white py-1 px-1 text-white" style="padding-left:1rem;" href="/units">
+                                                <div class="d-flex align-items-center gap-1">
+                                                    <span class="bi bi-substack
+                                                                             d-flex align-items-center justify-content-center
+                                                                             flex-shrink-0 fs-6"
+                                                          style="width:24px;"></span>
+                                                    <span>Manage Unit</span>
+                                                </div>
+                                            </NavLink>
+                                        </li>
+                                    }
+                                </ul>
+                            }
                         }
+
+                        
                     </div>
-                }
 
                 
                 @if (context.User.Identity.IsAuthenticated)
@@ -115,7 +117,7 @@
                         {
                             
                             <ul class="list-unstyled ms-4 mt-1">
-                                @if (context.User.IsInRole("BUSINESSANALYST,PRODUCTOWNER"))
+                                @if (context.User.IsInRole("PRODUCTOWNER") || context.User.IsInRole("BUSINESSANALYST"))
                                 {
                                     <li>
                                         <NavLink class="nav-link text-white py-1 px-1 text-white" href="/tasks">

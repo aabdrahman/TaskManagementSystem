@@ -23,6 +23,11 @@ public sealed class UserRepository : RepositoryBase<User>, IUserRepository
         DeleteEntity(deletedUser);
     }
 
+    public IQueryable<User> GetAll(bool trackChanges = true, bool hasQueryFilter = true)
+    {
+        return FindAll(trackChanges, hasQueryFilter);
+    }
+
     public IQueryable<User> GetAllUsers(UsersRequestParameter usersRequestParameter, bool trackChanges = true, bool hasQueryFilter = true)
     {
         return FindAll(trackChanges, hasQueryFilter)

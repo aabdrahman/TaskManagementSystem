@@ -33,6 +33,7 @@ builder.Services.ConfigureInfrastrucureManager();
 builder.Services.ConfigureModelsFromSettings(builder.Configuration);
 builder.Services.ConfigureHttpContextAccessor();
 builder.Services.ConfigureAuthentication(builder.Configuration);
+builder.Services.ConfigureAuthorization();
 builder.Services.ConfigureController();
 
 var app = builder.Build();

@@ -49,7 +49,7 @@ internal static class ApplicationServiceExtensions
 
         services.AddSwaggerGen(opts =>
         {
-            opts.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo() { Title = "TaskManagementSystemApi", Description = "Task Management System Api", Version = "v1", Contact = new Microsoft.OpenApi.Models.OpenApiContact()
+            opts.SwaggerDoc("v1", new OpenApiInfo() { Title = "TaskManagementSystemApi", Description = "Task Management System Api", Version = "v1", Contact = new Microsoft.OpenApi.Models.OpenApiContact()
             {
                 Name = "Abdrahman Akande",
                 Email = "akandeabdrahman@gmail.com",
@@ -212,7 +212,7 @@ internal static class ApplicationServiceExtensions
 
             opts.AddPolicy("AdminPolicy", opts =>
             {
-                opts.RequireRole("ADMIN", "GOVERNANCE");
+                opts.RequireRole("ADMIN", "ITGOVERNANCE");
             });
 
             opts.AddPolicy("UnitHeadPolicy", opts =>
@@ -224,13 +224,13 @@ internal static class ApplicationServiceExtensions
             {
                 opts.RequireAssertion(ctx =>
 
-                    ctx.User.IsInRole("ADMIN") || ctx.User.IsInRole("ITGOVERNANACE") || ctx.User.HasClaim("isUnitHead", "true"));
+                    ctx.User.IsInRole("ADMIN") || ctx.User.IsInRole("ITGOVERNANCE") || ctx.User.HasClaim("isUnitHead", "true"));
                 
             });
 
             opts.AddPolicy("ProductOwnerOrAdminPolicy", opts =>
             {
-                opts.RequireRole("ADMIN", "GOVERNANCE", "BUSINESSANALYST", "PRODUCTOWNER");
+                opts.RequireRole("ADMIN", "ITGOVERNANCE", "BUSINESSANALYST", "PRODUCTOWNER");
             });
 
             opts.AddPolicy("UnitHeadOrAdminOrProductOwnerPolicy", opts =>
