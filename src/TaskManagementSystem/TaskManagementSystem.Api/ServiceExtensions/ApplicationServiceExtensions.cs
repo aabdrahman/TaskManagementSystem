@@ -195,4 +195,51 @@ internal static class ApplicationServiceExtensions
             //};
         });
     }
+
+    internal static void ConfigureAuthorization(this IServiceCollection services)
+    {
+        services.AddAuthorization(opts =>
+        {
+            opts.AddPolicy("DeveloperPolicy", opts =>
+            {
+                opts.RequireRole("TESTER", "DEVELOPER", "DEPLOYMENT");
+            });
+
+            opts.AddPolicy("ProductOwnerPolicy", opts =>
+            {
+                opts.RequireRole("BUSINESSANALYST", "PRODUCTOWNER");
+            });
+
+            opts.AddPolicy("AdminPolicy", opts =>
+            {
+                opts.RequireRole("ADMIN", "GOVERNANCE");
+            });
+
+            opts.AddPolicy("UnitHeadPolicy", opts =>
+            {
+                opts.RequireClaim("isUnitHead", "true");
+            });
+
+            opts.AddPolicy("UnitHeadOrAdminPolicy", opts =>
+            {
+                opts.RequireAssertion(ctx =>
+
+                    ctx.User.IsInRole("ADMIN") || ctx.User.IsInRole("ITGOVERNANACE") || ctx.User.HasClaim("isUnitHead", "true"));
+                
+            });
+
+            opts.AddPolicy("ProductOwnerOrAdminPolicy", opts =>
+            {
+                opts.RequireRole("ADMIN", "GOVERNANCE", "BUSINESSANALYST", "PRODUCTOWNER");
+            });
+
+            opts.AddPolicy("UnitHeadOrAdminOrProductOwnerPolicy", opts =>
+            {
+                opts.RequireAssertion(ctx =>
+
+                    ctx.User.IsInRole("ADMIN") || ctx.User.IsInRole("ITGOVERNANACE") || ctx.User.IsInRole("BUSINESSANALYST") || ctx.User.IsInRole("PRODUCTOWNER") || ctx.User.HasClaim("isUnitHead", "true"));
+
+            });
+        });
+    }
 }

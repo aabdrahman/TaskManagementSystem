@@ -36,7 +36,6 @@ public class TaskUsersController : ControllerBase
         }
     }
 
-    [AllowAnonymous]
 	[HttpGet("userdashboard/userid/{userId:int}")]
 	public async Task<IActionResult> GetUserDaashboard(int userId)
 	{
@@ -54,6 +53,7 @@ public class TaskUsersController : ControllerBase
 	}
 
 	[HttpGet("taskid/{taskId:int}")]
+    [Authorize(Policy = "UnitHeadOrAdminOrProductOwnerPolicy")]
     public async Task<IActionResult> GetByTaskId(int taskId, bool hasQueryFilter = true)
     {
         try
@@ -70,6 +70,7 @@ public class TaskUsersController : ControllerBase
     }
 
     [HttpDelete("{Id:int}")]
+    [Authorize(Policy = "ProductOwnerPolicy")]
     public async Task<IActionResult> RemoveTaskUser(int Id, bool isSoftDelete = true)
     {
         try
@@ -86,6 +87,7 @@ public class TaskUsersController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "ProductOwnerPolicy")]
     public async Task<IActionResult> AssignTaskToUser([FromBody] CreateTaskUserDto createTaskUser)
     {
         try
@@ -102,6 +104,7 @@ public class TaskUsersController : ControllerBase
     }
 
     [HttpPost("cancel-user-task")]
+    [Authorize(Policy = "UnitHeadOrAdminOrProductOwnerPolicy")]
     public async Task<IActionResult> CancelUserTask([FromBody]CancelUserTaskDto cancelTask)
     {
         try
@@ -117,6 +120,7 @@ public class TaskUsersController : ControllerBase
         }
     }
     [HttpPost("reassign-user-task")]
+    [Authorize(Policy = "UnitHeadOrAdminOrProductOwnerPolicy")]
     public async Task<IActionResult> ReassignUserTask([FromBody] ReassignTaskUserDto reassignTaskUser)
     {
         try
@@ -133,6 +137,7 @@ public class TaskUsersController : ControllerBase
     }
 
     [HttpPut("update-user-task")]
+    [Authorize(Policy = "ProductOwnerPolicy")]
     public async Task<IActionResult> UpdateUserTask([FromBody] UpdateTaskUserDto updateTaskUser)
     {
         try

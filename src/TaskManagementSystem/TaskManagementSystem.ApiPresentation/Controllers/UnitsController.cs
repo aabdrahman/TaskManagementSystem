@@ -22,6 +22,7 @@ public class UnitsController : ControllerBase
 
 
     [HttpGet]
+    [Authorize(Policy = "UnitHeadOrAdminPolicy")]
     public async Task<IActionResult> GetAllUnits(bool hasQueryFilter = true)
     {
         try
@@ -39,6 +40,7 @@ public class UnitsController : ControllerBase
     }
 
     [HttpGet("{Id:int}")]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> GetUnitById(int Id, bool hasQueryFilter = true)
     {
         try
@@ -55,6 +57,7 @@ public class UnitsController : ControllerBase
     }
 
     [HttpPut]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> UpdateUnit([FromBody] UpdateUnitDto updateUnit)
     {
         try
@@ -71,6 +74,7 @@ public class UnitsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> Create([FromBody] CreateUnitDto newUnitToCreate)
     {
         try
@@ -87,6 +91,7 @@ public class UnitsController : ControllerBase
     }
 
     [HttpDelete("{Id:int}")]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> Delete(int Id, bool isSoftDelete = false)
     {
         try

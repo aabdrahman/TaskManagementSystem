@@ -1,4 +1,5 @@
 ﻿using Contracts.Infrastructure;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service.Contract;
@@ -21,6 +22,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("{username}")]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> GetByUsername(string username, bool hasQueryFilter = true)
     {
         try
@@ -37,6 +39,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("getByUnitId/{UnitId:int}")]
+    [Authorize(Policy = "UnitHeadOrAdminPolicy")]
     public async Task<IActionResult> GetUsersByUnitId(int UnitId, bool hasQueryFilter = true)
     {
         try
@@ -76,6 +79,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("{Id:int}")]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> GetById(int Id, bool hasQueryFilter = true)
     {
         try
@@ -92,6 +96,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("getUnitMember/{UserId:int}")]
+    [Authorize(Policy = "UnitHeadOrAdminPolicy")]
     public async Task<IActionResult> GetUnitMember(int UserId)
     {
         try
@@ -108,6 +113,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> Register([FromBody] CreateUserDto createUser)
     {
         try
@@ -124,6 +130,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpDelete("{Username}")]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> DeleteUser(string Username, bool isSoftDelete = false)
     {
         try
@@ -188,6 +195,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("getUserDetailsToUpdate/{Id:int}")]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> GetUserDetailsToUpdate(int Id)
     {
         try
@@ -204,6 +212,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPut]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> UpdateUserDetails([FromBody] UpdateUserDto updateUserDto)
     {
         try

@@ -19,7 +19,9 @@ public class RolesController : ControllerBase
         _serviceManager = serviceManager;
         _loggerManager = loggerManager;
     }
+
     [HttpGet]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> GetAllRoles(bool hasQueyFilter = true)
     {
         try
@@ -36,6 +38,7 @@ public class RolesController : ControllerBase
     }
 
     [HttpGet("{Id:int}")]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> GetById(int Id, bool hasQueryFilter = false)
     {
         try
@@ -52,6 +55,7 @@ public class RolesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> Create([FromBody] CreateRoleDto createRole)
     {
         try
@@ -68,6 +72,7 @@ public class RolesController : ControllerBase
     }
 
     [HttpDelete("{Id:int}")]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> Delete(int Id, bool isSoftDelete = false)
     {
         try

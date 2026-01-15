@@ -261,6 +261,7 @@ public sealed class TaskUserService : ITaskUserService
             if(taskUserToUpdate is null)
             {
                 await _loggerManager.LogWarning($"User Task does not exist - {updateUserTaskCompleteStatus.Id}");
+                return GenericResponse<string>.Failure(null, HttpStatusCode.NotFound, $"User Task does not exist.");
             }
 
             if(taskUserToUpdate.CompletionDate.HasValue)
@@ -324,9 +325,15 @@ public sealed class TaskUserService : ITaskUserService
                 return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.NotFound, "Invalid User Task Id", null);
             }
 
-            if(loggedInUserId != taskUserToReassign.task.UserId.ToString())
+            bool isCreator = loggedInUserId == taskUserToReassign.task.UserId.ToString();
+
+            bool isPrivilegedUser =
+                            _httpContextAccessor.HttpContext.User.IsInRole("ADMIN") ||
+                            _httpContextAccessor.HttpContext.User.HasClaim("isUnitHead", "true");
+
+            if (!isCreator && !isPrivilegedUser)
             {
-                await _loggerManager.LogWarning($"Logged in user and created task user mismatch. Logged in user: {loggedInUserId}. Created Task User Id: {taskUserToReassign.UserId}");
+                await _loggerManager.LogWarning($"Logged in user and created task user mismatch. Logged in user: {loggedInUserId}. Created Task User Id: {taskUserToReassign.task.UserId.ToString()}");
                 return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.Conflict, "Invalid Credentials.", null);
             }
 
@@ -352,7 +359,7 @@ public sealed class TaskUserService : ITaskUserService
 
             if(userToAssignTask.UnitId != taskUserToReassign.user.UnitId)
             {
-                await _loggerManager.LogInfo($"Current User and new user to reassign does not belong to same unit. Current User: {taskUserToReassign.user.UnitId} - Reassign User: {userToAssignTask.UnitId}");
+                await _loggerManager.LogInfo($"Current User and new user to reassign does not belong to same unit. Current User: {taskUserToReassign.user.UnitId} - Reassign User Unit: {userToAssignTask.UnitId}");
                 return GenericResponse<string>.Failure($"Operation Failed.", HttpStatusCode.BadRequest, "User to assign task is not in the expected unit.", null);
             }
 
