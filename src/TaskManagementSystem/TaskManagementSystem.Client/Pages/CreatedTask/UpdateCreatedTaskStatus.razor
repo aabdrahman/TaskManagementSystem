@@ -1,4 +1,5 @@
-﻿
+﻿@attribute [Authorize(Roles = "BUSINESSANALYST,PRODUCTOWNER")]
+
 @if(_editContext is not null)
 {
     <div class="d-flex flex-column justofy-content-center">

@@ -3,7 +3,7 @@
 @inject Handlers.Role.GetRolesHandler getRolesHandler
 @inject Handlers.Unit.GetUnitsHandler getUnitsHandler
 
-@attribute [Authorize]
+@attribute [Authorize(Roles = "ADMIN,ITGOVERNANCE")]
 
 @if(_isInitialized)
 {

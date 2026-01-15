@@ -1,5 +1,5 @@
 ﻿@page "/tasks/{TaskId}"
-@attribute [Authorize]
+@attribute [Authorize(Roles = "BUSINESSANALYST,PRODUCTOWNER")]
 
 <PageTitle>Created Task Summary Details - @TaskId</PageTitle>
 

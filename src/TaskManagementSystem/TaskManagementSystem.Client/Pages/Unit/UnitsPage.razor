@@ -1,5 +1,5 @@
 ﻿@page "/Units"
-@attribute [Authorize]
+@attribute [Authorize(Roles = "ADMIN,ITGOVERNANCE")]
 
 @if(_isAllowed)
 {

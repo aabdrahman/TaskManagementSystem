@@ -1,4 +1,6 @@
-﻿@using Entities.StaticValues
+﻿@attribute [Authorize(Roles = "BUSINESSANALYST,PRODUCTOWNER")]
+
+@using Entities.StaticValues
 
 @if(_userCreatedTasks.Count() == 0)
 {

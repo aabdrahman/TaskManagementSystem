@@ -1,5 +1,5 @@
 ﻿@page "/tasks/add"
-@attribute [Authorize]
+@attribute [Authorize(Roles = "BUSINESSANALYST,PRODUCTOWNER")]
 
 @inject AuthenticationStateProvider authStateProvider
 
