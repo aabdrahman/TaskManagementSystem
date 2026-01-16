@@ -1,6 +1,8 @@
 ﻿using Contracts;
 using Contracts.Infrastructure;
 using Entities.Models;
+using Infrastructure.Contracts;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Service.Contract;
 using Shared.ApiResponse;
@@ -16,10 +18,15 @@ public sealed class RoleService : IRoleService
 {
     private readonly IRepositoryManager _repositoryManager;
     private readonly ILoggerManager _loggerManager;
-    public RoleService(IRepositoryManager repositoryManager, ILoggerManager loggerManager)
+    private readonly IInfrastructureManager _infrastructureManager;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public RoleService(IRepositoryManager repositoryManager, ILoggerManager loggerManager, IInfrastructureManager infrastructureManager, IHttpContextAccessor httpContextAccessor)
     {
         _repositoryManager = repositoryManager;
         _loggerManager = loggerManager;
+        _infrastructureManager = infrastructureManager;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<GenericResponse<RoleDto>> CreateAsync(CreateRoleDto createRole)
@@ -33,11 +40,12 @@ public sealed class RoleService : IRoleService
 
             if(isNameExist)
             {
-                await _loggerManager.LogWarning($"");
+                await _loggerManager.LogWarning($"Role with name: {createRole.Name} already exists.");
                 return GenericResponse<RoleDto>.Failure(null, HttpStatusCode.Conflict, $"Role with name already exists.", null);
             }
 
             Role roleToInsert = createRole.ToEntity();
+            roleToInsert.CreatedBy = $"{_httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value}-{_httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value}";
 
             await _repositoryManager.RoleRepository.CreateRole(roleToInsert);
 
@@ -97,6 +105,8 @@ public sealed class RoleService : IRoleService
             await _repositoryManager.SaveChangesAsync();
             await _loggerManager.LogInfo(isSofDelete ? $"Role with Id: {Id} marked as inactive successfully." : $"Role with Id: {Id} deleted successfully.");
 
+            await _infrastructureManager.CacheService.RemoveMulipeFromFusionCache($"Role-{Id}", "Roles");
+
             return GenericResponse<string>.Success("Operation successful.", HttpStatusCode.OK, $"Role deleted successfully.");
 
         }
@@ -118,12 +128,22 @@ public sealed class RoleService : IRoleService
         {
             await _loggerManager.LogInfo($"Fetching All Existing Roles.....");
 
+            IEnumerable<RoleDto>? cachedRoles = await _infrastructureManager.CacheService.GetFromFusionCache<IEnumerable<RoleDto>>("Roles");
+
+            if(cachedRoles is not null && cachedRoles.Any())
+            {
+                await _loggerManager.LogInfo($"Roles Fetched Successfully for cache. {SerializeObjects(cachedRoles)}");
+                return GenericResponse<IEnumerable<RoleDto>>.Success(cachedRoles, HttpStatusCode.OK, "Roles Fetched Successfully");
+            }
+
             IEnumerable<RoleDto> allExistingRoles = await _repositoryManager.RoleRepository.GetAllRoles(trackChnages, hasQueryFilter)
                                                 //.Select(x => x.ToDto())
                                                 .Select(RoleMapper.ToDtoExpression())
                                                 .ToListAsync();
 
             await _loggerManager.LogInfo($"Roles Fetched Successfully - {SerializeObjects(allExistingRoles)}");
+
+            await _infrastructureManager.CacheService.AddNewFusionCache<IEnumerable<RoleDto>>("Roles", allExistingRoles);
 
             return GenericResponse<IEnumerable<RoleDto>>.Success(allExistingRoles, HttpStatusCode.OK, "Roles Fetched Successfully");
         }
@@ -145,6 +165,14 @@ public sealed class RoleService : IRoleService
         {
             await _loggerManager.LogInfo($"Fetching Role with Id: {Id}");
 
+            RoleDto? cachedRole = await _infrastructureManager.CacheService.GetFromFusionCache<RoleDto>($"Role-{Id}");
+
+            if(cachedRole is not null)
+            {
+                await _loggerManager.LogInfo($"Role with Id: {Id} fetched successfully from cache - {SerializeObjects(cachedRole)}");
+                return GenericResponse<RoleDto>.Success(cachedRole, HttpStatusCode.OK, $"Role Fetched Successfully.");
+            }
+
             RoleDto? existingRole = await _repositoryManager.RoleRepository.GetById(Id, trackChanges, hasQueryFilter)
                                             //.Select(x => x.ToDto())
                                             .Select(RoleMapper.ToDtoExpression())
@@ -157,6 +185,8 @@ public sealed class RoleService : IRoleService
             }
 
             await _loggerManager.LogInfo($"Role with id: {Id} fetched successfully. Role - {SerializeObjects(existingRole)}");
+
+            await _infrastructureManager.CacheService.AddNewFusionCache<RoleDto>($"Role-{Id}", existingRole);
 
             return GenericResponse<RoleDto>.Success(existingRole, HttpStatusCode.OK, $"Role Fetched Successfully.");
 

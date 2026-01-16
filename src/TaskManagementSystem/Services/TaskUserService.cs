@@ -11,6 +11,7 @@ using System.Net;
 using Shared.Mapper;
 using Microsoft.AspNetCore.Http;
 using Shared.DataTransferObjects.UserDashboard;
+using Infrastructure.Contracts;
 
 namespace Services;
 
@@ -19,12 +20,14 @@ public sealed class TaskUserService : ITaskUserService
     private readonly IRepositoryManager _repositoryManager;
     private readonly ILoggerManager _loggerManager;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IInfrastructureManager _infrastructureManager;
 
-    public TaskUserService(IRepositoryManager repositoryManager, ILoggerManager loggerManager, IHttpContextAccessor httpContextAccessor)
+    public TaskUserService(IRepositoryManager repositoryManager, ILoggerManager loggerManager, IHttpContextAccessor httpContextAccessor, IInfrastructureManager infrastructureManager)
     {
         _repositoryManager = repositoryManager;
         _loggerManager = loggerManager;
         _httpContextAccessor = httpContextAccessor;
+        _infrastructureManager = infrastructureManager;
     }
     public async Task<GenericResponse<TaskUserDto>> AssignUserToTask(CreateTaskUserDto taskUserDto)
     {

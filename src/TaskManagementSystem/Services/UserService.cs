@@ -262,7 +262,6 @@ public sealed class UserService : IUserService
 			bool maxDaysToChangeFromConfig = int.TryParse(_configuration["UserManagement:MaxDaysToChangePassword"] ?? "30", out int daysToLastPasswordChangeValue);
 
 			IEnumerable<UserDto> allUsers = await _repositoryManager.UserRepository.GetByUnitId(unitId, trackChanges, hasQueryFilter)
-                                        //.Select(x => x.ToDto(daysToLastPasswordChangeValue))
                                         .Select(UserMapper.ToDtoExpression(daysToLastPasswordChangeValue))
                                         .ToListAsync();
 
@@ -292,7 +291,6 @@ public sealed class UserService : IUserService
 			bool maxDaysToChangeFromConfig = int.TryParse(_configuration["UserManagement:MaxDaysToChangePassword"] ?? "30", out int daysToLastPasswordChangeValue);
 
 			UserDto? existingUser = await _repositoryManager.UserRepository.GetByUserName(Username.Trim(), trackChanges, hasQueryFilter)
-                                                    //.Select(x => x.ToDto(daysToLastPasswordChangeValue))
                                                     .Select(UserMapper.ToDtoExpression(daysToLastPasswordChangeValue))
                                                     .FirstOrDefaultAsync();
             if (existingUser is null)
@@ -386,13 +384,6 @@ public sealed class UserService : IUserService
             bool maxDaysToChangeFromConfig = int.TryParse(_configuration["UserManagement:MaxDaysToChangePassword"] ?? "30", out int daysToLastPasswordChangeValue);
 
             var usersAsQueryable = _repositoryManager.UserRepository.GetAllUsers(usersRequestParameter, false, hasQueryFilter);
-
-            //IEnumerable<UserSummaryDto> users = await _repositoryManager.UserRepository.GetAllUsers(usersRequestParameter, false, hasQueryFilter)
-            //                                                                .Skip((usersRequestParameter.PageNumber - 1) * usersRequestParameter.PageSize)
-            //                                                                .Take(usersRequestParameter.PageSize)
-            //                                                                .Select(UserMapper.ToSummaryDtoExpression())
-            //                                                                //.Select(x => x.ToSummaryDto())
-            //                                                                .ToListAsync();
 
             IEnumerable<UserDto> users = await usersAsQueryable.Skip((usersRequestParameter.PageNumber - 1) * usersRequestParameter.PageSize).Take(usersRequestParameter.PageSize).Select(UserMapper.ToDtoExpression(daysToLastPasswordChangeValue)).ToListAsync();
 
@@ -556,7 +547,6 @@ public sealed class UserService : IUserService
             ValidateAudience = true,
             ValidateIssuerSigningKey = true,
             ValidateLifetime = false,
-            //ValidAudience = _jwtConfiguration.validAudience,
             ValidAudiences = _jwtConfiguration.validAudience,
             ValidIssuer = _jwtConfiguration.validIssuer,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Secret-Key"]!))
@@ -646,7 +636,6 @@ public sealed class UserService : IUserService
             }
 
             userToUpdate = updateUserDto.ToEntity(userToUpdate);
-            //User updatedUserDetails = updateUserDto.ToEntity(userToUpdate);
             _repositoryManager.UserRepository.UpdateUser(userToUpdate);
 
             await _repositoryManager.SaveChangesAsync();
