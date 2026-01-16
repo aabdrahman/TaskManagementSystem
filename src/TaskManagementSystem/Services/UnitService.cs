@@ -10,6 +10,7 @@ using System.Net;
 using System.Text.Json;
 using Entities.Models;
 using Microsoft.AspNetCore.Http;
+using Infrastructure.Contracts;
 
 namespace Services;
 
@@ -18,11 +19,13 @@ public sealed class UnitService : IUnitService
     private readonly ILoggerManager _loggerManager;
     private readonly IRepositoryManager _repositoryManager;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    public UnitService(ILoggerManager loggerManager, IRepositoryManager repositoryManager, IHttpContextAccessor httpContextAccessor)
+    private readonly IInfrastructureManager _infrastructureManager;
+    public UnitService(ILoggerManager loggerManager, IRepositoryManager repositoryManager, IHttpContextAccessor httpContextAccessor, IInfrastructureManager infrastructureManager)
     {
         _loggerManager = loggerManager;
         _repositoryManager = repositoryManager;
         _httpContextAccessor = httpContextAccessor;
+        _infrastructureManager = infrastructureManager;
     }
 
     public async Task<GenericResponse<UnitDto>> CreateAsync(CreateUnitDto newUnitToCreate)
@@ -49,6 +52,10 @@ public sealed class UnitService : IUnitService
             {
                 await _repositoryManager.SaveChangesAsync();
                 await _loggerManager.LogInfo($"Unit Creation Successful - {SerializeObjectToString(unitToInsert)}");
+
+                await _infrastructureManager.CacheService.AddNewFusionCache<UnitDto>($"Unit-{unitToInsert.Id}", unitToInsert.ToDto());
+
+                await _infrastructureManager.CacheService.RemoveFromCache("Units");
 
                 return GenericResponse<UnitDto>.Success(unitToInsert.ToDto(), HttpStatusCode.Created, "Unit Created Successfully");
             }
@@ -102,6 +109,9 @@ public sealed class UnitService : IUnitService
 
             await _repositoryManager.SaveChangesAsync();
             await _loggerManager.LogInfo(isSoftDelete ? $"Unit with Id: {UnitId} marked as inactive successfully" : $"Unit wit Id: {UnitId} deleted successfully.");
+
+            await _infrastructureManager.CacheService.RemoveMulipeFromFusionCache($"Unit-{UnitId}", "Units");
+
             return GenericResponse<string>.Success($"Operation Successful", HttpStatusCode.OK, $"{(isSoftDelete ? "User marked as inactive successfully." : "User Deletion Successful")}");
 
         }
@@ -123,12 +133,29 @@ public sealed class UnitService : IUnitService
         {
             await _loggerManager.LogInfo($"Fetching All Units....");
 
+            //string cachedDetails = await _infrastructureManager.CacheService.GetFromCache("Units");
+
+            IEnumerable<UnitDto>? cachedRecord = await _infrastructureManager.CacheService.GetFromFusionCache<IEnumerable<UnitDto>>("Units");
+
+            if (cachedRecord is not null)
+            {
+                await _loggerManager.LogInfo($"Units Fetched successfully from cache: {SerializeObjectToString(cachedRecord)}");
+
+                return GenericResponse<IEnumerable<UnitDto>>.Success(cachedRecord, HttpStatusCode.OK, "Units Fetched Successfully.");
+            }
+
+
             List<UnitDto> allExistingUnits = await _repositoryManager.UnitRepository.GetAllUnits(trackChanges, hasQueryFilter)
                                                //.Select(x => x.ToDto())
                                                .Select(UnitMapper.ToDtoExpression())
                                                .ToListAsync();
+            string serializedUnits = SerializeObjectToString(allExistingUnits);
 
-            await _loggerManager.LogInfo($"Units Fetched Successfully: {SerializeObjectToString(allExistingUnits)}");
+            //bool updateCacheStaus = await _infrastructureManager.CacheService.CreateNewCache("Units", serializedUnits);
+
+            bool updateCacheStaus = await _infrastructureManager.CacheService.AddNewFusionCache<IEnumerable<UnitDto>>("Units", allExistingUnits);
+
+            await _loggerManager.LogInfo($"Units Fetched Successfully: {serializedUnits}. Update Cache Status: {(updateCacheStaus ? "Successful" : "Failed")}");
 
             return GenericResponse<IEnumerable<UnitDto>>.Success(allExistingUnits, HttpStatusCode.OK, "Units Fetched Successfully.");
         }
@@ -150,6 +177,14 @@ public sealed class UnitService : IUnitService
 
         try
         {
+            UnitDto? unitFromCache = await _infrastructureManager.CacheService.GetFromFusionCache<UnitDto>($"Unit-{UnitId}");
+
+            if(unitFromCache is not null)
+            {
+                await _loggerManager.LogInfo($"Unit Fetched successfully from cache - {SerializeObjectToString(unitFromCache)}");
+                GenericResponse<UnitDto>.Success(unitFromCache, HttpStatusCode.OK, $"Unit Fetched Successfully.");
+            }
+
             UnitDto? existingUnit = await _repositoryManager.UnitRepository.GetById(UnitId, false)
                                                         //.Select(x => x.ToDto())
                                                         .Select(UnitMapper.ToDtoExpression())
@@ -193,16 +228,19 @@ public sealed class UnitService : IUnitService
 
             await _loggerManager.LogInfo($"Update Unit Successful - {SerializeObjectToString(unitToUpdate.ToDto())} by: {loggedInUser}");
 
+            await _infrastructureManager.CacheService.AddNewFusionCache<UnitDto>($"Unit-{unitToUpdate.Id}", unitToUpdate.ToDto());
+            await _infrastructureManager.CacheService.RemoveFromCache("Units");
+
             return GenericResponse<UnitDto>.Success(unitToUpdate.ToDto(), HttpStatusCode.OK, "Unit Updated Successfully.");
         }
         catch (DbUpdateException ex)
         {
-            await _loggerManager.LogError(ex, $"An Error Occurred Deleting Unit - {SerializeObjectToString(updatedUnit)}");
+            await _loggerManager.LogError(ex, $"An Error Occurred Updating Unit - {SerializeObjectToString(updatedUnit)}");
             return GenericResponse<UnitDto>.Failure(null, HttpStatusCode.InternalServerError, ex.Message, null);
         }
         catch (Exception ex)
         {
-            await _loggerManager.LogError(ex, $"An Error Occurred Deleting Unit -  {SerializeObjectToString(updatedUnit)}");
+            await _loggerManager.LogError(ex, $"An Error Occurred Updating Unit -  {SerializeObjectToString(updatedUnit)}");
             return GenericResponse<UnitDto>.Failure(null, HttpStatusCode.InternalServerError, ex.Message, null);
         }
     }

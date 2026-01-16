@@ -242,4 +242,26 @@ internal static class ApplicationServiceExtensions
             });
         });
     }
+
+    internal static void ConfigureHybridCaching(this IServiceCollection services)
+    {
+        services.AddFusionCache();
+
+        services.AddHybridCache(opts =>
+        {
+            opts.MaximumKeyLength = 1024;
+            opts.MaximumPayloadBytes = 1024 * 1024;
+            opts.DefaultEntryOptions = new Microsoft.Extensions.Caching.Hybrid.HybridCacheEntryOptions()
+            {
+                Expiration = TimeSpan.FromMinutes(10),
+                LocalCacheExpiration = TimeSpan.FromMinutes(10)
+
+            };
+        });
+    }
+
+    internal static void ConfigureFusionCache(this IServiceCollection services)
+    {
+        services.AddFusionCache();
+    }
 }

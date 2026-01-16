@@ -35,6 +35,8 @@ builder.Services.ConfigureHttpContextAccessor();
 builder.Services.ConfigureAuthentication(builder.Configuration);
 builder.Services.ConfigureAuthorization();
 builder.Services.ConfigureController();
+builder.Services.ConfigureHybridCaching();
+//builder.Services.ConfigureFusionCache();
 
 var app = builder.Build();
 

@@ -39,7 +39,7 @@ public sealed class ServiceManager : IServiceManager
         _configuration = configuration;
         _jwtConfigurationOptionsMonitor = jwtConfigurationOptionsMonitor;
 
-        _unitService = new Lazy<IUnitService>(() => new UnitService(_loggerManager, _repositoryManager, _contextAccessor));
+        _unitService = new Lazy<IUnitService>(() => new UnitService(_loggerManager, _repositoryManager, _contextAccessor, _infrastructureManager));
         _roleService = new Lazy<IRoleService>(() => new RoleService(_repositoryManager, _loggerManager));
         _userService = new Lazy<IUserService>(() => new UserService(_repositoryManager, _loggerManager, _configuration, _jwtConfigurationOptionsMonitor, _contextAccessor));
         _createdTaskService = new Lazy<ICreatedTaskService>(() => new CreatedTaskService(_repositoryManager, _loggerManager, _contextAccessor));
