@@ -81,12 +81,13 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize]
-    public async Task<IActionResult> GetUserSummary(bool trackChanges = false, bool hasQueryFilter = true)
+    //[Authorize]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetUserSummary(int? AssignedUnitId, bool trackChanges = false, bool hasQueryFilter = true)
     {
         try
         {
-            var getUserSummaryResponse = await _serviceManager.UserService.GetUsersSummaryDetails(trackChanges, hasQueryFilter);
+            var getUserSummaryResponse = await _serviceManager.UserService.GetUsersSummaryDetails(AssignedUnitId, trackChanges, hasQueryFilter);
 
             return StatusCode((int)getUserSummaryResponse.StatusCode, getUserSummaryResponse);
         }

@@ -4,11 +4,13 @@
 {
     <div class="loading-overlay fade-in">
         <div class="spinner-border text-primary" role="status"></div>
-        <p class="loading-text">Loading, please wait...</p>
+        <p class="loading-text">@DisplayMessage</p>
     </div>
 }
 
 @code {
     [Parameter]
     public bool IsVisible { get; set; } = false;
+    [Parameter]
+    public string DisplayMessage { get; set; } = "Loading, please wait...";
 }

@@ -102,12 +102,15 @@ public sealed class AnalyticsReportingService : IAnalyticsReportingService
                 TotalCompletedTasks = x.TotalCompletedTasks,
                 TotalDeletedTasks = x.TotalDeletedTasks,
                 TotalOverdueTasks = x.TotalOverdueTasks,
-                TotalPendingTasks = x.TotalPendingTasks
+                TotalPendingTasks = x.TotalPendingTasks,
+                CompletedAfterDueDate = x.CompletedAfterDueDate,
+                CompletedWithinDueDate = x.CompletedWithinDueDate,
+                CompletionRate = x.CompletionRate
             }).ToList();
 
-            await _loggerManager.LogInfo($"Report Analytics successfully spooled - {SerializeObjectToString(result)}");
+            await _loggerManager.LogInfo($"Report Analytics successfully spooled - {SerializeObjectToString(res)}");
 
-            return GenericResponse<IEnumerable<UserUnitAssignedUserTaskAnalyticsDto>>.Success(result, System.Net.HttpStatusCode.OK, $"Analytics Reporting Fetched Successfully.");
+            return GenericResponse<IEnumerable<UserUnitAssignedUserTaskAnalyticsDto>>.Success(result, HttpStatusCode.OK, $"Analytics Reporting Fetched Successfully.");
         }
         catch (DbException ex)
         {

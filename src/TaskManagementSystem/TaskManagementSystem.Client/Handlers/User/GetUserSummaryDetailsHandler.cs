@@ -13,11 +13,11 @@ public class GetUserSummaryDetailsHandler
         _httpClient = httpClientFactory.CreateClient(ClientHelper.SecureClientKey);
     }
 
-    public async Task<IEnumerable<UserSummaryDto>> Handle()
+    public async Task<IEnumerable<UserSummaryDto>> Handle(int? AssignedUnit = null)
     {
         try
         {
-            var httpResponse = await _httpClient.GetAsync("api/Users?trackChanges=false&hasQueryFilter=true");
+            var httpResponse = await _httpClient.GetAsync($"api/Users?AssignedUnitId={AssignedUnit}&trackChanges=false&hasQueryFilter=true");
 
             string httpResponseContent = await httpResponse.Content.ReadAsStringAsync();
 

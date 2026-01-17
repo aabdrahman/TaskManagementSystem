@@ -656,13 +656,17 @@ public sealed class UserService : IUserService
         }
     }
 
-    public async Task<GenericResponse<IEnumerable<UserSummaryDto>>> GetUsersSummaryDetails(bool trackChanges = true, bool hasQueryFilter = true)
+    public async Task<GenericResponse<IEnumerable<UserSummaryDto>>> GetUsersSummaryDetails(int? AssignedUnitId, bool trackChanges = true, bool hasQueryFilter = true)
     {
         try
         {
-            await _loggerManager.LogInfo($"Fetching Users summary details");
+            int unitIdToFilter = AssignedUnitId.HasValue ? AssignedUnitId.Value : 0;
 
-            List<UserSummaryDto> users = await _repositoryManager.UserRepository.GetAll(false, true).Select(UserMapper.ToSummaryDtoExpression()).ToListAsync();
+            await _loggerManager.LogInfo($"Fetching Users summary details - Unit to Filter: {unitIdToFilter}");
+
+            List<UserSummaryDto> users = !AssignedUnitId.HasValue ? 
+                await _repositoryManager.UserRepository.GetAll(false, true).Select(UserMapper.ToSummaryDtoExpression()).ToListAsync() : 
+                await _repositoryManager.UserRepository.GetByUnitId(unitIdToFilter, false, true).Select(UserMapper.ToSummaryDtoExpression()).ToListAsync();
 
             await _loggerManager.LogInfo($"Users summary Details Fetched Successfully - {SerializeObject(users)}");
 

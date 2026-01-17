@@ -148,6 +148,16 @@
                     </div>
                 }
                 
+                @if(context.User.Identity.IsAuthenticated)
+                {
+                    <div>
+                        <div class="nav-item px-3" style="padding-left:1rem;">
+                            <NavLink class="nav-link" href="/user-unit-analytics" Match="NavLinkMatch.All" style="padding-left:1rem;">
+                                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Report Analytics
+                            </NavLink>
+                        </div>
+                    </div>
+                }
 
             </nav>
         </div>

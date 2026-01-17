@@ -15,7 +15,7 @@ public interface IUserService
     Task<GenericResponse<TokenDto>> RefreshTokenAsync(TokenDto tokenDto);
     Task<GenericResponse<string>> ChangePasswordAsync(ChangeUserPasswordDto changePasswordDto);
     Task<GenericResponse<IEnumerable<UserSummaryDto>>> GetUsersWithSameUnit(int userId);
-    Task<GenericResponse<IEnumerable<UserSummaryDto>>> GetUsersSummaryDetails(bool trackChanges = true, bool hasQueryFilter = true);
+    Task<GenericResponse<IEnumerable<UserSummaryDto>>> GetUsersSummaryDetails(int? AssignedUnitId, bool trackChanges = true, bool hasQueryFilter = true);
     Task<GenericResponse<PagedItemList<UserDto>>> GetAllUsers(UsersRequestParameter usersRequestParameter, bool hasQueryFilter = true);
     Task<GenericResponse<UpdateUserDto>> GetUserToUpdateByIdAsync(int Id, bool trackChanges = false, bool hasQueryFilter = true);
     Task<GenericResponse<string>> UpdateUserDetailsAsync(UpdateUserDto updateUserDto);
