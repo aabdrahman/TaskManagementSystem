@@ -51,6 +51,8 @@ public sealed class RoleService : IRoleService
 
             await _repositoryManager.SaveChangesAsync();
 
+            await _infrastructureManager.CacheService.RemoveFromFusionCache("Roles");
+
             await _loggerManager.LogInfo($"Role Creation Successful. Role - {SerializeObjects(roleToInsert)}");
 
             return GenericResponse<RoleDto>.Success(roleToInsert.ToDto(), HttpStatusCode.Created, $"Role Creation Successful.");

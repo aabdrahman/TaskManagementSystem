@@ -222,9 +222,7 @@ else
             await ResetForm();
             StateHasChanged();
 
-            Console.WriteLine($"Successful at: {DateTime.Now}");
             await Task.Delay(15000);
-            Console.WriteLine($"Successful after elapsed: {DateTime.Now}");
 
             _responseMessage = null;
             _isSuccessful = default;

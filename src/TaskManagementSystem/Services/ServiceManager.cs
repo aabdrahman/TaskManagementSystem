@@ -25,6 +25,7 @@ public sealed class ServiceManager : IServiceManager
     private readonly Lazy<ICreatedTaskService> _createdTaskService;
     private readonly Lazy<ITaskUserService> _taskUserService;
     private readonly Lazy<IAttachmentService> _attachmentService;
+    private readonly Lazy<IAnalyticsReportingService> _analyticsReportingService;
 
     public ServiceManager(ILoggerManager loggerManager, IRepositoryManager repositoryManager, 
                             IInfrastructureManager infrastructureManager, IOptionsMonitor<UploadConfig> uploadConfigOptionsMonitor, 
@@ -45,6 +46,7 @@ public sealed class ServiceManager : IServiceManager
         _createdTaskService = new Lazy<ICreatedTaskService>(() => new CreatedTaskService(_repositoryManager, _loggerManager, _contextAccessor));
         _taskUserService = new Lazy<ITaskUserService>(() => new TaskUserService(_repositoryManager, _loggerManager, _contextAccessor, _infrastructureManager));
         _attachmentService = new Lazy<IAttachmentService>(() => new AttachmentService(_repositoryManager, _loggerManager, _infrastructureManager, _uploadConfigOptionsMonitor, _contextAccessor));
+        _analyticsReportingService = new Lazy<IAnalyticsReportingService>(() => new AnalyticsReportingService(_loggerManager, _repositoryManager, _contextAccessor));
 
     }
 
@@ -60,4 +62,6 @@ public sealed class ServiceManager : IServiceManager
     public ITaskUserService TaskUserService => _taskUserService.Value;
 
     public IAttachmentService AttachmentService => _attachmentService.Value;
+
+    public IAnalyticsReportingService AnalyticsReportingService => _analyticsReportingService.Value;
 }

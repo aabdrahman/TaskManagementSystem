@@ -150,7 +150,6 @@ else
     {
         _isFetched = false;_isLoading = true;
         var response = await getUsersSummaryHandler.Handle2(_usersRequestParameter)!;
-        Console.WriteLine($"{System.Text.Json.JsonSerializer.Serialize(response)}");
         _metaData = response.fetchedUsersMetaData; _users = response.fetchedUsers;
 
         // if(response is null)

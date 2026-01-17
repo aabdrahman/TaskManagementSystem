@@ -1,4 +1,5 @@
 ﻿using Entities.Models;
+using Entities.Models.Keyless_Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 
@@ -18,6 +19,7 @@ public class RepositoryContext : DbContext
     public DbSet<Unit> Units { get; set; }
     public DbSet<TaskUser> TaskUsers { get; set; }
     public DbSet<Attachment> Attachments { get; set; }
+    public DbSet<UserUnitAssignedUserTaskAnalytics> UserUnitAssignedUserTaskAnalytics { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

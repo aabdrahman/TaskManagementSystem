@@ -148,7 +148,6 @@
     {
 
         await Task.Delay(500);
-        Console.WriteLine($"Selected Unit Id: {_userTaskToCreate.ResponsibleUnit}");
         int unitId = _userTaskToCreate?.ResponsibleUnit ?? 0;
 
         if(unitId > 0)

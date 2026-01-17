@@ -8,4 +8,5 @@ public interface IServiceManager
     ICreatedTaskService CreatedTaskService { get; }
     ITaskUserService TaskUserService { get; }
     IAttachmentService AttachmentService { get; }
+    IAnalyticsReportingService AnalyticsReportingService { get; }
 }

@@ -1,5 +1,5 @@
-﻿using Shared.DataTransferObjects.TaskUser;
-using Shared.DataTransferObjects.UserDashboard;
+﻿using Shared.DataTransferObjects.AnalyticsReporting.UserDashboard;
+using Shared.DataTransferObjects.TaskUser;
 
 namespace Shared.Mapper;
 

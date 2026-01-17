@@ -1,4 +1,4 @@
-﻿namespace Shared.DataTransferObjects.UserDashboard;
+﻿namespace Shared.DataTransferObjects.AnalyticsReporting.UserDashboard;
 
 public class UserTaskDashboardDto
 {

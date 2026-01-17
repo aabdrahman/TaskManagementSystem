@@ -95,7 +95,6 @@
     private async Task OnHandleDelete()
     {
         _isLoading = true;
-        Console.WriteLine($"Is Soft Delete Decision: {_isSoftDelete}");
         // await Task.Delay(5000);
         // _isSuccessful = DateTime.Now.Second % 2 == 0;
         // _responseMessage = _isSuccessful ? "Successful" : "Failed";
@@ -109,6 +108,5 @@
     private void OnChangeSoftDelete()
     {
         _isSoftDelete = !_isSoftDelete;
-        Console.WriteLine($"Is Soft Delete Decision: {_isSoftDelete}");
     }
 }

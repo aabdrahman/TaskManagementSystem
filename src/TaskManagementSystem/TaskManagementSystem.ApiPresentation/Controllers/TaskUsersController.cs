@@ -36,21 +36,21 @@ public class TaskUsersController : ControllerBase
         }
     }
 
-	[HttpGet("userdashboard/userid/{userId:int}")]
-	public async Task<IActionResult> GetUserDaashboard(int userId)
-	{
-		try
-		{
-			var getByUserDashboardResponse = await _serviceManager.TaskUserService.GetUserDashboard(userId);
+	//[HttpGet("userdashboard/userid/{userId:int}")]
+	//public async Task<IActionResult> GetUserDaashboard(int userId)
+	//{
+	//	try
+	//	{
+	//		var getByUserDashboardResponse = await _serviceManager.TaskUserService.GetUserDashboard(userId);
 
-			return StatusCode((int)getByUserDashboardResponse.StatusCode, getByUserDashboardResponse);
-		}
-		catch (Exception ex)
-		{
-			await _loggerManager.LogError(ex, ex.Message);
-			return StatusCode(500, ex.Message);
-		}
-	}
+	//		return StatusCode((int)getByUserDashboardResponse.StatusCode, getByUserDashboardResponse);
+	//	}
+	//	catch (Exception ex)
+	//	{
+	//		await _loggerManager.LogError(ex, ex.Message);
+	//		return StatusCode(500, ex.Message);
+	//	}
+	//}
 
 	[HttpGet("taskid/{taskId:int}")]
     [Authorize(Policy = "UnitHeadOrAdminOrProductOwnerPolicy")]

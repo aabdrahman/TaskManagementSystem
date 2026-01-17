@@ -40,7 +40,6 @@ public class GetUsersSummaryHandler
             HttpResponseMessage httpResponse = await _httpClient.GetAsync($"api/Users/getUserSummaryDetails?UnitId={usersRequestParameter.UnitId}&Name={usersRequestParameter.Name}&Email={usersRequestParameter.Email}&PageNumber={usersRequestParameter.PageNumber}&PageSize={usersRequestParameter.PageSize}&hasQueryFilter=true");
 
             string httpResponseContent = await httpResponse.Content.ReadAsStringAsync();
-            Console.WriteLine(httpResponseContent);
 
             GenericResponse<IEnumerable<UserDto>>? fetchedUsersResponse = JsonSerializer.Deserialize<GenericResponse<IEnumerable<UserDto>>>(httpResponseContent, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true }) ?? null;
 
@@ -52,13 +51,10 @@ public class GetUsersSummaryHandler
                 metaData = JsonSerializer.Deserialize<MetaData>(responseHeaders, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true }) ?? null;
             }
 
-            Console.WriteLine(responseHeaders);
-
             return fetchedUsersResponse is null ? ([], metaData) : (fetchedUsersResponse.Data, metaData);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error: {ex.Message}");
             return ([],  null);
         }
     }

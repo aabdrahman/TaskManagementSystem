@@ -1,5 +1,6 @@
 ﻿@page "/"
 
+@using Shared.DataTransferObjects.AnalyticsReporting.UserDashboard
 @using Shared.DataTransferObjects.User
 @using TaskManagementSystem.Client.Handlers.Authentication
 @using TaskManagementSystem.Client.Helper
@@ -81,7 +82,7 @@
 
     private UserDto? _loggedInUser;
     private bool _isOpen = true;
-    private Shared.DataTransferObjects.UserDashboard.UserTaskDashboardDto? _userTaskDashboardDto;
+    private UserTaskDashboardDto? _userTaskDashboardDto;
 
     private int _userId;
     private bool _isInitialized = false;

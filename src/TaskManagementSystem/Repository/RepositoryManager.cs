@@ -1,4 +1,6 @@
 ﻿using Contracts;
+using Contracts.Keyless_Entities_Repository;
+using Repository.Keyless_Entities;
 
 namespace Repository;
 
@@ -12,6 +14,7 @@ public sealed class RepositoryManager : IRepositoryManager
     private readonly Lazy<IUserRoleRepository> _userRoleRepository;
     private readonly Lazy<TaskUserRepository> _taskUserRepository;
     private readonly Lazy<IAttachmentRepository> _attachmentRepository;
+    private readonly Lazy<IUserUnitAssignedUserTaskAnalyticsRepository> _userUnitAssignedUserTaskAnalyticsRepository;
 
     public RepositoryManager()
     {
@@ -27,6 +30,7 @@ public sealed class RepositoryManager : IRepositoryManager
         _userRoleRepository = new Lazy<IUserRoleRepository>(() => new UserRoleRepository(_repositoryContext));
         _taskUserRepository = new Lazy<TaskUserRepository>(()  => new TaskUserRepository(_repositoryContext));
         _attachmentRepository = new Lazy<IAttachmentRepository>(() => new AttachmentRepository(_repositoryContext));
+        _userUnitAssignedUserTaskAnalyticsRepository = new Lazy<IUserUnitAssignedUserTaskAnalyticsRepository>(() => new UserUnitAssignedUserTaskAnalyticsRepository(_repositoryContext));
     }
 
     public IUnitRepository UnitRepository => _unitRepository.Value;
@@ -42,6 +46,8 @@ public sealed class RepositoryManager : IRepositoryManager
     public ITaskUserRepository TaskUserRepository => _taskUserRepository.Value;
 
     public IAttachmentRepository AttachmentRepository => _attachmentRepository.Value;
+
+    public IUserUnitAssignedUserTaskAnalyticsRepository UserUnitAssignedUserTaskAnalyticsRepository => _userUnitAssignedUserTaskAnalyticsRepository.Value;
 
     public async Task SaveChangesAsync()
     {

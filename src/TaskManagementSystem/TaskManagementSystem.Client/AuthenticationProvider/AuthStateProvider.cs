@@ -27,7 +27,6 @@ public class AuthStateProvider : AuthenticationStateProvider
 
         if(sessionToken is null)
         {
-            Console.WriteLine("No token found");
             //Set to anonymnous as token from storage is null.
             NotifyAuthenticationStateChanged(Task.FromResult(_anonymous));
             return _anonymous;
@@ -42,7 +41,6 @@ public class AuthStateProvider : AuthenticationStateProvider
         //Try convert the exp value to a datetime
         if(!long.TryParse(expiryTimeValue, out long expiryTime))
         {
-            Console.WriteLine($"Expired Time: {expiryTimeValue}");
             //Set to anonymous and remove the invalid session token from storage
             await _localStorageService.RemoveItemAsync(ClientHelper.TokenSessionStorgaeKey);
             NotifyAuthenticationStateChanged(Task.FromResult(_anonymous));
@@ -54,7 +52,6 @@ public class AuthStateProvider : AuthenticationStateProvider
 
         if (DateTimeOffset.UtcNow >= expTime)
         {
-			Console.WriteLine($"Expired Time Elapsed: {expTime}");
 			//The expiry time has exceeded. Token already expired. Remove expired token and set anonymous
 			await _localStorageService.RemoveItemAsync(ClientHelper.TokenSessionStorgaeKey);
             NotifyAuthenticationStateChanged(Task.FromResult(_anonymous));
@@ -68,7 +65,6 @@ public class AuthStateProvider : AuthenticationStateProvider
         {
             try
             {
-                Console.WriteLine($"Refresh window..");
                 //Genrate a new refresh token
                 var tokenRefreshResponse = await _refreshTokenHandler.Handle(sessionToken);
 
