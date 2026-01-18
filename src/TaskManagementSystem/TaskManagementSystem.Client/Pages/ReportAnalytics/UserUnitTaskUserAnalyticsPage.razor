@@ -27,7 +27,7 @@
             {
                 <div class="d-flex flex-column gap-1 flex-wrap">
                     <label class="form-label fw-bold text-primary">Unit</label>
-                    <select class="form-select" @bind="_parameter.UnitId">
+                    <select class="form-select" @bind="_parameter.UnitId" readonly="@(_isReadonlyUnit)" @bind:after="SpoolForSelectedUnit">
                         <option value=""></option>
                         @foreach (var unit in _availableUnits)
                         {
@@ -41,7 +41,7 @@
             {
                 <div class="d-flex flex-column gap-1 flex-wrap">
                     <label class="form-label fw-bold text-primary">User</label>
-                    <select class="form-select" @bind="_parameter.UserId">
+                    <select class="form-select" readonly="@(_isReadonlyUser)" @bind="_parameter.UserId">
                         <option value=""></option>
                         @foreach (var user in _availableUsers)
                         {
@@ -93,6 +93,8 @@
     private TaskManagementSystem.Client.SharedContent.Popup popup;
     private UserUnitAssignedUserTaskAnalyticsDto _selectedAnalytics;
     private OperationType _operationToPerform;
+    private bool _isReadonlyUnit = false;
+    private bool _isReadonlyUser = false;
 
     //OPERATION PARAMETER VARIABLES
     private UserUnitTaskUserAnalyticsRequestParameter _parameter;
@@ -104,6 +106,24 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        bool isValidUser = user.IsInRole("ADMIN") || user.IsInRole("ITGOVERNANCE") || user.HasClaim("isUnitHead", "true");
+
+        if (!user?.Identity.IsAuthenticated ?? false)
+        {
+
+            _isFormInitialized = true;
+            navManager.NavigateTo("/");
+        }
+
+        bool isValidAdmin = user!.IsInRole("ADMIN") || user.IsInRole("ITGOVERNANCE");
+        bool isUnitHead = user.HasClaim("isUnitHead", "true");
+
+        string loggedInUserUnit = user.FindFirst(x => x.Type.Equals("UnitId", StringComparison.CurrentCultureIgnoreCase))?.Value ?? "0";
+        string loggedInUserId = user.FindFirst(x => x.Type.EndsWith("serialnumber"))?.Value ?? "0";
+
         var getUnit = getUnitsHandler.Handle();
         var getUser = getUserSummaryDetailsHandler.Handle();
 
@@ -113,6 +133,19 @@
         _availableUsers = (getUser.Result).ToList();
 
         _parameter = new() { StartDate = DateOnly.FromDateTime(DateTime.Now.AddDays(-7)), EndDate = DateOnly.FromDateTime(DateTime.Now) };
+
+        if(!isValidAdmin && isUnitHead)
+        {
+            _parameter.UnitId = int.Parse(loggedInUserUnit);
+        }
+
+        if(!isValidAdmin && !isUnitHead)
+        {
+            _parameter.UnitId = int.Parse(loggedInUserUnit);
+            _parameter.UserId = int.Parse(loggedInUserId);
+            _isReadonlyUnit = true;
+            _isReadonlyUser = true;
+        }
 
         _isFormInitialized = true;
     }
@@ -159,5 +192,12 @@
     {
         None,
         ShowDetails
+    }
+
+    private async Task SpoolForSelectedUnit()
+    {
+        var result = await getUserSummaryDetailsHandler.Handle(_parameter.UnitId);
+        _availableUsers = result.ToList();
+        StateHasChanged();
     }
 }

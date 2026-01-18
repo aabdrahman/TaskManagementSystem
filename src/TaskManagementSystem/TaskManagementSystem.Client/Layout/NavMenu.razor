@@ -25,11 +25,11 @@
                             <!-- Parent menu -->
                             <div class="nav-link p-2 cursor-pointer" style="cursor:pointer;" @onclick="ToggleUserManagementSubMenu">
                                 <div class="d-flex align-items-center text-white gap-1">
-                                    <span class="bi bi-backpack4-fill
-                                     d-flex align-items-center justify-content-center
-                                     flex-shrink-0 fs-4"
-                                          style="width:24px;"></span>
-                                    <span>User Management</span>
+                                    <span class="bi bi-people-fill
+                                         d-flex align-items-center justify-content-center
+                                         flex-shrink-0 fs-4"
+                                              style="width:24px;"></span>
+                                    <span class="fw-bold">User Management</span>
                                 </div>
                             </div>
                             <!--SUBMENUS -->
@@ -40,13 +40,13 @@
                                     @if (context.User.IsInRole("ADMIN") || context.User.IsInRole("ITGOVERNANCE") || context.User.IsInRole("ITGOVERNANCE"))
                                     {
                                         <li>
-                                            <NavLink class="nav-link text-white py-1 px-1 text-white" href="/users/add">
+                                            <NavLink class="nav-link text-white py-1 px-1 text-white" style="padding-left:1rem;" href="/users/add">
                                                 <div class="d-flex align-items-center gap-1">
-                                                    <span class="bi bi-file-medical
+                                                    <span class="bi bi-person-plus-fill
                                                                              d-flex align-items-center justify-content-center
                                                                              flex-shrink-0 fs-6"
                                                           style="width:24px;"></span>
-                                                    <span>Add New User</span>
+                                                    <span class="fw-bold">Add New User</span>
                                                 </div>
                                             </NavLink>
                                         </li>
@@ -54,11 +54,11 @@
                                         <li>
                                             <NavLink class="nav-link text-white py-1 px-1 text-white" style="padding-left:1rem;" href="/users">
                                                 <div class="d-flex align-items-center gap-1">
-                                                    <span class="bi bi-substack
+                                                    <span class="bi bi-person-square
                                                                              d-flex align-items-center justify-content-center
                                                                              flex-shrink-0 fs-6"
                                                           style="width:24px;"></span>
-                                                    <span>View All Users</span>
+                                                <span class="fw-bold">View All Users</span>
                                                 </div>
                                             </NavLink>
                                         </li>
@@ -66,11 +66,11 @@
                                         <li>
                                             <NavLink class="nav-link text-white py-1 px-1 text-white" style="padding-left:1rem;" href="/roles">
                                                 <div class="d-flex align-items-center gap-1">
-                                                    <span class="bi bi-substack
+                                                    <span class="bi bi-person-fill-gear
                                                                              d-flex align-items-center justify-content-center
                                                                              flex-shrink-0 fs-6"
                                                           style="width:24px;"></span>
-                                                    <span>Manage Role</span>
+                                                <span class="fw-bold">Manage Role</span>
                                                 </div>
                                             </NavLink>
                                         </li>
@@ -81,11 +81,11 @@
                                         <li>
                                             <NavLink class="nav-link text-white py-1 px-1 text-white" style="padding-left:1rem;" href="/units">
                                                 <div class="d-flex align-items-center gap-1">
-                                                    <span class="bi bi-substack
+                                                    <span class="bi bi-person-square
                                                                              d-flex align-items-center justify-content-center
                                                                              flex-shrink-0 fs-6"
                                                           style="width:24px;"></span>
-                                                    <span>Manage Unit</span>
+                                                <span class="fw-bold">Manage Unit</span>
                                                 </div>
                                             </NavLink>
                                         </li>
@@ -98,18 +98,18 @@
                     </div>
 
                 
-                @if (context.User.Identity.IsAuthenticated)
+                @if (context.User?.Identity?.IsAuthenticated ?? false)
                 {
                     <div class="nav-item px-3 mt-1">
 
                         <!-- Parent menu -->
                         <div class="nav-link p-2 cursor-pointer" style="cursor:pointer;" @onclick="ToggleTaskSubMenu">
                             <div class="d-flex align-items-center text-white gap-1">
-                                <span class="bi bi-backpack4-fill
+                                <span class="bi bi-list-task
                              d-flex align-items-center justify-content-center
                              flex-shrink-0 fs-4"
                                       style="width:24px;"></span>
-                                <span>Task Management</span>
+                                <span class="fw-bold">Task Management</span>
                             </div>
                         </div>
                         <!--SUBMENUS -->
@@ -120,13 +120,13 @@
                                 @if (context.User.IsInRole("PRODUCTOWNER") || context.User.IsInRole("BUSINESSANALYST"))
                                 {
                                     <li>
-                                        <NavLink class="nav-link text-white py-1 px-1 text-white" href="/tasks">
+                                        <NavLink class="nav-link text-white py-1 px-1 text-white" style="padding-left:1rem;" href="/tasks">
                                             <div class="d-flex align-items-center gap-1">
-                                                <span class="bi bi-file-medical
+                                                <span class="bi bi-journal-check
                                                              d-flex align-items-center justify-content-center
                                                              flex-shrink-0 fs-6"
                                                       style="width:24px;"></span>
-                                                <span>My Tasks</span>
+                                                <span class="fw-bold">My Tasks</span>
                                             </div>
                                         </NavLink>
                                     </li>
@@ -135,11 +135,11 @@
                                 <li>
                                     <NavLink class="nav-link text-white py-1 px-1 text-white" style="padding-left:1rem;" href="/user-tasks">
                                         <div class="d-flex align-items-center gap-1">
-                                            <span class="bi bi-substack
+                                            <span class="bi bi-clipboard-check-fill
                                                  d-flex align-items-center justify-content-center
                                                  flex-shrink-0 fs-6"
                                                   style="width:24px;"></span>
-                                            <span>My User Tasks</span>
+                                            <span class="fw-bold">My User Tasks</span>
                                         </div>
                                     </NavLink>
                                 </li>
@@ -148,14 +148,63 @@
                     </div>
                 }
                 
-                @if(context.User.Identity.IsAuthenticated)
+                @if(context?.User?.Identity?.IsAuthenticated ?? false)
                 {
+                    @*
                     <div>
                         <div class="nav-item px-3" style="padding-left:1rem;">
-                            <NavLink class="nav-link" href="/user-unit-analytics" Match="NavLinkMatch.All" style="padding-left:1rem;">
+                            <NavLink class="nav-link" Match="NavLinkMatch.All" style="padding-left:1rem;">
                                 <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Report Analytics
                             </NavLink>
                         </div>
+                    </div>
+                    *@
+
+                    <div class="nav-item px-3 mt-1">
+
+                        <!-- Parent Report Analytics menu -->
+                        <div class="nav-link p-2 cursor-pointer" style="cursor:pointer;" @onclick="ToggleReportAnalyticsSubMenu">
+                            <div class="d-flex align-items-center text-white gap-1">
+                                <span class="bi bi-bar-chart-fill
+                                 d-flex align-items-center justify-content-center
+                                 flex-shrink-0 fs-4"
+                                      style="width:24px;"></span>
+                                <span class="fw-bold">Report Analytics</span>
+                            </div>
+                        </div>
+                        <!--SUBMENUS -->
+                        @if (_showReportAnalyticsSubMenu)
+                        {
+
+                            <ul class="list-unstyled ms-4 mt-1">
+                                @if (context.User.IsInRole("ADMIN") || context.User.IsInRole("ITGOVERNANCE") || context.User.HasClaim("isUnitHead", "true"))
+                                {
+                                    <li>
+                                        <NavLink class="nav-link text-white py-1 px-1 text-white" style="padding-left:1rem;" href="/user-unit-analytics">
+                                            <div class="d-flex align-items-center gap-1">
+                                                <span class="bi bi-people-fill
+                                                                         d-flex align-items-center justify-content-center
+                                                                         flex-shrink-0 fs-6"
+                                                      style="width:24px;"></span>
+                                                <span class="fw-bold">User Analytics</span>
+                                            </div>
+                                        </NavLink>
+                                    </li>
+                                }
+
+                                <li>
+                                    <NavLink class="nav-link text-white py-1 px-1 text-white" style="padding-left:1rem;" href="/user-tasks">
+                                        <div class="d-flex align-items-center gap-1">
+                                            <span class="bi bi-people-fill
+                                                         d-flex align-items-center justify-content-center
+                                                         flex-shrink-0 fs-6"
+                                                  style="width:24px;"></span>
+                                            <span class="fw-bold">User Analytics</span>
+                                        </div>
+                                    </NavLink>
+                                </li>
+                            </ul>
+                        }
                     </div>
                 }
 
@@ -171,6 +220,7 @@
     private bool collapseNavMenu = true;
     private bool _showTaskSubMenu = false;
     private bool _showUserManagementSubMenu = false;
+    private bool _showReportAnalyticsSubMenu = false;
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
@@ -208,5 +258,9 @@
             UserManagementCssStyle = "hiddeh";
             UserManagementMargin = "-3.5rem";
         }
+    }
+    private void ToggleReportAnalyticsSubMenu()
+    {
+        _showReportAnalyticsSubMenu = !_showReportAnalyticsSubMenu;
     }
 }
