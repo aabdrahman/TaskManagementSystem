@@ -7,6 +7,7 @@ using LoggerService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Repository;
@@ -264,4 +265,24 @@ internal static class ApplicationServiceExtensions
     {
         services.AddFusionCache();
     }
+
+    internal static void ConfigureHealthChecks(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddHealthChecks()
+            .AddSqlServer(
+                configuration.GetConnectionString("DbConnection")!,
+                name: "Sql Server Database",
+                failureStatus: HealthStatus.Unhealthy
+            )
+            .AddCheck<Infrastructure.HealthChecks.CachingServiceHealthCheck>(name: "Fusin Cache Service", failureStatus: HealthStatus.Degraded);
+
+        services.AddHealthChecksUI(setup =>
+        {
+            setup.AddHealthCheckEndpoint("API Health", "/_healths");
+        })
+        .AddInMemoryStorage();
+    }
+
 }

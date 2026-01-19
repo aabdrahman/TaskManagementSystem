@@ -1,6 +1,8 @@
-using TaskManagementSystem.Api.ServiceExtensions;
-using Serilog;
+using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.FileProviders;
+using Serilog;
+using TaskManagementSystem.Api.ServiceExtensions;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,13 +38,16 @@ builder.Services.ConfigureAuthentication(builder.Configuration);
 builder.Services.ConfigureAuthorization();
 builder.Services.ConfigureController();
 builder.Services.ConfigureHybridCaching();
-//builder.Services.ConfigureFusionCache();
+builder.Services.ConfigureHealthChecks(builder.Configuration);
+
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline
+
 
 app.CongigureExceptionHandler();
+
 
 app.UseCors("FrontEndPolicy");
 
@@ -61,6 +66,16 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+app.UseHealthChecks("/_healths", new HealthCheckOptions
+{
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse // <-- required for UI
+});
+
+app.MapHealthChecksUI(options =>
+{
+    options.UIPath = "/_healthchecks-ui"; // <-- UI URL
+});
 
 app.MapControllers();
 
