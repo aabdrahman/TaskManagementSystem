@@ -130,6 +130,7 @@
         {
             0 => "today",
             1 => "tomorrow",
+            <0 => $"{Math.Abs(_loggedInUser.DaysToPasswordExpiry)} days(s) ago",
             _ => $"in {_loggedInUser.DaysToPasswordExpiry} days"
         };
     }
