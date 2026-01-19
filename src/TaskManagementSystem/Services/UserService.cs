@@ -344,7 +344,7 @@ public sealed class UserService : IUserService
 			bool maxDaysToChangeFromConfig = int.TryParse(_configuration["UserManagement:MaxDaysToChangePassword"] ?? "30", out int daysToLastPasswordChangeValue);
 
 
-			if (daysToLastPasswordChnage < daysToLastPasswordChangeValue)
+			if (daysToLastPasswordChnage > daysToLastPasswordChangeValue)
 			{
 				return GenericResponse<TokenDto>.Failure(null, HttpStatusCode.Locked, "Password Change required", null);
 			}
