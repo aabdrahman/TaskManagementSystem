@@ -20,6 +20,7 @@ public class RepositoryContext : DbContext
     public DbSet<TaskUser> TaskUsers { get; set; }
     public DbSet<Attachment> Attachments { get; set; }
     public DbSet<UserUnitAssignedUserTaskAnalytics> UserUnitAssignedUserTaskAnalytics { get; set; }
+    public DbSet<AuditTrail> AuditTrails { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
