@@ -9,4 +9,5 @@ public interface IServiceManager
     ITaskUserService TaskUserService { get; }
     IAttachmentService AttachmentService { get; }
     IAnalyticsReportingService AnalyticsReportingService { get; }
+    IAuditService AuditService { get; }
 }

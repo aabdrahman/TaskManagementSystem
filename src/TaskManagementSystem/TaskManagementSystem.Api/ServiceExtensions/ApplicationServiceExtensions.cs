@@ -118,6 +118,7 @@ internal static class ApplicationServiceExtensions
     internal static void ConfigureInfrastrucureManager(this IServiceCollection services)
     {
         services.AddScoped<IInfrastructureManager, InfrastructureManager>();
+        services.AddSingleton<IAuditPersistenceService, AuditPersistenceService>();
     }
 
     internal static void ConfigureController(this IServiceCollection services)

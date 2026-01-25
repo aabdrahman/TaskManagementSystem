@@ -1,16 +1,17 @@
 ﻿using Contracts;
 using Contracts.Infrastructure;
 using Entities.Models;
+using Entities.StaticValues;
+using Infrastructure.Contracts;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Service.Contract;
 using Shared.ApiResponse;
 using Shared.DataTransferObjects.CreatedTask;
 using Shared.Mapper;
 using System.Data.Common;
-using System.Text.Json;
 using System.Net;
-using Entities.StaticValues;
-using Microsoft.AspNetCore.Http;
+using System.Text.Json;
 
 namespace Services;
 
@@ -19,12 +20,14 @@ public sealed class CreatedTaskService : ICreatedTaskService
     private readonly IRepositoryManager _repositoryManager;
     private readonly ILoggerManager _loggerManager;
     private readonly IHttpContextAccessor _contextAccessor;
+    private readonly IAuditPersistenceService _auditPersistenceService;
 
-    public CreatedTaskService(IRepositoryManager repositoryManager, ILoggerManager loggerManager, IHttpContextAccessor contextAccessor)
+    public CreatedTaskService(IRepositoryManager repositoryManager, ILoggerManager loggerManager, IHttpContextAccessor contextAccessor, IAuditPersistenceService auditPersistenceService)
     {
         _repositoryManager = repositoryManager;
         _loggerManager = loggerManager;
         _contextAccessor = contextAccessor;
+        _auditPersistenceService = auditPersistenceService;
     }
 
     public async Task<GenericResponse<string>> CancelTaskAsync(CancelCreatedTaskDto cancelCreatedTaskDto)
@@ -61,6 +64,8 @@ public sealed class CreatedTaskService : ICreatedTaskService
                 return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.BadRequest, "Request Mismatch.", null);
             }
 
+            string? oldValue = taskToCancel.CancelReason;
+
             taskToCancel.TaskStage = Stage.Cancelled;
             taskToCancel.CancelReason = cancelCreatedTaskDto.Justification;
 
@@ -68,7 +73,21 @@ public sealed class CreatedTaskService : ICreatedTaskService
 
             await _repositoryManager.SaveChangesAsync();
 
-            await _loggerManager.LogInfo($"Cancel Created Task Success - {SerializeObjects(cancelCreatedTaskDto)} by {_contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value}");
+            AuditTrail auditTrail = new AuditTrail()
+            {
+                EntityId = taskToCancel.Id.ToString(),
+                EntityName = typeof(CreatedTask).Name,
+                PerformedAction = AuditAction.Cancelled,
+                PerformedAt = DateTime.UtcNow.ToLocalTime(),
+                ParticipantName = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
+                ParticipandIdentification = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
+                OldValue = string.IsNullOrEmpty(oldValue) ? "" : oldValue,
+                NewValue = taskToCancel.CancelReason
+            };
+
+            bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(auditTrail);
+
+            await _loggerManager.LogInfo($"Cancel Created Task Success - {SerializeObjects(cancelCreatedTaskDto)} by {_contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value}. Queue Audit Response: {queueAuditResponse}");
 
             return GenericResponse<string>.Success("Operation Successul", HttpStatusCode.OK, "Task Cancelled Successfuly.");
         }
@@ -105,6 +124,21 @@ public sealed class CreatedTaskService : ICreatedTaskService
             await _repositoryManager.CreatedTaskRepository.CreateTask(taskToInsert);
 
             await _repositoryManager.SaveChangesAsync();
+
+            AuditTrail auditTrail = new AuditTrail()
+            {
+                EntityId = taskToInsert.Id.ToString(),
+                EntityName = typeof(CreatedTask).Name,
+                PerformedAction = AuditAction.Created,
+                PerformedAt = DateTime.UtcNow.ToLocalTime(),
+                ParticipantName = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
+                ParticipandIdentification = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
+                NewValue = SerializeObjects(taskToInsert.ToDto())
+            };
+
+            bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(auditTrail);
+
+            await _loggerManager.LogInfo($"Task Created Successfully - {SerializeObjects(taskToInsert.ToDto())}. Queue Audit Response: {queueAuditResponse}");
 
             return GenericResponse<CreatedTaskDto>.Success(taskToInsert.ToDto(), HttpStatusCode.Created, "Task Creation Successful.");
         }
@@ -148,7 +182,21 @@ public sealed class CreatedTaskService : ICreatedTaskService
             }
 
             await _repositoryManager.SaveChangesAsync();
-            await _loggerManager.LogInfo(isSoftDelete ? $"Task with Id: {taskId} deactivation successful." : $"Task with Id: {taskId} deleted successfully.");
+
+            AuditTrail auditTrail = new AuditTrail()
+            {
+                EntityId = taskToDelete.Id.ToString(),
+                EntityName = typeof(CreatedTask).Name,
+                PerformedAction = isSoftDelete ? AuditAction.SoftDeleted : AuditAction.HardDeleted,
+                PerformedAt = DateTime.UtcNow.ToLocalTime(),
+                ParticipantName = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
+                ParticipandIdentification = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
+                OldValue = SerializeObjects(taskToDelete.ToDto())
+            };
+
+            bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(auditTrail);
+
+            await _loggerManager.LogInfo(isSoftDelete ? $"Task with Id: {taskId} deactivation successful." : $"Task with Id: {taskId} deleted successfully." + $"Queue Audit Record: {queueAuditResponse}");
 
             return GenericResponse<string>.Success("Operation successful.", HttpStatusCode.OK, isSoftDelete ? "Task deactivation successful" : "Task Deletion Successful");
         }
@@ -330,13 +378,29 @@ public sealed class CreatedTaskService : ICreatedTaskService
             //    return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.BadRequest, "User Role is not valid.", null);
             //}
 
+            var oldValue = taskToReassign.UserId.ToString();
+
             taskToReassign.UserId = reassignCreatedTaskDto.UserId;
 
             _repositoryManager.CreatedTaskRepository.UpdateTask(taskToReassign);
 
             await _repositoryManager.SaveChangesAsync();
 
-            await _loggerManager.LogInfo($"Task Reassign Successful. {SerializeObjects(reassignCreatedTaskDto)}");
+            AuditTrail auditTrail = new AuditTrail()
+            {
+                EntityId = taskToReassign.Id.ToString(),
+                EntityName = typeof(CreatedTask).Name,
+                PerformedAction = AuditAction.Reassigned,
+                PerformedAt = DateTime.UtcNow.ToLocalTime(),
+                ParticipantName = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
+                ParticipandIdentification = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
+                NewValue = taskToReassign.UserId.ToString(),
+                OldValue = oldValue
+            };
+
+            bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(auditTrail);
+
+            await _loggerManager.LogInfo($"Task Reassign Successful. {SerializeObjects(reassignCreatedTaskDto)}. Queue Audit Record: {queueAuditResponse}");
 
             return GenericResponse<string>.Success("Operation Successful.", HttpStatusCode.OK, "Task Successfully Reassigned.");
 
@@ -385,6 +449,8 @@ public sealed class CreatedTaskService : ICreatedTaskService
                 return GenericResponse<CreatedTaskDto>.Failure(null, HttpStatusCode.BadRequest, "Task is already cancelled.", null);
             }
 
+            var oldValue = createdTaskToUpdate.ToDto();
+
             createdTaskToUpdate.Title = updateCreatedTaskDto.Title;
             createdTaskToUpdate.Description = updateCreatedTaskDto.Description;
             createdTaskToUpdate.ProjectedCompletionDate = updateCreatedTaskDto.ProposedCompletionDate;
@@ -394,7 +460,21 @@ public sealed class CreatedTaskService : ICreatedTaskService
 
             await _repositoryManager.SaveChangesAsync();
 
-            await _loggerManager.LogInfo($"Created Task Updated Successful - {SerializeObjects(updateCreatedTaskDto)}");
+                AuditTrail auditTrail = new AuditTrail()
+                {
+                    EntityId = createdTaskToUpdate.Id.ToString(),
+                    EntityName = typeof(CreatedTask).Name,
+                    PerformedAction = AuditAction.Updated,
+                    PerformedAt = DateTime.UtcNow.ToLocalTime(),
+                    ParticipantName = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
+                    ParticipandIdentification = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
+                    NewValue = SerializeObjects(createdTaskToUpdate.ToDto()),
+                    OldValue = SerializeObjects(oldValue)
+                };
+
+                bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(auditTrail);
+
+            await _loggerManager.LogInfo($"Created Task Updated Successful - {SerializeObjects(updateCreatedTaskDto)}. Queue Audit Record: {queueAuditResponse}");
 
             return GenericResponse<CreatedTaskDto>.Success(createdTaskToUpdate.ToDto(), HttpStatusCode.OK, "Created Task Updated Successfully.");
 
@@ -449,13 +529,29 @@ public sealed class CreatedTaskService : ICreatedTaskService
                 return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.BadRequest, "Created Task not found", null);
             }
 
+            var oldValue = taskToUpdate.TaskStage.ToString();
+
             taskToUpdate.TaskStage = Enum.Parse<Stage>(updateCreatedTaskCompleteStatusDto.Stage, ignoreCase: true);
 
             _repositoryManager.CreatedTaskRepository.UpdateTask(taskToUpdate);
 
             await _repositoryManager.SaveChangesAsync();
 
-            await _loggerManager.LogInfo($"Task Sttaus Update Successful - {SerializeObjects(updateCreatedTaskCompleteStatusDto)}");
+            AuditTrail auditTrail = new AuditTrail()
+            {
+                EntityId = taskToUpdate.Id.ToString(),
+                EntityName = typeof(CreatedTask).Name,
+                PerformedAction = AuditAction.Updated,
+                PerformedAt = DateTime.UtcNow.ToLocalTime(),
+                ParticipantName = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
+                ParticipandIdentification = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
+                NewValue = taskToUpdate.TaskStage.ToString(),
+                OldValue = oldValue
+            };
+
+            bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(auditTrail);
+
+            await _loggerManager.LogInfo($"Task Sttaus Update Successful - {SerializeObjects(updateCreatedTaskCompleteStatusDto)}. Queue Audit Record: {queueAuditResponse}");
 
             return GenericResponse<string>.Success("Operation Successful", HttpStatusCode.OK, $"Task updated Successfully. Current Status: {taskToUpdate.TaskStage.ToString()}");
         }

@@ -19,6 +19,7 @@ using Entities.ConfigurationModels;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Http;
 using Shared.RequestParameters;
+using Infrastructure.Contracts;
 
 namespace Services;
 
@@ -29,16 +30,18 @@ public sealed class UserService : IUserService
     private readonly IConfiguration _configuration;
     private readonly JwtConfiguration _jwtConfiguration;
     private readonly IHttpContextAccessor _contextAccessor;
+    private readonly IAuditPersistenceService _auditPersistenceService;
 
     private User? _loginUser;
 
-    public UserService(IRepositoryManager repositoryManager, ILoggerManager loggerManager, IConfiguration configuration, IOptionsMonitor<JwtConfiguration> jwtConfiurationOptionsMonitor, IHttpContextAccessor contextAccessor)
+    public UserService(IRepositoryManager repositoryManager, ILoggerManager loggerManager, IConfiguration configuration, IOptionsMonitor<JwtConfiguration> jwtConfiurationOptionsMonitor, IHttpContextAccessor contextAccessor, IAuditPersistenceService auditPersistenceService)
     {
         _repositoryManager = repositoryManager;
         _loggerManager = loggerManager;
         _configuration = configuration;
         _jwtConfiguration = jwtConfiurationOptionsMonitor.CurrentValue;
         _contextAccessor = contextAccessor;
+        _auditPersistenceService = auditPersistenceService;
     }
     public async Task<GenericResponse<UserDto>> CreateAsync(CreateUserDto createUserDto)
     {
@@ -87,9 +90,22 @@ public sealed class UserService : IUserService
 
             await _repositoryManager.SaveChangesAsync();
 
-			bool maxDaysToChangeFromConfig = int.TryParse(_configuration["UserManagement:MaxDaysToChangePassword"] ?? "30", out int daysToLastPasswordChangeValue);
+            AuditTrail createAuditTrail = new AuditTrail()
+            {
+                EntityId = userToInsert.Id.ToString(),
+                EntityName = typeof(User).Name,
+                PerformedAction = Entities.StaticValues.AuditAction.Created,
+                PerformedAt = DateTime.UtcNow.ToLocalTime(),
+                ParticipantName = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
+                ParticipandIdentification = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
+                NewValue = SerializeObject(userToInsert)
+            };
 
-			await _loggerManager.LogInfo($"User Creation Successful - {SerializeObject(userToInsert.ToDto(daysToLastPasswordChangeValue))}");
+            bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(createAuditTrail);
+
+            bool maxDaysToChangeFromConfig = int.TryParse(_configuration["UserManagement:MaxDaysToChangePassword"] ?? "30", out int daysToLastPasswordChangeValue);
+
+			await _loggerManager.LogInfo($"User Creation Successful - {SerializeObject(userToInsert.ToDto(daysToLastPasswordChangeValue))}. Queue Audit Response: {queueAuditResponse}");
 
             return GenericResponse<UserDto>.Success(userToInsert.ToDto(daysToLastPasswordChangeValue), HttpStatusCode.Created, $"User creation successful.");
 
@@ -178,7 +194,20 @@ public sealed class UserService : IUserService
             }
 
             await _repositoryManager.SaveChangesAsync();
-            await _loggerManager.LogInfo(isSoftDelete ? $"User with username: {Username} soft deletion successful" : $"User Removed Successfully.");
+
+            AuditTrail deleteAuditTrail = new AuditTrail()
+            {
+                EntityId = existingUser.Id.ToString(),
+                EntityName = typeof(User).Name,
+                PerformedAction = isSoftDelete ? Entities.StaticValues.AuditAction.SoftDeleted : Entities.StaticValues.AuditAction.HardDeleted,
+                PerformedAt = DateTime.UtcNow.ToLocalTime(),
+                ParticipantName = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
+                ParticipandIdentification = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0"
+            };
+
+            bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(deleteAuditTrail);
+
+            await _loggerManager.LogInfo(isSoftDelete ? $"User with username: {Username} soft deletion successful" : $"User Removed Successfully." + $"Queue audit record response: {queueAuditResponse}");
 
             return GenericResponse<string>.Success("Operation Successful", HttpStatusCode.OK, isSoftDelete ? "User marked as inactive" : "User deleted successfully.");
 
@@ -635,12 +664,28 @@ public sealed class UserService : IUserService
                 return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.NotFound, "Selcted User does not exist");
             }
 
+            User oldAuditValue = userToUpdate;
+
             userToUpdate = updateUserDto.ToEntity(userToUpdate);
             _repositoryManager.UserRepository.UpdateUser(userToUpdate);
 
             await _repositoryManager.SaveChangesAsync();
 
-            await _loggerManager.LogInfo($"User Updated Successfully - {SerializeObject(updateUserDto)}");
+            AuditTrail createAuditTrail = new AuditTrail()
+            {
+                EntityId = userToUpdate.Id.ToString(),
+                EntityName = typeof(User).Name,
+                PerformedAction = Entities.StaticValues.AuditAction.Updated,
+                PerformedAt = DateTime.UtcNow.ToLocalTime(),
+                ParticipantName = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
+                ParticipandIdentification = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
+                NewValue = SerializeObject(userToUpdate),
+                OldValue = SerializeObject(oldAuditValue)
+            };
+
+            bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(createAuditTrail);
+
+            await _loggerManager.LogInfo($"User Updated Successfully - {SerializeObject(updateUserDto)}. Queu Audit Response: {queueAuditResponse}");
 
             return GenericResponse<string>.Success("Operaion Successful.", HttpStatusCode.OK, "User Details Successfully Updated.");
         }

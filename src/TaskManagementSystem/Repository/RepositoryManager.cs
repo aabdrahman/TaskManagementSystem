@@ -15,6 +15,7 @@ public sealed class RepositoryManager : IRepositoryManager
     private readonly Lazy<TaskUserRepository> _taskUserRepository;
     private readonly Lazy<IAttachmentRepository> _attachmentRepository;
     private readonly Lazy<IUserUnitAssignedUserTaskAnalyticsRepository> _userUnitAssignedUserTaskAnalyticsRepository;
+    private readonly Lazy<IAuditTrailRepository> _auditTrailRepository;
 
     public RepositoryManager()
     {
@@ -31,6 +32,7 @@ public sealed class RepositoryManager : IRepositoryManager
         _taskUserRepository = new Lazy<TaskUserRepository>(()  => new TaskUserRepository(_repositoryContext));
         _attachmentRepository = new Lazy<IAttachmentRepository>(() => new AttachmentRepository(_repositoryContext));
         _userUnitAssignedUserTaskAnalyticsRepository = new Lazy<IUserUnitAssignedUserTaskAnalyticsRepository>(() => new UserUnitAssignedUserTaskAnalyticsRepository(_repositoryContext));
+        _auditTrailRepository = new Lazy<IAuditTrailRepository>(() => new AuditTrailRepository(_repositoryContext));
     }
 
     public IUnitRepository UnitRepository => _unitRepository.Value;
@@ -48,6 +50,8 @@ public sealed class RepositoryManager : IRepositoryManager
     public IAttachmentRepository AttachmentRepository => _attachmentRepository.Value;
 
     public IUserUnitAssignedUserTaskAnalyticsRepository UserUnitAssignedUserTaskAnalyticsRepository => _userUnitAssignedUserTaskAnalyticsRepository.Value;
+
+    public IAuditTrailRepository AuditTrailRepository => _auditTrailRepository.Value;
 
     public async Task SaveChangesAsync()
     {

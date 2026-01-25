@@ -12,5 +12,6 @@ public interface IRepositoryManager
     ITaskUserRepository TaskUserRepository { get; }
     IAttachmentRepository AttachmentRepository { get; }
     IUserUnitAssignedUserTaskAnalyticsRepository UserUnitAssignedUserTaskAnalyticsRepository { get; }
+    IAuditTrailRepository AuditTrailRepository { get; }
     Task SaveChangesAsync();
 }

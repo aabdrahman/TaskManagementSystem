@@ -9,5 +9,6 @@ public enum AuditAction
     Reopened = 5,
     SoftDeleted = 6,
     HardDeleted = 7,
-    Reassigned = 8
+    Reassigned = 8,
+    UpdatedStatus = 9
 }

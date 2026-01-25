@@ -20,12 +20,15 @@ public sealed class UnitService : IUnitService
     private readonly IRepositoryManager _repositoryManager;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IInfrastructureManager _infrastructureManager;
-    public UnitService(ILoggerManager loggerManager, IRepositoryManager repositoryManager, IHttpContextAccessor httpContextAccessor, IInfrastructureManager infrastructureManager)
+    private readonly IAuditPersistenceService _auditPersistenceService;
+
+    public UnitService(ILoggerManager loggerManager, IRepositoryManager repositoryManager, IHttpContextAccessor httpContextAccessor, IInfrastructureManager infrastructureManager, IAuditPersistenceService auditPersistenceService)
     {
         _loggerManager = loggerManager;
         _repositoryManager = repositoryManager;
         _httpContextAccessor = httpContextAccessor;
         _infrastructureManager = infrastructureManager;
+        _auditPersistenceService = auditPersistenceService;
     }
 
     public async Task<GenericResponse<UnitDto>> CreateAsync(CreateUnitDto newUnitToCreate)
@@ -47,11 +50,28 @@ public sealed class UnitService : IUnitService
             unitToInsert.CreatedBy = $"{_httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value}-{_httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value}";
 
             await _repositoryManager.UnitRepository.CreateUnit(unitToInsert);
+            AuditTrail createAuditTrail = new AuditTrail()
+            {
+                EntityId = unitToInsert.Id.ToString(),
+                EntityName = typeof(Unit).Name,
+                PerformedAction = Entities.StaticValues.AuditAction.Created,
+                PerformedAt = DateTime.UtcNow.ToLocalTime(),
+                ParticipantName = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
+                ParticipandIdentification = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
+                NewValue = SerializeObjectToString(unitToInsert)
+            };
+
+            //await _repositoryManager.AuditTrailRepository.CreateAuditTrailAsync(createAuditTrail);
+
+            
 
             try
             {
                 await _repositoryManager.SaveChangesAsync();
-                await _loggerManager.LogInfo($"Unit Creation Successful - {SerializeObjectToString(unitToInsert)}");
+
+                bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(createAuditTrail);
+
+                await _loggerManager.LogInfo($"Unit Creation Successful - {SerializeObjectToString(unitToInsert)}. Audit Queue status: {queueAuditResponse}");
 
                 await _infrastructureManager.CacheService.AddNewFusionCache<UnitDto>($"Unit-{unitToInsert.Id}", unitToInsert.ToDto());
 
@@ -96,6 +116,8 @@ public sealed class UnitService : IUnitService
                 return GenericResponse<string>.Failure($"Operation Failed.", HttpStatusCode.Conflict, "Unit has one or more users linked to it.", null);
             }
 
+            Unit auditLogUnit = existingUnit;
+
             if(isSoftDelete)
             {
                 await _loggerManager.LogInfo($"{existingUnit.Name} - marking as inactive");
@@ -107,8 +129,28 @@ public sealed class UnitService : IUnitService
                 _repositoryManager.UnitRepository.DeleteUnit(existingUnit);
             }
 
+            AuditTrail deleteUnitAuditTrail = new AuditTrail() 
+            {
+                EntityId = existingUnit.Id.ToString(),
+                EntityName = typeof(Unit).Name,
+                PerformedAt = DateTime.UtcNow.ToLocalTime(),
+                PerformedAction = isSoftDelete ? Entities.StaticValues.AuditAction.SoftDeleted : Entities.StaticValues.AuditAction.HardDeleted,
+                ParticipantName = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
+                ParticipandIdentification = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
+                OldValue = SerializeObjectToString(auditLogUnit),
+                NewValue = SerializeObjectToString(existingUnit)
+
+            };
+
+            //await _repositoryManager.AuditTrailRepository.CreateAuditTrailAsync(deleteUnitAuditTrail);
+
+
             await _repositoryManager.SaveChangesAsync();
-            await _loggerManager.LogInfo(isSoftDelete ? $"Unit with Id: {UnitId} marked as inactive successfully" : $"Unit wit Id: {UnitId} deleted successfully.");
+
+            bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(deleteUnitAuditTrail);
+
+
+            await _loggerManager.LogInfo(isSoftDelete ? $"Unit with Id: {UnitId} marked as inactive successfully" : $"Unit wit Id: {UnitId} deleted successfully. Queue Audit Response: {queueAuditResponse}");
 
             await _infrastructureManager.CacheService.RemoveMulipeFromFusionCache($"Unit-{UnitId}", "Units");
 
@@ -218,15 +260,33 @@ public sealed class UnitService : IUnitService
                 return GenericResponse<UnitDto>.Failure(null, HttpStatusCode.NotFound, "Unit does not exist");
             }
 
+            Unit auditLogUnit = unitToUpdate;
+
             unitToUpdate.UnitHeadName = updatedUnit.UnitHeadName;
             unitToUpdate.Name = updatedUnit.Name;
             //unitToUpdate.NormalizedName = updatedUnit.Name.ToUpper();
 
             _repositoryManager.UnitRepository.UpdateUnit(unitToUpdate);
 
+            AuditTrail updateAuditTrail = new AuditTrail()
+            {
+                EntityId = unitToUpdate.Id.ToString(),
+                EntityName = typeof(Unit).Name,
+                PerformedAction = Entities.StaticValues.AuditAction.Updated,
+                PerformedAt = DateTime.UtcNow.ToLocalTime(),
+                ParticipantName = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
+                ParticipandIdentification = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
+                OldValue = SerializeObjectToString(auditLogUnit),
+                NewValue = SerializeObjectToString(unitToUpdate)
+            };
+
+            //await _repositoryManager.AuditTrailRepository.CreateAuditTrailAsync(updateAuditTrail);
+
             await _repositoryManager.SaveChangesAsync();
 
-            await _loggerManager.LogInfo($"Update Unit Successful - {SerializeObjectToString(unitToUpdate.ToDto())} by: {loggedInUser}");
+            bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(updateAuditTrail);
+
+            await _loggerManager.LogInfo($"Update Unit Successful - {SerializeObjectToString(unitToUpdate.ToDto())} by: {loggedInUser}. Queue Audit Response: {queueAuditResponse}");
 
             await _infrastructureManager.CacheService.AddNewFusionCache<UnitDto>($"Unit-{unitToUpdate.Id}", unitToUpdate.ToDto());
             await _infrastructureManager.CacheService.RemoveFromCache("Units");
