@@ -17,6 +17,7 @@ using Services;
 using System.Text;
 using TaskManageemntSystem.WorkerService;
 using TaskManageemntSystem.WorkerService.CustomScheduler;
+using TaskManageemntSystem.WorkerService.CustomScheduler.Jobs;
 
 namespace TaskManagementSystem.Api.ServiceExtensions;
 
@@ -299,6 +300,7 @@ internal static class ApplicationServiceExtensions
         });
 
         var testJobKey = JobKey.Create(nameof(TestSchedulerJob));
+        var auditPersisteneJobKey = JobKey.Create(nameof(AuditTrailPersistenceJob));
         var startDate = DateTime.Now;
 
         services.AddQuartz(opts =>
@@ -306,6 +308,7 @@ internal static class ApplicationServiceExtensions
             opts.AddJob<TestSchedulerJob>(opts =>
             {
                 opts.WithIdentity(testJobKey);
+
             }).AddTrigger(trigger =>
             {
                 trigger.ForJob(testJobKey);
@@ -313,6 +316,22 @@ internal static class ApplicationServiceExtensions
                 .WithSimpleSchedule(schedule =>
                 {
                     schedule.WithIntervalInSeconds(60).RepeatForever();
+                });
+            });
+        });
+
+        services.AddQuartz(opts =>
+        {
+            opts.AddJob<AuditTrailPersistenceJob>(opts =>
+            {
+                opts.WithIdentity(auditPersisteneJobKey);
+                
+            }).AddTrigger(trigger =>
+            {
+                trigger.ForJob(auditPersisteneJobKey); 
+                trigger.StartAt(startDate.AddSeconds(120))
+                .WithSimpleSchedule(schedule => {
+                    schedule.WithIntervalInSeconds(90).RepeatForever();
                 });
             });
         });

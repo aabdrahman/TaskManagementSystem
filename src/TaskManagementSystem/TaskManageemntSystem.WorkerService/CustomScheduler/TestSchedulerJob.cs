@@ -3,6 +3,7 @@ using Quartz;
 
 namespace TaskManageemntSystem.WorkerService.CustomScheduler;
 
+[DisallowConcurrentExecution]
 public sealed class TestSchedulerJob : IJob
 {
     private ILoggerManager _loggerManager;
@@ -15,7 +16,7 @@ public sealed class TestSchedulerJob : IJob
     {
         try
         {
-            await _loggerManager.LogInfo($"Test Sceduled Quartz Job running at: {DateTime.Now}");
+            await _loggerManager.LogInfo($"Test Scheduled Quartz Job running at: {DateTime.Now}");
         }
         catch (Exception ex)
         {
