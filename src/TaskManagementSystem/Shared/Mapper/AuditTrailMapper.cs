@@ -15,7 +15,8 @@ public static class AuditTrailMapper
             ParticipandIdentification = auditTrail.ParticipandIdentification,
             ParticipantName = auditTrail.ParticipantName,
             PerformedAction = auditTrail.PerformedAction.ToString(),
-            PerformedAt = auditTrail.PerformedAt
+            PerformedAt = auditTrail.PerformedAt,
+            Comment = auditTrail.Comment
         };
     }
 }

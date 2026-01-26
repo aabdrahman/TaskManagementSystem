@@ -546,7 +546,7 @@ public sealed class CreatedTaskService : ICreatedTaskService
             {
                 EntityId = taskToUpdate.Id.ToString(),
                 EntityName = typeof(CreatedTask).Name,
-                PerformedAction = AuditAction.Updated,
+                PerformedAction = AuditAction.UpdatedStatus,
                 PerformedAt = DateTime.UtcNow.ToLocalTime(),
                 ParticipantName = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
                 ParticipandIdentification = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",

@@ -22,7 +22,7 @@ public class UnitsController : ControllerBase
 
 
     [HttpGet]
-    [Authorize(Policy = "UnitHeadOrAdminPolicy")]
+    [Authorize(Policy = "UnitHeadOrAdminOrProductOwnerPolicy")]
     public async Task<IActionResult> GetAllUnits(bool hasQueryFilter = true)
     {
         try

@@ -1,4 +1,5 @@
 ﻿@page "/tasks/{TaskId}"
+@using System.Threading.Tasks
 @attribute [Authorize(Roles = "BUSINESSANALYST,PRODUCTOWNER")]
 
 <PageTitle>Created Task Summary Details - @TaskId</PageTitle>
@@ -42,9 +43,37 @@ else
 
         <CreatedTaskDetails CreatedMainTask="_createdTask" />
 
+        <div class="d-flex w-100 justify-content-start">
+            <div class="btn btn-primary my-2 float-start" @onclick="HandleGetProcessAudit">
+                Get Process Audit
+            </div>
+        </div>
+
         <hr class="display-1" />
 
-
+        if (_isFetchedAuditResponseMessage is not null)
+        {
+            if (!_isFetchAuditSuccessful)
+            {
+                <p class="fw-bolder fs-4 fst-italic text-info w-100">
+                    @_isFetchedAuditResponseMessage
+                </p>
+            }
+            else
+            {
+                if (_auditTrails.Any())
+                {
+                    <TaskManagementSystem.Client.Pages.AuditTrail.AuditTrailView AuditTrails="_auditTrails" ShowHeader="true" />
+                }
+                else
+                {
+                    <p class="fw-bolder fs-4 fst-italic text-info w-100">
+                        @_isFetchedAuditResponseMessage
+                        @("No Audit Record Exists")
+                    </p>
+                }
+            }
+        }
 
         if(!_isLoadingUserTasks && _responseMessage is not null)
         {
@@ -62,13 +91,19 @@ else
                         You have not assigned any task to users yet.
                     </p>
 
-                    <div class="btn btn-primary my-2 float-start" @onclick="HandleAddNewUserTask">
-                        Assign New Task To User
+                    <div class="d-flex flex-row justify-content-end">
+
+
+                        <div class="btn btn-primary my-2 float-start" @onclick="HandleAddNewUserTask">
+                            Assign New Task To User
+                        </div>
                     </div>
+
+                    
                 }
                 else
                 {
-                    <AssignedTasksToUsersView TasksAssignedToUser="_userAssignedTasks" HandleShowDetails="HandleShowReadOnly" HandleAddNewUserTask="HandleAddNewUserTask" HandleEditUserTask="HandleEditUserTask" HandleDeleteUserTask="HandleDeleteUserTask" HandleReassignUserTask="HandleReassigneUserTask" />
+                    <AssignedTasksToUsersView HandleGetCreatedTaskAudit="HandleGetAssignedTaskProcessAudit" TasksAssignedToUser="_userAssignedTasks" HandleShowDetails="HandleShowReadOnly" HandleAddNewUserTask="HandleAddNewUserTask" HandleEditUserTask="HandleEditUserTask" HandleDeleteUserTask="HandleDeleteUserTask" HandleReassignUserTask="HandleReassigneUserTask" />
                 }
             }
         }
@@ -101,6 +136,10 @@ else
         {
             <UpdateCreatedTaskStatus TaskToUpdateStatus="_createdTask" HandleClose="OnHandleUpdateCreatedTaskStatusClosePopup" />
         }
+        else if(_operationToPerform == OperationType.GetAssignedTaskAudit)
+        {
+            <TaskManagementSystem.Client.Pages.AuditTrail.AuditTrailView AuditTrails="_userTaskAuditTrails" />
+        }
     </Body>
 </Popup>
 
@@ -115,6 +154,14 @@ else
     private string _responseMessage;
     private bool _isSuccessful;
     private Shared.DataTransferObjects.TaskUser.TaskUserDto _selectedTask;
+
+    //CREATED TASK PROCESS AUDIT VARIABLES
+    private bool _isFetchAuditSuccessful;
+    private string _isFetchedAuditResponseMessage;
+    private IEnumerable<AuditTrailDto> _auditTrails;
+
+    //USER TASK PROCESS AUDIT VARIABLES
+    private IEnumerable<AuditTrailDto> _userTaskAuditTrails;
 
     [Parameter, EditorRequired]
     public string TaskId { get; set; }
@@ -147,6 +194,37 @@ else
         return (!_createdTask.CompletionDate.HasValue && string.IsNullOrEmpty(_createdTask.CancelReason));
     }
 
+    private async Task HandleGetProcessAudit()
+    {
+        var getAuditResponse = await getItemAuditTrailHandler.Handle(_createdTask.Id, typeof(CreatedTaskDto).Name);
+
+        if(getAuditResponse is null)
+        {
+            _isFetchAuditSuccessful = false;
+            _isFetchedAuditResponseMessage = "An Error Occurred Fetching Audit";
+            return;
+        }
+
+        _isFetchAuditSuccessful = getAuditResponse.IsSuccessful;
+        _isFetchedAuditResponseMessage = getAuditResponse.Message;
+        _auditTrails = getAuditResponse.Data ?? [];
+    }
+
+    private async Task HandleGetAssignedTaskProcessAudit(Shared.DataTransferObjects.TaskUser.TaskUserDto selectedUserTask)
+    {
+        var response = await getItemAuditTrailHandler.Handle(selectedUserTask.Id, typeof(Shared.DataTransferObjects.TaskUser.TaskUserDto).Name);
+
+        _userTaskAuditTrails = response.Data ?? [];
+
+        if(_userAssignedTasks is not null && _userTaskAuditTrails.Any())
+        {
+            _selectedTask = selectedUserTask;
+            _operationToPerform = OperationType.GetAssignedTaskAudit;
+            _showCloseButton = true;
+            _popupTitle = $"Process Audit For: {selectedUserTask.Id}";
+            popup.Open();
+        } 
+    }
 }
 
 @code{
@@ -160,7 +238,7 @@ else
     private async Task FetchAssignedUserTasks()
     {
         _isLoadingUserTasks = true;
-        var response = await fetchCreatedTaskAssignedTasksHandler.Handle(_createdTask.Id);
+        var response = await fetchCreatedTaskAssignedTasksHandler.Handle(_createdTask!.Id);
 
         _fetchUserTasksResponseMessage = response.Message;
         _isSuccessfulFetchUserTasks = response.IsSuccessful;
@@ -309,6 +387,7 @@ else
         EditUserTask,
         DeleteUserTask,
         ReassignUserTask,
-        UpdateCreatedTaskStatus
+        UpdateCreatedTaskStatus,
+        GetAssignedTaskAudit
     }
 }

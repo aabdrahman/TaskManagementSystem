@@ -10,4 +10,5 @@ public record class AuditTrailDto
     public string ParticipandIdentification { get; set; }
     public DateTime PerformedAt { get; set; }
     public string PerformedAction { get; set; }
+    public string Comment { get; set; }
 }

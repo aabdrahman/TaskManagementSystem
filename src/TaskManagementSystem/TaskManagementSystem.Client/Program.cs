@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using TaskManagementSystem.Client;
 using TaskManagementSystem.Client.AuthenticationProvider;
+using TaskManagementSystem.Client.Handlers.AuditTrail;
 using TaskManagementSystem.Client.Handlers.Authentication;
 using TaskManagementSystem.Client.Handlers.CreatedTask;
 using TaskManagementSystem.Client.Handlers.ReportAnalytics;
@@ -60,6 +61,8 @@ builder.Services.AddScoped<UpdateUserDetailsHandler>();
 builder.Services.AddScoped<GetUserEditDetailsHandler>();
 builder.Services.AddScoped<GetUserSummaryDetailsHandler>();
 builder.Services.AddScoped<GetUserUnitTaskUserAnalyticsHandler>();
+builder.Services.AddScoped<GetItemAuditTrailHandler>();
+builder.Services.AddScoped<GetUserAuditTrailHandler>();
 
 //Clients
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });

@@ -39,7 +39,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("getByUnitId/{UnitId:int}")]
-    [Authorize(Policy = "UnitHeadOrAdminPolicy")]
+    [Authorize(Policy = "UnitHeadOrAdminOrProductOwnerPolicy")]
     public async Task<IActionResult> GetUsersByUnitId(int UnitId, bool hasQueryFilter = true)
     {
         try
