@@ -61,3 +61,4 @@ nunit-*.xml
 /src/TaskManagementSystem/.vs/TaskManagementSystem/config/applicationhost.config
 /src/TaskManagementSystem/.vs/TaskManagementSystem/DesignTimeBuild/.dtbcache.v2
 /src/TaskManagementSystem/.vs
+/src/TaskManagementSystem/TaskManagementSystem.Api/Attachments/Uploads

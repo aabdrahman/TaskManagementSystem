@@ -281,7 +281,8 @@ internal static class ApplicationServiceExtensions
                 name: "Sql Server Database",
                 failureStatus: HealthStatus.Unhealthy
             )
-            .AddCheck<Infrastructure.HealthChecks.CachingServiceHealthCheck>(name: "Fusin Cache Service", failureStatus: HealthStatus.Degraded);
+            .AddCheck<Infrastructure.HealthChecks.CachingServiceHealthCheck>(name: "Fusion Cache Service", failureStatus: HealthStatus.Degraded)
+            .AddCheck<Infrastructure.HealthChecks.FileUtilityHealthCheck>(name: "File Utility Operation", failureStatus: HealthStatus.Unhealthy);
 
         services.AddHealthChecksUI(setup =>
         {
