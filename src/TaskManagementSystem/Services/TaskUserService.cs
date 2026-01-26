@@ -88,7 +88,8 @@ public sealed class TaskUserService : ITaskUserService
                 PerformedAt = DateTime.UtcNow.ToLocalTime(),
                 ParticipantName = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
                 ParticipandIdentification = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
-                NewValue = SerializeObject(taskUserToInsert)
+                NewValue = SerializeObject(taskUserToInsert),
+                Comment = "Create User Task"
             };
 
             bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(deleteAuditTrail);
@@ -153,7 +154,8 @@ public sealed class TaskUserService : ITaskUserService
                 PerformedAction = Entities.StaticValues.AuditAction.Cancelled,
                 PerformedAt = DateTime.UtcNow.ToLocalTime(),
                 ParticipantName = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
-                ParticipandIdentification = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0"
+                ParticipandIdentification = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
+                Comment = cancelUserTaskDto.CancelReason
             };
 
             bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(deleteAuditTrail);
@@ -326,7 +328,8 @@ public sealed class TaskUserService : ITaskUserService
                 PerformedAction = Entities.StaticValues.AuditAction.Completed,
                 PerformedAt = DateTime.UtcNow.ToLocalTime(),
                 ParticipantName = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
-                ParticipandIdentification = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0"
+                ParticipandIdentification = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
+                Comment = updateUserTaskCompleteStatus.Comment
             };
 
             bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(auditTrail);
@@ -419,7 +422,8 @@ public sealed class TaskUserService : ITaskUserService
                 ParticipantName = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
                 ParticipandIdentification = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
                 OldValue = $"{taskUserToReassign.UserId}",
-                NewValue = $"{reassignTaskUserDto.UserId}"
+                NewValue = $"{reassignTaskUserDto.UserId}",
+                Comment = reassignTaskUserDto.Justification
             };
 
             bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(reassignAuditTrail);
@@ -481,7 +485,8 @@ public sealed class TaskUserService : ITaskUserService
                 PerformedAction = isSoftDelete ? Entities.StaticValues.AuditAction.SoftDeleted : Entities.StaticValues.AuditAction.HardDeleted,
                 PerformedAt = DateTime.UtcNow.ToLocalTime(),
                 ParticipantName = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
-                ParticipandIdentification = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0"
+                ParticipandIdentification = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
+                Comment = isSoftDelete ? "Hard Delete User Task" : "Soft Delete User Task"
             };
 
             bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(auditTrail);
@@ -556,7 +561,8 @@ public sealed class TaskUserService : ITaskUserService
                 ParticipantName = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
                 ParticipandIdentification = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
                 OldValue = SerializeObject(oldValue),
-                NewValue = SerializeObject(taskUserToUpdate.ToDto())
+                NewValue = SerializeObject(taskUserToUpdate.ToDto()),
+                Comment = "Update User Task Details"
             };
 
             bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(auditTrail);

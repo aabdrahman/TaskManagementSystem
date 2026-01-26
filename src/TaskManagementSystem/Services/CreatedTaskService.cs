@@ -82,7 +82,8 @@ public sealed class CreatedTaskService : ICreatedTaskService
                 ParticipantName = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
                 ParticipandIdentification = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
                 OldValue = string.IsNullOrEmpty(oldValue) ? "" : oldValue,
-                NewValue = taskToCancel.CancelReason
+                NewValue = taskToCancel.CancelReason,
+                Comment = cancelCreatedTaskDto.Justification
             };
 
             bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(auditTrail);
@@ -133,7 +134,8 @@ public sealed class CreatedTaskService : ICreatedTaskService
                 PerformedAt = DateTime.UtcNow.ToLocalTime(),
                 ParticipantName = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
                 ParticipandIdentification = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
-                NewValue = SerializeObjects(taskToInsert.ToDto())
+                NewValue = SerializeObjects(taskToInsert.ToDto()),
+                Comment = "Create New Task"
             };
 
             bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(auditTrail);
@@ -191,7 +193,8 @@ public sealed class CreatedTaskService : ICreatedTaskService
                 PerformedAt = DateTime.UtcNow.ToLocalTime(),
                 ParticipantName = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
                 ParticipandIdentification = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
-                OldValue = SerializeObjects(taskToDelete.ToDto())
+                OldValue = SerializeObjects(taskToDelete.ToDto()),
+                Comment = "Delete Created Task"
             };
 
             bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(auditTrail);
@@ -395,7 +398,8 @@ public sealed class CreatedTaskService : ICreatedTaskService
                 ParticipantName = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
                 ParticipandIdentification = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
                 NewValue = taskToReassign.UserId.ToString(),
-                OldValue = oldValue
+                OldValue = oldValue,
+                Comment = reassignCreatedTaskDto.Justification
             };
 
             bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(auditTrail);
@@ -469,7 +473,8 @@ public sealed class CreatedTaskService : ICreatedTaskService
                     ParticipantName = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
                     ParticipandIdentification = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
                     NewValue = SerializeObjects(createdTaskToUpdate.ToDto()),
-                    OldValue = SerializeObjects(oldValue)
+                    OldValue = SerializeObjects(oldValue),
+                    Comment = "Update Created Task Details"
                 };
 
                 bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(auditTrail);
@@ -546,7 +551,8 @@ public sealed class CreatedTaskService : ICreatedTaskService
                 ParticipantName = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
                 ParticipandIdentification = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
                 NewValue = taskToUpdate.TaskStage.ToString(),
-                OldValue = oldValue
+                OldValue = oldValue,
+                Comment = updateCreatedTaskCompleteStatusDto.Comment
             };
 
             bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(auditTrail);

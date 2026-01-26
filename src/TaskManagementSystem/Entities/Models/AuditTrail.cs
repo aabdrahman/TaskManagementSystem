@@ -11,6 +11,7 @@ public class AuditTrail
     public string ParticipandIdentification { get; set; }
     public DateTime PerformedAt { get; set; }
     public AuditAction PerformedAction { get; set; }
+    public string Comment { get; set; } = "";
 
     public string OldValue { get; set; } = "";
     public string NewValue { get; set; } = "";

@@ -98,7 +98,8 @@ public sealed class UserService : IUserService
                 PerformedAt = DateTime.UtcNow.ToLocalTime(),
                 ParticipantName = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
                 ParticipandIdentification = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
-                NewValue = SerializeObject(userToInsert)
+                NewValue = SerializeObject(userToInsert),
+                Comment = "Create New User"
             };
 
             bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(createAuditTrail);
@@ -202,7 +203,8 @@ public sealed class UserService : IUserService
                 PerformedAction = isSoftDelete ? Entities.StaticValues.AuditAction.SoftDeleted : Entities.StaticValues.AuditAction.HardDeleted,
                 PerformedAt = DateTime.UtcNow.ToLocalTime(),
                 ParticipantName = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
-                ParticipandIdentification = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0"
+                ParticipandIdentification = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
+                Comment = isSoftDelete ? "Soft Delete User" : "Hard Delete User"
             };
 
             bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(deleteAuditTrail);
@@ -680,7 +682,8 @@ public sealed class UserService : IUserService
                 ParticipantName = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
                 ParticipandIdentification = _contextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
                 NewValue = SerializeObject(userToUpdate),
-                OldValue = SerializeObject(oldAuditValue)
+                OldValue = SerializeObject(oldAuditValue),
+                Comment = "Update User Details"
             };
 
             bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(createAuditTrail);

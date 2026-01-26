@@ -58,7 +58,8 @@ public sealed class UnitService : IUnitService
                 PerformedAt = DateTime.UtcNow.ToLocalTime(),
                 ParticipantName = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
                 ParticipandIdentification = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
-                NewValue = SerializeObjectToString(unitToInsert)
+                NewValue = SerializeObjectToString(unitToInsert),
+                Comment = "Create New Unit"
             };
 
             //await _repositoryManager.AuditTrailRepository.CreateAuditTrailAsync(createAuditTrail);
@@ -138,7 +139,8 @@ public sealed class UnitService : IUnitService
                 ParticipantName = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
                 ParticipandIdentification = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
                 OldValue = SerializeObjectToString(auditLogUnit),
-                NewValue = SerializeObjectToString(existingUnit)
+                NewValue = SerializeObjectToString(existingUnit),
+                Comment = isSoftDelete ? "Soft Delete Unit" : "Hard Delete Unit"
 
             };
 
@@ -277,7 +279,8 @@ public sealed class UnitService : IUnitService
                 ParticipantName = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
                 ParticipandIdentification = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
                 OldValue = SerializeObjectToString(auditLogUnit),
-                NewValue = SerializeObjectToString(unitToUpdate)
+                NewValue = SerializeObjectToString(unitToUpdate),
+                Comment = "Update Unit Details"
             };
 
             //await _repositoryManager.AuditTrailRepository.CreateAuditTrailAsync(updateAuditTrail);
