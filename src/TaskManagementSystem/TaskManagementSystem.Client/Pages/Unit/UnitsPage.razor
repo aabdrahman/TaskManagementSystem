@@ -19,7 +19,7 @@
             </div>
             <div class="d-flex flex-column justify-content-center w-100 mt-2 align-items-center">
                 <hr class="display-1" />
-                <UnitsView Units="_fetchedUnits" HandleEdit="OnHandleEditUnit" HandleDelete="OnHandleDeleteUnit" />
+                <UnitsView Units="_fetchedUnits" HandleEdit="OnHandleEditUnit" HandleDelete="OnHandleDeleteUnit" HandleShowAuditDetails="OnHaandleShowAudit" />
             </div>
         </div>
     }
@@ -47,6 +47,10 @@ else
         {
             <DeleteUnit UnitToDelete="_selectedUnit" HandleClose="OnHandleDeleteUnitClose" />
         }
+        else if(_operationToPerform == OperationType.ShowAudit)
+        {
+            <TaskManagementSystem.Client.Pages.AuditTrail.AuditTrailView AuditTrails="_auditTrails" />
+        }
     </Body>
 </TaskManagementSystem.Client.SharedContent.Popup>
 
@@ -59,6 +63,9 @@ else
 
     //FETCH OPERATION VARIABLES
     private bool _isLoading = false;
+
+    //FETCH AUDIT VARIABLES
+    private IEnumerable<Shared.DataTransferObjects.AuditTrail.AuditTrailDto> _auditTrails; 
 
     protected override async Task OnInitializedAsync()
     {
@@ -102,7 +109,8 @@ else
         None,
         AddNewUnit,
         UpdateUnit,
-        DeleteUnit
+        DeleteUnit,
+        ShowAudit
     }
 
     private void HandleClose()
@@ -167,5 +175,20 @@ else
         _title = $"Delete Unit - {_selectedUnit.Name}";
         _showCloseButton = false;
         popup.Open();
+    }
+
+    private async Task OnHaandleShowAudit(UnitDto selectedUnit)
+    {
+        _selectedUnit = selectedUnit;
+        var response = await getItemAuditTrailHandler.Handle(selectedUnit.Id, typeof(UnitDto).Name);
+
+        _auditTrails = response.Data ?? [];
+        if (_auditTrails.Any())
+        {
+            _operationToPerform = OperationType.ShowAudit;
+            _title = $"Audit History for Unit - {_selectedUnit.Name}";
+            _showCloseButton = true;
+            popup.Open();
+        }
     }
 }

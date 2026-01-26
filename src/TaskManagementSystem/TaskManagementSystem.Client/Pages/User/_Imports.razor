@@ -2,6 +2,7 @@
 @using TaskManagementSystem.Client.Handlers.Unit
 @using TaskManagementSystem.Client.Handlers.Role
 @using TaskManagementSystem.Client.Handlers.User
+@using TaskManagementSystem.Client.Handlers.AuditTrail
 @using Shared.RequestParameters
 
 @inject AuthenticationStateProvider authStateProvider
@@ -13,3 +14,4 @@
 @inject NavigationManager navManager
 @inject GetUserEditDetailsHandler getUserEditDetailsHandler
 @inject UpdateUserDetailsHandler updateUserDetailsHandler
+@inject GetItemAuditTrailHandler getItemAuditTrailHandler

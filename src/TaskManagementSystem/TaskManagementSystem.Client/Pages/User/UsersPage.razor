@@ -72,7 +72,7 @@ else
             <div class="d-flex mt-2 border-top mx-2 p-2 flex-column">
                 @if (_users.Any())
                 {
-                    <UsersView UsersToView="_users" UserMetaData="_metaData" OnHandleNextPage="HandleNextPage" OnHandlePreviousPage="HandlePreviousPage" HandleDeleteOperation="HandleShowDelete" HandleShowDetailsOperation="HandleShowDetails" HandleEditDetailsOperation="HandleEditDetails" />
+                    <UsersView UsersToView="_users" UserMetaData="_metaData" OnHandleNextPage="HandleNextPage" OnHandlePreviousPage="HandlePreviousPage" HandleDeleteOperation="HandleShowDelete" HandleShowDetailsOperation="HandleShowDetails" HandleEditDetailsOperation="HandleEditDetails" HandleViewAuditDetailsOperation="HandleViewAuditDetails" />
                 }
                 else
                 {
@@ -105,6 +105,10 @@ else
         {
             <UpdateUserView UserToUpdate="_selectedUser" HandleClose="OnHandleClose" />
         }
+        else if(_operationToPerform == OperationType.ViewAuditDetails)
+        {
+            <TaskManagementSystem.Client.Pages.AuditTrail.AuditTrailView AuditTrails="_auditTrails" />
+        }
     </Body>
 </TaskManagementSystem.Client.SharedContent.Popup>
 
@@ -128,6 +132,9 @@ else
     private bool _isSuccessful;
     private string _responseMesssage;
     private bool _isFetched = false;
+
+    //AUDIT HISTORY DETAILS VARIABLE
+    private IEnumerable<Shared.DataTransferObjects.AuditTrail.AuditTrailDto> _auditTrails;
 
     protected override async Task OnInitializedAsync()
     {
@@ -197,7 +204,8 @@ else
         None,
         DeleteUser,
         ShowDetails,
-        EditUser
+        EditUser,
+        ViewAuditDetails
     }
 
     private void HandleShowDelete(UserDto selectedUser)
@@ -222,6 +230,21 @@ else
         _selectedUser = selectedUser; _showCloseButton = false;
         _title = $"Update User Details - {_selectedUser.Username}";
         popup.Open();
+    }
+
+    private async Task HandleViewAuditDetails(UserDto selectedUser)
+    {
+        _selectedUser = selectedUser;
+        var response = await getItemAuditTrailHandler.Handle(_selectedUser.Id, typeof(UserDto).Name);
+        _auditTrails = response.Data ?? [];
+
+        if (_auditTrails.Any())
+        {
+            _operationToPerform = OperationType.ViewAuditDetails;
+            _title = $"Áudit History For User - {_selectedUser.Email}";
+            _showCloseButton = true;
+            popup.Open();
+        }
     }
 
     private async Task OnHandleClose(bool refreshDecision)
