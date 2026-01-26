@@ -39,6 +39,7 @@ builder.Services.ConfigureAuthorization();
 builder.Services.ConfigureController();
 builder.Services.ConfigureHybridCaching();
 builder.Services.ConfigureHealthChecks(builder.Configuration);
+builder.Services.ConfigureWorkerServices();
 
 
 var app = builder.Build();

@@ -10,10 +10,13 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Quartz;
 using Repository;
 using Service.Contract;
 using Services;
 using System.Text;
+using TaskManageemntSystem.WorkerService;
+using TaskManageemntSystem.WorkerService.CustomScheduler;
 
 namespace TaskManagementSystem.Api.ServiceExtensions;
 
@@ -284,6 +287,35 @@ internal static class ApplicationServiceExtensions
             setup.AddHealthCheckEndpoint("API Health", "/_healths");
         })
         .AddInMemoryStorage();
+    }
+
+    internal static void ConfigureWorkerServices(this IServiceCollection services)
+    {
+        services.AddHostedService<Worker>();
+
+        services.AddQuartzHostedService(opts =>
+        {
+            opts.WaitForJobsToComplete = true;
+        });
+
+        var testJobKey = JobKey.Create(nameof(TestSchedulerJob));
+        var startDate = DateTime.Now;
+
+        services.AddQuartz(opts =>
+        {
+            opts.AddJob<TestSchedulerJob>(opts =>
+            {
+                opts.WithIdentity(testJobKey);
+            }).AddTrigger(trigger =>
+            {
+                trigger.ForJob(testJobKey);
+                trigger.StartAt(startDate.AddSeconds(90))
+                .WithSimpleSchedule(schedule =>
+                {
+                    schedule.WithIntervalInSeconds(60).RepeatForever();
+                });
+            });
+        });
     }
 
 }
