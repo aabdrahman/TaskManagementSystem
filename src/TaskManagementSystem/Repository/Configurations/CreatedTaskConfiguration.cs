@@ -19,7 +19,7 @@ internal class CreatedTaskConfiguration : IEntityTypeConfiguration<CreatedTask>
         builder.HasIndex(x => x.TaskId)
             .IsUnique();
 
-        builder.ToTable(table => table.HasCheckConstraint("CK_Projected_Completion_Date", "ProjectedCompletionDate > CAST(GETDATE() AS DATE)"));
+        builder.ToTable(table => table.HasCheckConstraint("CK_Projected_Completion_Date", "ProjectedCompletionDate > CAST(GETDATE() AS DATE) OR [TaskStage] != 'Cancelled' "));
 
         builder.ToTable(table => table.HasCheckConstraint("CK_Priority_Level", $"[Priority] IN ('Low', 'Medium', 'High', 'Critical')"));
 
