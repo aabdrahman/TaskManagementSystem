@@ -17,6 +17,7 @@ public record class CreateTaskUserDto
     [Required(ErrorMessage = "Description is a required field.")]
     public string Description { get; set; }
     [Required(ErrorMessage = "Assigned User is a required field.")]
+    [Range(0, maximum:double.MaxValue, ErrorMessage = "Invalid Selected Assigned User")]
     public int AssignedUser { get; set; }
-
+    public int? ResponsibleUnit { get; set; }
 }

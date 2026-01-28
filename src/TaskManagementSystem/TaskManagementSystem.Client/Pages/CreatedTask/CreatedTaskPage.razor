@@ -1,0 +1,125 @@
+﻿@page "/tasks"
+@attribute [Authorize(Roles = "BUSINESSANALYST,PRODUCTOWNER")]
+
+<div class="container-fluid w-100">
+    <div class="d-flex w-100 justify-content-between align-items-center">
+        <div>
+
+        </div>
+        <div class="btn btn-primary" @onclick="HandleCreateTaskNavigation" role="button">
+            Create New Task
+        </div>
+    </div>
+
+    @if (_isLoading)
+    {
+        <p class="fw-bolder fs-4 fst-italic text-info w-100">
+            Fetching Tasks Created By User......
+        </p>
+    }
+    else
+    {
+        if (_createdTasks is not null && _isSuccessful)
+        {
+            <CreatedTaskView UserCreatedTasks="_createdTasks" HandleCancelTask="HandleCancelTask" />
+        }
+        else if (!_isSuccessful && _createdTasks is not null)
+        {
+            <p class="fw-bolder fst-italic fs-4 text-info">
+                Your Created Tasks could not be fetched.......
+            </p>
+        }
+    }
+
+</div>
+
+<Popup @ref="popup" ShowCloseButton="_showCloseButton" Title="@_title" SaveChanges="(() => popup.Close())">
+    <Body>
+        @if(_operationype == OperationType.CancelCreatedTask)
+        {
+            <CancelCreatedTask TaskToDelete="_selectedTask" HandleClose="HandleClose" />            
+        }
+    </Body>
+</Popup>
+
+@code {
+
+    private int _loggedInUserId;
+    private IEnumerable<CreatedTaskDto> _createdTasks;
+    private bool _isLoading = true;
+    private OperationType _operationype;
+
+    private bool _isSuccessful;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        _loggedInUserId = int.Parse(user.FindFirst(x => x.Type.EndsWith("serialnumber"))?.Value ?? "0");
+
+        if(_loggedInUserId > 0)
+        {
+
+            await GetUserCreatedTasks();
+        }
+
+        _isLoading = false;
+    }
+
+    private void HandleCreateTaskNavigation()
+    {
+        navManager.NavigateTo("tasks/add");
+    }
+
+    private async Task GetUserCreatedTasks()
+    {
+        var fetchUserTasksResponse = await fetchUserCreatedTasksHandler.Handle(_loggedInUserId);
+        _isSuccessful = fetchUserTasksResponse._isSuccessful;
+        _createdTasks = fetchUserTasksResponse.userCreatedTasks;
+    }
+}
+
+@code{
+    private CreatedTaskDto _selectedTask;
+    private Popup popup;
+    private bool _showCloseButton = true;
+    private string _title = "";
+
+    private void HandleCancelTask(CreatedTaskDto createdTask)
+    {
+        _selectedTask = createdTask;
+        _showCloseButton = false;
+        _title = $"Cancel Task - {_selectedTask.TaskId}";
+        _operationype = OperationType.CancelCreatedTask;
+        popup.Open();
+    }
+
+    private async Task HandleClose(bool routeDecision)
+    {
+        if(routeDecision)
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            _loggedInUserId = int.Parse(user.FindFirst(x => x.Type.EndsWith("serialnumber"))?.Value ?? "0");
+
+            if(_loggedInUserId > 0)
+            {
+
+                await GetUserCreatedTasks();
+            }
+        }
+
+        popup.Close();
+    }
+}
+
+@code{
+
+    enum OperationType
+    {
+        None,
+        CancelCreatedTask
+    }
+}

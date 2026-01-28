@@ -1,0 +1,194 @@
+﻿@page "/Units"
+@attribute [Authorize(Roles = "ADMIN,ITGOVERNANCE")]
+
+@if(_isAllowed)
+{
+    if(_isLoading)
+    {
+        
+    }
+    else
+    {
+        <div class="container-fluid container-xxl w-100">
+            <div class="d-flex flex-row justify-content-between mb-2 mb-sm-1 align-content-center w-100 gap-2">
+                <div>
+                </div>
+                <div class="btn btn-lg btn-primary" role="button" @onclick="OnHandleUnit">
+                    Create New Unit
+                </div>
+            </div>
+            <div class="d-flex flex-column justify-content-center w-100 mt-2 align-items-center">
+                <hr class="display-1" />
+                <UnitsView Units="_fetchedUnits" HandleEdit="OnHandleEditUnit" HandleDelete="OnHandleDeleteUnit" HandleShowAuditDetails="OnHaandleShowAudit" />
+            </div>
+        </div>
+    }
+
+}
+else
+{
+    <span class="fst-italic fs-4 text-info fw-bolder">
+        Oops...
+        Operation could not be completed.
+    </span>
+}
+
+<TaskManagementSystem.Client.SharedContent.Popup @ref="popup" Title="@_title" ShowCloseButton="@_showCloseButton" SaveChanges="(() => HandleClose())">
+    <Body>
+        @if (_operationToPerform == OperationType.AddNewUnit)
+        {
+            <AddUnit HandleClose="OnHandleAddUnitClose" />
+        }
+        else if(_operationToPerform == OperationType.UpdateUnit)
+        {
+            <EditUnit UnitToEdit="_selectedUnit" HandleClose="OnHandleEditUnitClose" />
+        }
+        else if(_operationToPerform == OperationType.DeleteUnit)
+        {
+            <DeleteUnit UnitToDelete="_selectedUnit" HandleClose="OnHandleDeleteUnitClose" />
+        }
+        else if(_operationToPerform == OperationType.ShowAudit)
+        {
+            <TaskManagementSystem.Client.Pages.AuditTrail.AuditTrailView AuditTrails="_auditTrails" />
+        }
+    </Body>
+</TaskManagementSystem.Client.SharedContent.Popup>
+
+@code {
+
+    //BASE PROPERTY
+    private IEnumerable<UnitDto> _fetchedUnits;
+    private int _loggedInUserId;
+    private bool _isAllowed = false;
+
+    //FETCH OPERATION VARIABLES
+    private bool _isLoading = false;
+
+    //FETCH AUDIT VARIABLES
+    private IEnumerable<Shared.DataTransferObjects.AuditTrail.AuditTrailDto> _auditTrails; 
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isLoading = true;
+        var authState = await authStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        _loggedInUserId = int.Parse(user.FindFirst(x => x.Type.EndsWith("serialnumber"))?.Value ?? "0");
+
+        if(_loggedInUserId == 0)
+        {
+            _isAllowed = false;
+            _isLoading = false;
+            return;
+        }
+
+        _isAllowed = true;
+        await FetchUnits();
+        _isLoading = false;
+    }
+
+    private async Task FetchUnits()
+    {
+        _fetchedUnits = await getUnitsHandler.Handle();
+    }
+}
+
+@code{
+
+    private TaskManagementSystem.Client.SharedContent.Popup popup;
+
+    private OperationType _operationToPerform;
+    private string _title;
+    private bool _showCloseButton = false;
+
+    //Selected Unit To Perform Operation
+    private UnitDto _selectedUnit;
+
+    enum OperationType
+    {
+        None,
+        AddNewUnit,
+        UpdateUnit,
+        DeleteUnit,
+        ShowAudit
+    }
+
+    private void HandleClose()
+    {
+        _title = null;
+        _showCloseButton = false;
+        _operationToPerform = OperationType.None;
+        popup.Close();
+    }
+
+    private async Task OnHandleAddUnitClose(bool refreshDecision)
+    {
+        HandleClose();
+
+        if(refreshDecision)
+        {
+            await FetchUnits();
+        }
+    }
+
+    private async Task OnHandleEditUnitClose(bool refreshDecision)
+    {
+        HandleClose();
+
+        if (refreshDecision)
+        {
+            await FetchUnits();
+        }
+    }
+
+    private async Task OnHandleDeleteUnitClose(bool refreshDecision)
+    {
+        HandleClose();
+
+        if (refreshDecision)
+        {
+            await FetchUnits();
+        }
+    }
+
+    private void OnHandleUnit()
+    {
+        _operationToPerform = OperationType.AddNewUnit;
+        _title = "Add New Unit";
+        _showCloseButton = false;
+        popup.Open();
+    }
+
+    private void OnHandleEditUnit(UnitDto selectedUnit)
+    {
+        _selectedUnit = selectedUnit;
+        _operationToPerform = OperationType.UpdateUnit;
+        _title = $"Edit Unit - {_selectedUnit.Name}";
+        _showCloseButton = false;
+        popup.Open();
+    }
+
+    private void OnHandleDeleteUnit(UnitDto selectedUnit)
+    {
+        _selectedUnit = selectedUnit;
+        _operationToPerform = OperationType.DeleteUnit;
+        _title = $"Delete Unit - {_selectedUnit.Name}";
+        _showCloseButton = false;
+        popup.Open();
+    }
+
+    private async Task OnHaandleShowAudit(UnitDto selectedUnit)
+    {
+        _selectedUnit = selectedUnit;
+        var response = await getItemAuditTrailHandler.Handle(selectedUnit.Id, typeof(UnitDto).Name);
+
+        _auditTrails = response.Data ?? [];
+        if (_auditTrails.Any())
+        {
+            _operationToPerform = OperationType.ShowAudit;
+            _title = $"Audit History for Unit - {_selectedUnit.Name}";
+            _showCloseButton = true;
+            popup.Open();
+        }
+    }
+}

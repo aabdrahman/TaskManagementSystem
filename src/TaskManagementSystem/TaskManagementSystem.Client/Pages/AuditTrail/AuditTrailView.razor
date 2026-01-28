@@ -1,0 +1,45 @@
+﻿
+@if (ShowHeader)
+{
+    <div class="p-3 mb-2 bg-info-subtle text-info-emphasis">
+        Task Process Audit History
+    </div>
+}
+
+<table class="table table-light table-borderless table-sm table-responsive">
+    <thead>
+        <tr>
+            <th>Performed At</th>
+            <th>Participant Name</th>
+            <th>Performed Action</th>
+            <th>Comment</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var auditTrail in _auditTrails)
+        {
+            <tr>
+                <td>@auditTrail.PerformedAt.ToString("f")</td>
+                <td>@auditTrail.ParticipantName</td>
+                <td>@auditTrail.PerformedAction</td>
+                <td>@auditTrail.Comment</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+
+    private List<AuditTrailDto> _auditTrails;
+
+    [Parameter, EditorRequired]
+    public IEnumerable<AuditTrailDto> AuditTrails { get; set; }
+
+    [Parameter]
+    public bool ShowHeader { get; set; } = false;
+
+    protected override void OnParametersSet()
+    {
+        _auditTrails = AuditTrails.ToList();
+    }
+}

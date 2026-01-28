@@ -1,0 +1,19 @@
+﻿
+@using Shared.DataTransferObjects.CreatedTask
+@using TaskManagementSystem.Client.Handlers.CreatedTask
+@using TaskManagementSystem.Client.SharedContent
+@using TaskManagementSystem.Client.Handlers.AuditTrail
+@using Shared.DataTransferObjects.AuditTrail
+
+@inject AuthenticationStateProvider authStateProvider
+@inject FetchUserCreatedTasksHandler fetchUserCreatedTasksHandler
+@inject GetCreatedTaskByTaskIdHandler getCreatedTaskByTaskIdHandler
+@inject FetchCreatedTaskAssignedTasksHandler fetchCreatedTaskAssignedTasksHandler
+@inject EditCreatedTaskHandler editCreatedTaskHandler
+@inject AddNewTaskHandler addNewTaskHandler
+@inject CancelCreatedTaskHandler cancelCreatedTaskHandler
+@inject UpdateCreatedTaskStatusHandler updateCreatedTaskStatusHandler
+@inject NavigationManager navManager
+
+
+@inject GetItemAuditTrailHandler getItemAuditTrailHandler

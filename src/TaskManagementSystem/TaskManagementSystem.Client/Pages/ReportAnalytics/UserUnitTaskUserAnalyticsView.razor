@@ -1,0 +1,51 @@
+﻿
+<table class="table table-striped table-hover align-middle">
+    <thead class="table-dark">
+        <tr>
+            <th>User</th>
+            <th>Total Assigned</th>
+            <th>Pending</th>
+            <th>Completed</th>
+            <th>Overdue</th>
+            <th>Completion Rate (%)</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var r in _userUnitAnalytics)
+        {
+            <tr @onclick="() => ShowUserDetailCard(r)" style="cursor: pointer;">
+                <td>@($"{r.FirstName} {r.LastName}")</td>
+                <td>@r.TotalAssignedTasks</td>
+                <td class="@GetOverdueClass(r.TotalPendingTasks)">@r.TotalPendingTasks</td>
+                <td>@r.TotalCompletedTasks</td>
+                <td class="@GetOverdueClass(r.TotalOverdueTasks)">@r.TotalOverdueTasks</td>
+                <td class="@GetCompletionRateClass(r.CompletionRate)">@r.CompletionRate</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+
+    private List<UserUnitAssignedUserTaskAnalyticsDto> _userUnitAnalytics;
+
+    [Parameter]
+    public IEnumerable<UserUnitAssignedUserTaskAnalyticsDto> UserUnitAnalytics { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<UserUnitAssignedUserTaskAnalyticsDto> HandleShowDetails { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _userUnitAnalytics = UserUnitAnalytics.ToList();
+    }
+
+    private async Task ShowUserDetailCard(UserUnitAssignedUserTaskAnalyticsDto user)
+    {
+        await HandleShowDetails.InvokeAsync(user);
+    }
+
+    private string GetOverdueClass(int overdue) => overdue > 0 ? "text-danger fw-bold" : "";
+    private string GetCompletionRateClass(decimal rate) => rate >= 80 ? "text-success fw-bold" : rate >= 50 ? "text-warning fw-bold" : "text-danger fw-bold";
+    private string GetTotalTimeClass(double? minutes) => minutes.HasValue && minutes > 10000 ? "bg-warning text-dark" : "";
+}

@@ -10,4 +10,6 @@ public record class TaskUserDto
     public string Title { get; set; }
     public string Description { get; set; }
     public string AssignedUser { get; set; }
+    public string? CancelReason { get; set;}
+    public int UserId { get; set; }
 }

@@ -13,4 +13,5 @@ public record class CreatedTaskDto
     public string Priority { get; set; }
     public DateTime? CompletionDate { get; set; }
     public string Stage { get; set; }
+    public string? CancelReason { get; set; }
 }

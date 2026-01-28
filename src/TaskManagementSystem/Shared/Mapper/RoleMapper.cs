@@ -1,5 +1,6 @@
 ﻿using Entities.Models;
 using Shared.DataTransferObjects.Role;
+using System.Linq.Expressions;
 
 namespace Shared.Mapper;
 
@@ -20,6 +21,15 @@ public static class RoleMapper
         {
             CreatedBy = "",
             Name = createRole.Name
+        };
+    }
+
+    public static Expression<Func<Role, RoleDto>> ToDtoExpression()
+    {
+        return role => new RoleDto()
+        {
+            RoleId = role.Id,
+            RoleName = role.NormalizedName
         };
     }
 }

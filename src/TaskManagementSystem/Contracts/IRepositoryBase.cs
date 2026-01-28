@@ -12,4 +12,5 @@ public interface IRepositoryBase<T>
     IQueryable<T> FindByCondition(Expression<Func<T, bool>> condition, bool trackChanges = true, bool hasQueryFilter = true);
     Task<int> ExecuteCustomQuery(string command, params object[] parameters);
     Task<IQueryable<T>> CustomeDatabaseQuery(string command, params object[] parameters);
+    Task<IQueryable<T>> CustomDatabaseQueryWithListResult(string command, params object[] parameters);
 }

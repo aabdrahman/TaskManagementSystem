@@ -1,4 +1,6 @@
-﻿namespace Contracts;
+﻿using Contracts.Keyless_Entities_Repository;
+
+namespace Contracts;
 
 public interface IRepositoryManager
 {
@@ -9,5 +11,7 @@ public interface IRepositoryManager
     IUserRoleRepository UserRoleRepository { get; }
     ITaskUserRepository TaskUserRepository { get; }
     IAttachmentRepository AttachmentRepository { get; }
+    IUserUnitAssignedUserTaskAnalyticsRepository UserUnitAssignedUserTaskAnalyticsRepository { get; }
+    IAuditTrailRepository AuditTrailRepository { get; }
     Task SaveChangesAsync();
 }

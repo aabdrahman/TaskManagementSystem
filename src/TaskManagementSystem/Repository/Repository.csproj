@@ -14,5 +14,6 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\Contracts\Contracts.csproj" />
+	  <ProjectReference Include="..\Shared\Shared.csproj" />
 	</ItemGroup>
 </Project>

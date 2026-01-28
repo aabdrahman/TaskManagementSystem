@@ -1,0 +1,93 @@
+﻿@attribute [Authorize(Roles = "ADMIN,ITGOVERNANCE")]
+
+@if(_roleToDelete is not null)
+{
+   <div class="d-flex flex-column justify-content-center gap-2">
+        @if (_responseMessage is not null && !_isLoading)
+        {
+            <div class="alert w-100 fst-italic text-center fs-6 fw-bold alert-@(_isSuccessful ? "success" : "danger")" role="alert">
+                @(_isSuccessful ? $"{_responseMessage} Click Close Button" : _responseMessage)
+            </div>
+        }
+       <div class="d-flex flex-column gap-1 justify-content-start">
+           <label class="fw-bold form-label">Role To Delete</label>
+           <span class="text-black">@_roleToDelete.RoleName</span>
+       </div>
+        <div class="d-flex flex-row justify-content-between border-3">
+            @if (!_isSuccessful)
+            {
+                <button class="btn btn-secondary" type="button" disabled="@_isLoading" @onclick="(() => OnHandleClose(false))">
+                    Cancel
+                </button>
+            }
+            @if (_isLoading)
+            {
+                <button class="btn btn-danger" type="button" disabled>
+                    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                    <span role="status">Loading...</span>
+                </button>
+            }
+            else
+            {
+                if (!_isSuccessful)
+                {
+                    <button class="btn btn-danger" type="button" @onclick="OnHandleDelete">
+                        Delete Role
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-secondary float-end" type="button" @onclick="(() => OnHandleClose(true))">
+                        Close
+                    </button>
+                }
+            }
+        </div>
+   </div> 
+}
+
+@code 
+{
+    //MODEL VARIABLES
+    private RoleDto _roleToDelete;
+
+    //OPERATION VARIABLES
+    private bool _isSuccessful;
+    private bool _isLoading;
+    private string _responseMessage;
+
+    [Parameter, EditorRequired]
+    public RoleDto RoleToDelete { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<bool> HandleClose { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var authState = await authStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        _roleToDelete = RoleToDelete;
+    }
+
+    private async Task OnHandleDelete()
+    {
+        _isLoading = true;
+        //await Task.Delay(5000);
+
+        var response = await deleteRoleHandler.Handle(_roleToDelete.RoleId);
+        _isSuccessful = response.isSuccessful; _responseMessage = response.responseMessage;
+
+        _isLoading = false;
+    }
+
+    private async Task OnHandleClose(bool refreshDecision)
+    {
+        _responseMessage = null;
+        _isSuccessful = default;
+        _isLoading = false;
+        _roleToDelete = null;
+        await HandleClose.InvokeAsync(refreshDecision);
+    }
+
+}

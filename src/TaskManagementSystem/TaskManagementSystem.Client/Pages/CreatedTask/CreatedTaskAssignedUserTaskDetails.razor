@@ -1,0 +1,144 @@
+﻿@using System.Globalization
+@using Shared.DataTransferObjects.TaskUser
+
+
+@if(_userTask is not null)
+{
+    <div class="container-fluid w-100">
+        <div class="d-flex flex-column justify-content-center align-items-center w-100">
+            <div class="card border-top w-100">
+
+                <!-- HEADER PART -->
+                <div class="card-header mb-2">
+                    <div class="d-flex flex-row justify-content-between align-items-center">
+                        <h4 class="fw-bold">
+                            @_userTask.TaskId - @_userTask.Title
+                        </h4>
+                        <span class="badge px-3 py-2 text-center @GetUserTaskStatusClass()">
+                            @GetUserTaskStatus()
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Description Part -->
+                <div class="d-flex flex-column mr-1 p-1 gap-0 w-100">
+                    <div class="text-uppercase text-muted small fw-bolder">
+                        Description
+                    </div>
+                    <p class="mb-0 text-wrap">
+                        @_userTask.Description
+                    </p>
+                </div>
+
+                <hr />
+
+                <div class="d-flex flex-column mr-1 p-1 gap-0 w-100">
+                    <div class="text-uppercase text-muted small fw-bolder">
+                        Assigned User
+                    </div>
+                    <p class="mb-0 text-wrap">
+                        @_userTask.AssignedUser
+                    </p>
+                </div>
+                <hr />
+                <div class="d-flex flex-row justify-content-between mr-1 p-1 gap-2 w-100">
+                    <div class="d-flex flex-column justify-content-start mx-2">
+                        <div class="text-uppercase text-muted small fw-bolder">
+                            Due Date
+                        </div>
+                        <div>
+                            @_userTask.ProposedCompletionDate.ToString("dd MMM yyyy", CultureInfo.InvariantCulture)
+                        </div>
+                    </div>
+                    @if (_userTask.CompletionDate.HasValue)
+                    {
+                        <div class="d-flex flex-column justify-content-end mx-2">
+                            <div class="text-uppercase text-muted small fw-bolder">
+                                Completion Date
+                            </div>
+                            <div class="@(_userTask.CompletionDate is null ? "text-muted" : "")">
+                                @(_userTask.CompletionDate?.ToString("dd MMM yyyy", CultureInfo.InvariantCulture) ?? "—")
+                            </div>
+                        </div>
+                    }
+
+                </div>
+
+                <!-- Cancellation Reason Part -->
+                @if (!string.IsNullOrWhiteSpace(_userTask.CancelReason))
+                {
+                    <hr />
+                    <div class="alert alert-warning mb-0">
+                        <strong>Cancellation Reason:</strong>
+                        @_userTask.CancelReason
+                    </div>
+                }
+
+            </div>
+        </div>
+    </div>
+    
+}
+
+@code {
+
+    private TaskUserDto _userTask;
+
+    [Parameter, EditorRequired]
+    public TaskUserDto AssignedUserTasks { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _userTask = AssignedUserTasks;
+    }
+
+    private string GetUserTaskStatus()
+    {
+        if(!string.IsNullOrEmpty(_userTask.CancelReason))
+        {
+            return "Cancelled";
+        }
+
+        if(_userTask.CompletionDate.HasValue)
+        {
+            return "Completed";
+        }
+
+        if(!_userTask.CompletionDate.HasValue && _userTask.ProposedCompletionDate.Date < DateTime.UtcNow.Date)
+        {
+            return $"Over Due {(DateTime.UtcNow.Date - _userTask.ProposedCompletionDate.Date).TotalDays} day(s) ago";
+        }
+
+        if(!_userTask.CompletionDate.HasValue && _userTask.ProposedCompletionDate.Date == DateTime.UtcNow.Date)
+        {
+            return "Due Today.";
+        }
+
+        return "Pending";
+    }
+
+    private string GetUserTaskStatusClass()
+    {
+        if (!string.IsNullOrEmpty(_userTask.CancelReason))
+        {
+            return "bg-danger text-white";
+        }
+
+        if (_userTask.CompletionDate.HasValue)
+        {
+            return "bg-success-subtle text-success-emphasis";
+        }
+
+        if (!_userTask.CompletionDate.HasValue && _userTask.ProposedCompletionDate.Date < DateTime.UtcNow.Date)
+        {
+            return $"bg-danger-subtle text-danger-emphasis";
+        }
+
+        if (!_userTask.CompletionDate.HasValue && _userTask.ProposedCompletionDate.Date == DateTime.UtcNow.Date)
+        {
+            return "bg-warning-subtle text-warning-emphasis";
+        }
+
+        return "bg-primary-subtle text-primary-emphasis";
+    }
+}

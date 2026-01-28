@@ -1,0 +1,393 @@
+﻿@page "/tasks/{TaskId}"
+@using System.Threading.Tasks
+@attribute [Authorize(Roles = "BUSINESSANALYST,PRODUCTOWNER")]
+
+<PageTitle>Created Task Summary Details - @TaskId</PageTitle>
+
+<h2>Created Task Summary Details - @TaskId</h2>
+
+<hr class="display-1" />
+
+@if(_isLoading)
+{
+    <p class="fw-bolder fs-4 fst-italic text-info w-100">
+        Fetching Task Summary Details......
+    </p>
+}
+else
+{
+    if(!_isSuccessful)
+    {
+        <div class="no-trails" style="text-align:center;margin-top:100px;">
+            <svg viewBox="0 0 16 16" class="bi bi-tree" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style="width:200px;">
+                <path fill-rule="evenodd" d="M8 0a.5.5 0 0 1 .416.223l3 4.5A.5.50 0 1 11 5.5h-.098l2.022 3.235a.5.5 0 0 1-.424.765h-.191l1.638 3.276a.5.50 0 1-.447.724h-11a.5.5 0 0 1-.447-.724L3.69 9.5H3.5a.5.5 0 01-.424-.765L5.098 5.5H5a.5.5 0 0 1-.416-.777l3-4.5A.5.5 0 0 1 8 0zM5.9344.5H6a.5.5 0 0 1 .424.765L4.402 8.5H4.5a.5.5 0 0 1 .447.724L3.3112.5h9.382l-1.638-3.276A.5.5 0 0 1 11.5 8.5h.098L9.576 5.265A.5.5 0 0 110 4.5h.066L8 1.401 5.934 4.5z" />
+                <path d="M7 13.5h2V16H7v-2.5z" />
+            </svg>
+            <h3 class="text-muted fw-light">
+                @_responseMessage
+            </h3>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-row justify-content-between align-items-center mb-1 mb-lg-1 gap-5">
+            <div class="btn btn-lg btn-primary" role="button" @onclick="NavigateToTaskLists">
+                Back To Tasks List
+            </div>
+            <div class="btn btn-primary btn-lg" role="button" @onclick="HandleUpdateCreatedTaskStatus">
+                Update Task Status
+            </div>
+        </div>
+
+        <hr class="display-1" />
+
+        <CreatedTaskDetails CreatedMainTask="_createdTask" />
+
+        <div class="d-flex w-100 justify-content-start">
+            <div class="btn btn-primary my-2 float-start" @onclick="HandleGetProcessAudit">
+                Get Process Audit
+            </div>
+        </div>
+
+        <hr class="display-1" />
+
+        if (_isFetchedAuditResponseMessage is not null)
+        {
+            if (!_isFetchAuditSuccessful)
+            {
+                <p class="fw-bolder fs-4 fst-italic text-info w-100">
+                    @_isFetchedAuditResponseMessage
+                </p>
+            }
+            else
+            {
+                if (_auditTrails.Any())
+                {
+                    <TaskManagementSystem.Client.Pages.AuditTrail.AuditTrailView AuditTrails="_auditTrails" ShowHeader="true" />
+                }
+                else
+                {
+                    <p class="fw-bolder fs-4 fst-italic text-info w-100">
+                        @_isFetchedAuditResponseMessage
+                        @("No Audit Record Exists")
+                    </p>
+                }
+            }
+        }
+
+        if(!_isLoadingUserTasks && _responseMessage is not null)
+        {
+            if(!_isSuccessful)
+            {
+                <p class="fw-bolder fs-4 fst-italic text-info w-100">
+                    @_fetchUserTasksResponseMessage
+                </p>
+            }
+            else
+            {
+                if(_userAssignedTasks.Count() == 0 )
+                {
+                    <p class="fw-bolder fs-4 fst-italic text-info w-100">
+                        You have not assigned any task to users yet.
+                    </p>
+
+                    <div class="d-flex flex-row justify-content-end">
+
+
+                        <div class="btn btn-primary my-2 float-start" @onclick="HandleAddNewUserTask">
+                            Assign New Task To User
+                        </div>
+                    </div>
+
+                    
+                }
+                else
+                {
+                    <AssignedTasksToUsersView HandleGetCreatedTaskAudit="HandleGetAssignedTaskProcessAudit" TasksAssignedToUser="_userAssignedTasks" HandleShowDetails="HandleShowReadOnly" HandleAddNewUserTask="HandleAddNewUserTask" HandleEditUserTask="HandleEditUserTask" HandleDeleteUserTask="HandleDeleteUserTask" HandleReassignUserTask="HandleReassigneUserTask" />
+                }
+            }
+        }
+    }
+}
+
+<Popup @ref="popup" Title="@_popupTitle" ShowCloseButton="@_showCloseButton" SaveChanges="OnHandleClosePopup">
+    <Body>
+        @if(_operationToPerform == OperationType.ReadOnly)
+        {
+            <CreatedTaskAssignedUserTaskDetails AssignedUserTasks="_selectedTask" />
+        }
+        else if(_operationToPerform == OperationType.AddNewUserTask)
+        {
+            <TaskManagementSystem.Client.Pages.UserTask.AddNewUserTaskPage ParentTask="_createdTask" HandleClose="OnHandleAddNewUserTaskClosePopup" />
+        }
+        else if(_operationToPerform == OperationType.EditUserTask)
+        {
+            <TaskManagementSystem.Client.Pages.UserTask.EditUserTask UserTaskToUpdate="_selectedTask" HandleClose="OnHandleEditUserTaskClosePopup" />
+        }
+        else if(_operationToPerform == OperationType.DeleteUserTask)
+        {
+            <TaskManagementSystem.Client.Pages.UserTask.CancelUserTask TaskUserToDelete="_selectedTask" HandleClose="OnHandleDeleteUserTaskClosePopup" />
+        }
+        else if(_operationToPerform == OperationType.ReassignUserTask)
+        {
+            <TaskManagementSystem.Client.Pages.UserTask.ReassignUserTask_ TaskUserToReassign="_selectedTask" HandleClose="OnHandleReassignUserTaskClosePopup" />
+        }
+        else if(_operationToPerform == OperationType.UpdateCreatedTaskStatus)
+        {
+            <UpdateCreatedTaskStatus TaskToUpdateStatus="_createdTask" HandleClose="OnHandleUpdateCreatedTaskStatusClosePopup" />
+        }
+        else if(_operationToPerform == OperationType.GetAssignedTaskAudit)
+        {
+            <TaskManagementSystem.Client.Pages.AuditTrail.AuditTrailView AuditTrails="_userTaskAuditTrails" />
+        }
+    </Body>
+</Popup>
+
+
+@code {
+    private CreatedTaskDto? _createdTask;
+    private bool _isLoading = true;
+
+    private Popup popup;
+    private bool _showCloseButton = true;
+
+    private string _responseMessage;
+    private bool _isSuccessful;
+    private Shared.DataTransferObjects.TaskUser.TaskUserDto _selectedTask;
+
+    //CREATED TASK PROCESS AUDIT VARIABLES
+    private bool _isFetchAuditSuccessful;
+    private string _isFetchedAuditResponseMessage;
+    private IEnumerable<AuditTrailDto> _auditTrails;
+
+    //USER TASK PROCESS AUDIT VARIABLES
+    private IEnumerable<AuditTrailDto> _userTaskAuditTrails;
+
+    [Parameter, EditorRequired]
+    public string TaskId { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if(TaskId is not null)
+        {
+            await GetCreatedTask();
+        }
+    }
+
+    private async Task GetCreatedTask()
+    {
+        var response = await getCreatedTaskByTaskIdHandler.Handle(TaskId);
+
+        _responseMessage = response.Message; _isSuccessful = response.IsSuccessful;
+        _createdTask = response.Data ?? null;
+
+        _isLoading = false;
+
+        if(_createdTask is not null)
+        {
+            await FetchAssignedUserTasks();
+        }
+    }
+
+    private bool CanAddUserTask()
+    {
+        return (!_createdTask.CompletionDate.HasValue && string.IsNullOrEmpty(_createdTask.CancelReason));
+    }
+
+    private async Task HandleGetProcessAudit()
+    {
+        var getAuditResponse = await getItemAuditTrailHandler.Handle(_createdTask.Id, typeof(CreatedTaskDto).Name);
+
+        if(getAuditResponse is null)
+        {
+            _isFetchAuditSuccessful = false;
+            _isFetchedAuditResponseMessage = "An Error Occurred Fetching Audit";
+            return;
+        }
+
+        _isFetchAuditSuccessful = getAuditResponse.IsSuccessful;
+        _isFetchedAuditResponseMessage = getAuditResponse.Message;
+        _auditTrails = getAuditResponse.Data ?? [];
+    }
+
+    private async Task HandleGetAssignedTaskProcessAudit(Shared.DataTransferObjects.TaskUser.TaskUserDto selectedUserTask)
+    {
+        var response = await getItemAuditTrailHandler.Handle(selectedUserTask.Id, typeof(Shared.DataTransferObjects.TaskUser.TaskUserDto).Name);
+
+        _userTaskAuditTrails = response.Data ?? [];
+
+        if(_userAssignedTasks is not null && _userTaskAuditTrails.Any())
+        {
+            _selectedTask = selectedUserTask;
+            _operationToPerform = OperationType.GetAssignedTaskAudit;
+            _showCloseButton = true;
+            _popupTitle = $"Process Audit For: {selectedUserTask.Id}";
+            popup.Open();
+        } 
+    }
+}
+
+@code{
+
+    private bool _isLoadingUserTasks = false;
+    private bool _isSuccessfulFetchUserTasks;
+    private string _fetchUserTasksResponseMessage;
+
+    private IEnumerable<Shared.DataTransferObjects.TaskUser.TaskUserDto> _userAssignedTasks;
+
+    private async Task FetchAssignedUserTasks()
+    {
+        _isLoadingUserTasks = true;
+        var response = await fetchCreatedTaskAssignedTasksHandler.Handle(_createdTask!.Id);
+
+        _fetchUserTasksResponseMessage = response.Message;
+        _isSuccessfulFetchUserTasks = response.IsSuccessful;
+        _userAssignedTasks = response.Data ?? [];
+        _isLoadingUserTasks = false;
+    }
+
+    private void NavigateToTaskLists()
+    {
+        navManager.NavigateTo("tasks");
+    }
+}
+
+@code{
+
+    private string _popupTitle;
+    private OperationType _operationToPerform;
+
+
+    private void HandleShowReadOnly(Shared.DataTransferObjects.TaskUser.TaskUserDto selectedTask)
+    {
+        _selectedTask = selectedTask;
+        _popupTitle = "Assigned User Task Details";
+        _showCloseButton = true;
+        _operationToPerform = OperationType.ReadOnly;
+        popup.Open();
+    }
+
+    private void OnHandleClosePopup()
+    {
+        _selectedTask = null;
+        _showCloseButton = true;
+        _operationToPerform = OperationType.None;
+        popup.Close();
+    }
+
+    private async Task OnHandleAddNewUserTaskClosePopup(bool operationDecision)
+    {
+        if(operationDecision)
+        {
+            await GetCreatedTask();
+        }
+        _showCloseButton = true;
+        _operationToPerform = OperationType.None;
+        popup.Close();
+    }
+
+    private async Task OnHandleEditUserTaskClosePopup(bool operationDecision)
+    {
+        if (operationDecision)
+        {
+            await GetCreatedTask();
+        }
+        _operationToPerform = OperationType.None;
+        _showCloseButton = true;
+        popup.Close();
+    }
+
+    private async Task OnHandleReassignUserTaskClosePopup(bool operationDecision)
+    {
+        if (operationDecision)
+        {
+            await GetCreatedTask();
+        }
+        _showCloseButton = true;
+        _operationToPerform = OperationType.None;
+        popup.Close();
+    }
+
+    private async Task OnHandleDeleteUserTaskClosePopup(bool operationDecision)
+    {
+        if (operationDecision)
+        {
+            await GetCreatedTask();
+        }
+        _showCloseButton = true;
+        _operationToPerform = OperationType.None;
+        popup.Close();
+    }
+
+    private void HandleAddNewUserTask()
+    {
+        if(CanAddUserTask())
+        {
+            _operationToPerform = OperationType.AddNewUserTask;
+            _showCloseButton = false;
+            _popupTitle = $"Add New User Task To - {TaskId}";
+            popup.Open();
+        }
+
+    }
+
+    private void HandleEditUserTask(Shared.DataTransferObjects.TaskUser.TaskUserDto userTaskToUpdate)
+    {
+        _selectedTask = userTaskToUpdate;
+        _operationToPerform = OperationType.EditUserTask;
+        _showCloseButton = false;
+        _popupTitle = $"Edit User Task For Task - {TaskId}";
+        popup.Open();
+    }
+
+    private void HandleDeleteUserTask(Shared.DataTransferObjects.TaskUser.TaskUserDto userTaskToUpdate)
+    {
+        _selectedTask = userTaskToUpdate;
+        _operationToPerform = OperationType.DeleteUserTask;
+        _showCloseButton = false;
+        _popupTitle = $"Delete User Task For Task - {TaskId}";
+        popup.Open();
+    }
+
+    private void HandleReassigneUserTask(Shared.DataTransferObjects.TaskUser.TaskUserDto userTaskToUpdate)
+    {
+        _selectedTask = userTaskToUpdate;
+        _operationToPerform = OperationType.ReassignUserTask;
+        _showCloseButton = false;
+        _popupTitle = $"Reassign User Task For Task - {TaskId}";
+        popup.Open();
+    }
+
+    private void HandleUpdateCreatedTaskStatus()
+    {
+        _operationToPerform = OperationType.UpdateCreatedTaskStatus;
+        _showCloseButton = false;
+        _popupTitle = $"Update Created Task Status - {TaskId}";
+        popup.Open();
+    }
+
+    private async Task OnHandleUpdateCreatedTaskStatusClosePopup(bool operationDecision)
+    {
+        if (operationDecision)
+        {
+            await GetCreatedTask();
+        }
+        _showCloseButton = true;
+        _operationToPerform = OperationType.None;
+        popup.Close();
+    }
+
+    enum OperationType
+    {
+        None,
+        ReadOnly,
+        CancelOperation,
+        DeleteOperation,
+        AddNewUserTask,
+        EditUserTask,
+        DeleteUserTask,
+        ReassignUserTask,
+        UpdateCreatedTaskStatus,
+        GetAssignedTaskAudit
+    }
+}

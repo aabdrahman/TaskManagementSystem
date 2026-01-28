@@ -1,0 +1,52 @@
+﻿@using System.Globalization
+
+@if(_userToView is not null)
+{
+    <div class="d-flex flex-column gap-2 flex-wrap justify-content-center p-2 w-100" style="max-width:600px;">
+        <div class="flex-fill">
+            <strong>Username:</strong>
+            <div>@_userToView.Username</div>
+        </div>
+
+        <div class="flex-fill">
+            <strong>Full Name:</strong>
+            <div>@($"{_userToView.FirstName} {_userToView.LastName}")</div>
+        </div>
+
+        <div class="flex-fill">
+            <strong>Email:</strong>
+            <div>@_userToView.Email</div>
+        </div>
+
+        <div class="flex-fill">
+            <strong>Phone:</strong>
+            <div>@_userToView.PhoneNumber</div>
+        </div>
+
+        <div class="flex-fill">
+            <strong>Assigned Unit:</strong>
+            <div>@(_userToView?.AssignedUnit ?? "")</div>
+        </div>
+
+        <div class="flex-fill">
+            <strong>Last Login:</strong>
+            <div>
+                @(_userToView.LastLoginDate == DateTime.MinValue
+                    ? "Never"
+                    : _userToView.LastLoginDate.ToString("F", CultureInfo.InvariantCulture))
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private UserDto _userToView;
+
+    [Parameter, EditorRequired]
+    public UserDto UserToView { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _userToView = UserToView;
+    }
+}

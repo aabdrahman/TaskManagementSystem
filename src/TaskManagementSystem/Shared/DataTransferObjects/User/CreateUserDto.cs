@@ -27,7 +27,9 @@ public record class CreateUserDto
     [Compare(nameof(Password), ErrorMessage = "Password Mismatch.")]
     public string ConfirmPassword { get; set; }
     [Required(ErrorMessage = "Assignd Unit is a required field.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Unit is required")]
     public int AssignedUnit { get; set; }
     [Required(ErrorMessage = "Assigned Role is a required field.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Role is required")]
     public int AssignedRole { get; set; }
 }

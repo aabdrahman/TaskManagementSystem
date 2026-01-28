@@ -21,7 +21,8 @@ public class CreatedTasksController : ControllerBase
     }
 
     [HttpGet("taskid/{taskId}")]
-    public async Task<IActionResult> GetByTakId(string taskId, bool hasQueryFilter = true)
+    [Authorize(Policy = "ProductOwnerOrAdminPolicy")]
+    public async Task<IActionResult> GetByTaskId(string taskId, bool hasQueryFilter = true)
     {
         try
         {
@@ -37,6 +38,9 @@ public class CreatedTasksController : ControllerBase
     }
 
     [HttpGet("status/{status}")]
+    //[Authorize(Policy = "ProductOwnerPolicy")]
+    [Authorize(Policy = "AdminPolicy")]
+
     public async Task<IActionResult> GetByStatus(string status, bool hasQueryFilter = true)
     {
         try
@@ -53,6 +57,7 @@ public class CreatedTasksController : ControllerBase
     }
 
     [HttpGet("userid/{userid:int}")]
+    [Authorize(Policy = "UnitHeadOrAdminOrProductOwnerPolicy")]
     public async Task<IActionResult> GetByUser(int userid, bool hasQueryFilter = true)
     {
         try
@@ -69,7 +74,8 @@ public class CreatedTasksController : ControllerBase
     }
 
     [HttpGet("priority/{taskPriority}")]
-    public async Task<IActionResult> GetByUser(string taskPriority, bool hasQueryFilter = true)
+    [Authorize(Policy = "ProductOwnerOrAdminPolicy")]
+    public async Task<IActionResult> GetByPriority(string taskPriority, bool hasQueryFilter = true)
     {
         try
         {
@@ -85,6 +91,7 @@ public class CreatedTasksController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "ProductOwnerOrAdminPolicy")]
     public async Task<IActionResult> CreateTask([FromBody] CreateTaskDto createTask)
     {
         try
@@ -101,6 +108,7 @@ public class CreatedTasksController : ControllerBase
     }
 
     [HttpDelete("{Id}")]
+    [Authorize(Policy = "ProductOwnerOrAdminPolicy")]
     public async Task<IActionResult> Delete(int Id, bool isSoftDelete = true)
     {
         try
@@ -117,6 +125,7 @@ public class CreatedTasksController : ControllerBase
     }
 
     [HttpPost("cancel-task")]
+    [Authorize(Policy = "ProductOwnerOrAdminPolicy")]
     public async Task<IActionResult> CancelTask([FromBody] CancelCreatedTaskDto cancelCreatedTask)
     {
         try
@@ -133,6 +142,7 @@ public class CreatedTasksController : ControllerBase
     }
 
     [HttpPost("reassign-task")]
+    [Authorize(Policy = "UnitHeadOrAdminOrProductOwnerPolicy")]
     public async Task<IActionResult> ReassignTask([FromBody]  ReassignCreatedTaskDto reassignCreatedTask)
     {
         try
@@ -147,8 +157,9 @@ public class CreatedTasksController : ControllerBase
             return StatusCode(500, "Internal Server Error");
         }
     }
-
+    
     [HttpPut("update-task")]
+    [Authorize(Policy = "ProductOwnerOrAdminPolicy")]
     public async Task<IActionResult> UpdateTask([FromBody] UpdateCreatedTaskDto updateCreatedTask)
     {
         try
@@ -165,6 +176,7 @@ public class CreatedTasksController : ControllerBase
     }
 
     [HttpPut("update-task-status")]
+    [Authorize(Policy = "ProductOwnerOrAdminPolicy")]
     public async Task<IActionResult> UpdateTaskStatus([FromBody] UpdateCreatedTaskStatusDto updateCreatedTaskStatus)
     {
         try

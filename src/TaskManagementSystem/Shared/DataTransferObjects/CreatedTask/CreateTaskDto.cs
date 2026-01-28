@@ -10,7 +10,7 @@ public record class CreateTaskDto
     public string Title { get; set; }
     [Required(ErrorMessage = "Description is a required field.")]
     public string Description { get; set; }
-    [DateTimeValidatorAttribute]
+    [DateTimeValidator]
     [Required(ErrorMessage = "Proposed Completion Date is a required field.")]
     public DateTime ProposedCompletionDate { get; set; }
     [Required(ErrorMessage = "Priority is a required field.")]

@@ -1,4 +1,5 @@
 ﻿using Contracts.Infrastructure;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Contract;
 using Shared.DataTransferObjects.Attachment;
@@ -7,6 +8,7 @@ namespace TaskManagementSystem.ApiPresentation.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class AttachmentsController : ControllerBase
 {
     private readonly ILoggerManager _loggerManager;

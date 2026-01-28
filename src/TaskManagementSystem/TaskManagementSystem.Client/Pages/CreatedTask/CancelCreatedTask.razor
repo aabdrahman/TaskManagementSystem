@@ -1,0 +1,200 @@
+﻿@attribute [Authorize(Roles = "BUSINESSANALYST,PRODUCTOWNER")]
+
+@using Entities.StaticValues
+
+@if(_editContext is not null)
+{
+    <div class="d-flex flex-column gap-2">
+        @if (_responseMessage is not null && !_isLoading)
+        {
+            <div class="alert fst-italic text-center fs-6 fw-bold alert-@(_isSuccessful ? "success" : "danger")" role="alert">
+                @(_isSuccessful ? $"{_responseMessage}. Click Close button" : _responseMessage)
+            </div>
+        }
+        <div class="d-flex flex-column gap-0">
+            <label class="form-label fs-5 fw-bold">Title</label>
+            <span class="text-dark fs-5">@_taskToDelete.Title</span>
+        </div>
+        <div class="d-flex flex-column gap-0">
+            <label class="form-label fs-5 fw-bold">Description</label>
+            <span class="text-dark fs-5">@_taskToDelete.Description</span>
+        </div>
+        <div class="d-flex flex-column justify-content-start gap-1">
+            <label class="form-label fw-bold fs-5 text-black">Priority</label>
+            <span class="badge rounded-pill @GetPriorityBadgeClass()">
+                @if (_taskToDelete.Priority == PriorityLevel.Critical.ToString())
+                {
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                }
+                @_taskToDelete.Priority
+            </span>
+        </div>
+        <div class="d-flex flex-column justify-content-start gap-1">
+            <label class="form-label fw-bold fs-5 text-black">Stage</label>
+            <span class="badge rounded-pill @GetStageBadgeClass()">
+                @_taskToDelete.Stage
+            </span>
+        </div>
+        <div class="d-flex flex-column justify-content-start align-items-start gap-1">
+            <label class="fw-bold fs-5 text-black">Expected Delivery Date</label>
+            <span class="fs-6 text-wrap">
+                @_taskToDelete.ProposedCompletionDate.ToString("dd MMM yyyy")
+            </span>
+        </div>
+        <div class="d-flex w-100">
+            <EditForm class="w-100" EditContext="_editContext" OnValidSubmit="OnHandleSubmit">
+                <DataAnnotationsValidator />
+                <div class="d-flex flex-column mb-2 gap-1">
+                    <label class="fw-bold fs-5 form-label">Justification to Cancel</label>
+                    <InputTextArea @bind-Value="_cancelCreatedTaskModel.Justification" class="form-control" />
+                    <ValidationMessage  For="(() => _cancelCreatedTaskModel.Justification)"/>
+                </div>
+                <div class="d-flex flex-row justify-content-between align-items-center">
+                    @if (!_isSuccessful)
+                    {
+                        <button class="btn btn-secondary" type="button" disabled="@_isLoading" @onclick="(() => OnHandleClose(false))">
+                            Cancel
+                        </button>
+                    }
+                    @if (_isLoading)
+                    {
+                        <button class="btn btn-danger" type="button" disabled>
+                            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                            <span role="status">Loading...</span>
+                        </button>
+                    }
+                    else
+                    {
+                        if (!_isSuccessful)
+                        {
+                            <button class="btn btn-danger" type="submit">
+                                Submit
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-secondary float-end" type="button" @onclick="(() => OnHandleClose(true))">
+                                Close
+                            </button>
+                        }
+                    }
+                </div>
+            </EditForm>
+        </div>
+
+    </div>
+}
+
+
+
+@code {
+    //Operation Variables
+    private CreatedTaskDto _taskToDelete;
+    private int _loggedInUserId;
+    private bool _isLoading = false;
+    private bool _isSuccessful;
+    private string _responseMessage;
+
+    //CANCEL TASK MODELS
+    private CancelCreatedTaskDto _cancelCreatedTaskModel;
+    private EditContext _editContext;
+
+    //Parameters
+    [Parameter, EditorRequired]
+    public CreatedTaskDto TaskToDelete { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<bool> HandleClose { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var authState = await authStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        _loggedInUserId = int.Parse(user.FindFirst(x => x.Type.EndsWith("serialnumber"))?.Value ?? "0");
+
+        if(_loggedInUserId > 0)
+        {
+            _taskToDelete = TaskToDelete;
+            _cancelCreatedTaskModel = new CancelCreatedTaskDto() { ReqesterId = _loggedInUserId, TaskId = _taskToDelete.TaskId, TaskPrimaryId = _taskToDelete.Id };
+            _editContext = new EditContext(_cancelCreatedTaskModel);
+        }
+
+    }
+
+    private async Task OnHandleSubmit()
+    {
+        _isLoading = true;
+        // await Task.Delay(5000);
+        // _isSuccessful = DateTime.Now.Second % 2 == 0;
+        // _responseMessage = _isSuccessful ? "Success" : "Failed";
+
+        var response = await cancelCreatedTaskHandler.Handle(_cancelCreatedTaskModel);
+
+        _isSuccessful = response.isSuccessful; _responseMessage = response.responseMessage;
+
+        _isLoading = false;
+    }
+
+    private async Task OnHandleClose(bool routeDecision)
+    {
+        _taskToDelete = null;
+        _isLoading = false;
+        _isSuccessful = default;
+        _responseMessage = null;
+        _cancelCreatedTaskModel = null;
+        _editContext = null;
+        _taskToDelete = null;
+        await HandleClose.InvokeAsync(routeDecision);
+    }
+
+    private string GetPriorityBadgeClass()
+    {
+        if (_taskToDelete.Priority == Entities.StaticValues.PriorityLevel.Low.ToString())
+        {
+            return "text-bg-secondary";
+        }
+        else if (_taskToDelete.Priority == Entities.StaticValues.PriorityLevel.Medium.ToString())
+        {
+            return "text-bg-info";
+        }
+        else if (_taskToDelete.Priority == Entities.StaticValues.PriorityLevel.High.ToString())
+        {
+            return "text-bg-warning";
+        }
+        else if (_taskToDelete.Priority == Entities.StaticValues.PriorityLevel.Critical.ToString())
+        {
+            return "text-bg-danger";
+        }
+
+        return "text-bg-light";
+    }
+
+    private string GetStageBadgeClass()
+    {
+        if (_taskToDelete.Stage == Stage.Review.ToString())
+            return "text-bg-info";
+
+        if (_taskToDelete.Stage == Stage.Development.ToString())
+            return "text-bg-primary";
+
+        if (_taskToDelete.Stage == Stage.Testing.ToString())
+            return "text-bg-warning";
+
+        if (_taskToDelete.Stage == Stage.Deployment.ToString())
+            return "text-bg-dark";
+
+        if (_taskToDelete.Stage == Stage.ChangeManagement.ToString())
+            return "text-bg-secondary";
+
+        if (_taskToDelete.Stage == Stage.Completed.ToString())
+            return "text-bg-success";
+
+        if (_taskToDelete.Stage == Stage.Cancelled.ToString())
+            return "text-bg-danger";
+
+        return "text-bg-light";
+    }
+}
+
+

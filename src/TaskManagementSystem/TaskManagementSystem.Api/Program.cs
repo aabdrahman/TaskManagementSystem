@@ -1,6 +1,8 @@
-using TaskManagementSystem.Api.ServiceExtensions;
-using Serilog;
+using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.FileProviders;
+using Serilog;
+using TaskManagementSystem.Api.ServiceExtensions;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,7 +17,7 @@ Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()
             .Enrich.FromLogContext()
             .WriteTo.File(Path.Combine(logFolderPath, "log-.txt"), Serilog.Events.LogEventLevel.Debug, 
-                            outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.ff zzz}||{Level:u3}] || [{ClassName}].[{MethodName}] - {Message:lj}{NewLine}{Exception}{Properties}{NewLine}", 
+                            outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}||{Level:u3}] || [{ClassName}].[{MethodName}] - {Message:lj}{NewLine}{Exception}{NewLine}", 
                             fileSizeLimitBytes: 10_000_000, rollOnFileSizeLimit: true,
                             rollingInterval: RollingInterval.Day)
             .CreateLogger();
@@ -33,15 +35,22 @@ builder.Services.ConfigureInfrastrucureManager();
 builder.Services.ConfigureModelsFromSettings(builder.Configuration);
 builder.Services.ConfigureHttpContextAccessor();
 builder.Services.ConfigureAuthentication(builder.Configuration);
+builder.Services.ConfigureAuthorization();
 builder.Services.ConfigureController();
+builder.Services.ConfigureHybridCaching();
+builder.Services.ConfigureHealthChecks(builder.Configuration);
+builder.Services.ConfigureWorkerServices();
+
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline
+
 
 app.CongigureExceptionHandler();
 
-app.UseCors();
+
+app.UseCors("FrontEndPolicy");
 
 app.ConfigureSwaggerDefinition();
 
@@ -58,6 +67,16 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+app.UseHealthChecks("/_healths", new HealthCheckOptions
+{
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse // <-- required for UI
+});
+
+app.MapHealthChecksUI(options =>
+{
+    options.UIPath = "/_healthchecks-ui"; // <-- UI URL
+});
 
 app.MapControllers();
 

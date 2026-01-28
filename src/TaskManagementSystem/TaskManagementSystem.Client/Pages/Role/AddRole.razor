@@ -1,0 +1,105 @@
+﻿@attribute [Authorize(Roles = "ADMIN,ITGOVERNANCE")]
+
+@if(_editContext is not null)
+{
+    <div class="d-flex flex-column justify-content-center w-100">
+        @if (_responseMessage is not null && !_isLoading)
+        {
+            <div class="alert w-100 fst-italic text-center fs-6 fw-bold alert-@(_isSuccessful ? "success" : "danger")" role="alert">
+                @(_isSuccessful ? $"{_responseMessage} Click Close Button" : _responseMessage)
+            </div>
+        }
+        <EditForm EditContext="_editContext" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+            <div class="d-flex flex-column justify-content-startgap-3 gap-lg-3 w-100">
+                <div class="d-flex flex-column justify-content-start gap-1 gap-lg-1 w-100">
+                    <label class="form-label fw-bold">Role Name</label>
+                    <InputText @bind-Value="_roleToCreate.Name" class="form-control" />
+                    <ValidationMessage For="(() => _roleToCreate.Name)" />
+                </div>
+                <div class="d-flex flex-row justify-content-between border-3">
+                    @if (!_isSuccessful)
+                    {
+                        <button class="btn btn-secondary" type="button" disabled="@_isLoading" @onclick="(() => OnHandleClose(false))">
+                            Cancel
+                        </button>
+                    }
+                    @if (_isLoading)
+                    {
+                        <button class="btn btn-primary" type="button" disabled>
+                            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                            <span role="status">Loading...</span>
+                        </button>
+                    }
+                    else
+                    {
+                        if (!_isSuccessful)
+                        {
+                            <button class="btn btn-primary" type="submit">
+                                Create Role
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-secondary float-end" type="submi" @onclick="(() => OnHandleClose(true))">
+                                Close
+                            </button>
+                        }
+                    }
+                </div>
+            </div>
+        </EditForm>
+    </div>
+}
+
+
+@code {
+
+    //MODEL VARIABLES
+    private CreateRoleDto _roleToCreate;
+    private EditContext _editContext;
+    private int _loggedinUserId;
+
+    //OPERATION VARIABLES
+    private bool _isSuccessful;
+    private bool _isLoading;
+    private string _responseMessage;
+
+    [Parameter, EditorRequired]
+    public EventCallback<bool> HandleClose { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        _loggedinUserId = int.Parse(user.FindFirst(x => x.Type.EndsWith("serialnumber"))?.Value ?? "0");
+
+        if(_loggedinUserId == 0)
+        {
+            return;
+        }
+
+        _roleToCreate = new CreateRoleDto();
+        _editContext = new EditContext(_roleToCreate);
+    }
+
+    private async Task HandleSubmit()
+    {
+        _isLoading = true;
+        //await Task.Delay(5000);
+        // _isSuccessful = DateTime.Now.Second % 2 == 0;
+        // _responseMessage = _isSuccessful ? "Successful" : "Failed";
+
+        var response = await addRoleHandler.Handle(_roleToCreate);
+        _isSuccessful = response.isSuccessful; _responseMessage = response.responseMessage;
+
+        _isLoading = false;
+
+    }
+
+    private async Task OnHandleClose(bool refreshDecision)
+    {
+        await HandleClose.InvokeAsync(refreshDecision);
+    }
+}

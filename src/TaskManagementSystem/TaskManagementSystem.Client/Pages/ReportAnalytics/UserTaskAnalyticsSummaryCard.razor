@@ -1,0 +1,110 @@
+﻿
+
+<div class="card shadow-sm mb-3 w-100">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <span class="fw-bold fs-5">@($"{UserAnalytics.FirstName} {UserAnalytics.LastName}")</span>
+        <span class="badge bg-light text-dark">@UserAnalytics?.UserId</span>
+    </div>
+    <div class="card-body mt-1">
+        <div class="row g-2">
+            <div class="col-md-6 col-12 w-100">
+                <div class="row g-2 text-center w-100">
+
+                    <!-- Total Assigned -->
+                    <div class="col-6 w-100 col-md-4">
+                        <div class="p-2 bg-light rounded">
+                            <div class="fw-bold">Total Assigned</div>
+                            <div class="fs-5">@UserAnalytics?.TotalAssignedTasks</div>
+                        </div>
+                    </div>
+
+                    <!-- Pending -->
+                    <div class="col-6 w-100 col-md-4">
+                        <div class="p-2 bg-light rounded">
+                            <div class="fw-bold">Pending</div>
+                            <div class="fs-5 text-warning">@UserAnalytics?.TotalPendingTasks</div>
+                        </div>
+                    </div>
+
+                    <!-- Completed -->
+                    <div class="col-6 w-100 col-md-4">
+                        <div class="p-2 bg-light rounded">
+                            <div class="fw-bold">Completed</div>
+                            <div class="fs-5 text-success">@UserAnalytics?.TotalCompletedTasks</div>
+                        </div>
+                    </div>
+
+                    <!-- Completion Rate -->
+                    <div class="col-6 w-100 col-md-4">
+                        <div class="p-2 bg-light rounded">
+                            <div class="fw-bold">Completion Rate (%)</div>
+                            <div class="fs-5">@UserAnalytics?.CompletionRate</div>
+                        </div>
+                    </div>
+
+                    <!-- Overdue -->
+                    <div class="col-6 w-100 col-md-4">
+                        <div class="p-2 bg-light rounded">
+                            <div class="fw-bold">Overdue</div>
+                            <div class="fs-5 text-danger">@UserAnalytics?.TotalOverdueTasks</div>
+                        </div>
+                    </div>
+
+                    <!-- Cancelled -->
+                    <div class="col-6 w-100 col-md-4">
+                        <div class="p-2 bg-light rounded">
+                            <div class="fw-bold">Cancelled</div>
+                            <div class="fs-5 text-danger">@UserAnalytics?.TotalCancelledTasks</div>
+                        </div>
+                    </div>
+
+                    <!-- Deleted -->
+                    <div class="col-6 w-100 col-md-4">
+                        <div class="p-2 bg-light rounded">
+                            <div class="fw-bold">Deleted</div>
+                            <div class="fs-5 text-secondary">@UserAnalytics?.TotalDeletedTasks</div>
+                        </div>
+                    </div>
+
+                    <!-- Completed Within Due Date -->
+                    <div class="col-6 w-100 col-md-4">
+                        <div class="p-2 bg-light rounded">
+                            <div class="fw-bold">Completed On Time</div>
+                            <div class="fs-5 text-success">@UserAnalytics?.CompletedWithinDueDate</div>
+                        </div>
+                    </div>
+
+                    <!-- Completed After Due Date -->
+                    <div class="col-6 w-100 col-md-4">
+                        <div class="p-2 bg-light rounded">
+                            <div class="fw-bold">Completed Late</div>
+                            <div class="fs-5 text-warning">@UserAnalytics?.CompletedAfterDueDate</div>
+                        </div>
+                    </div>
+
+                    <!-- Average Time Taken -->
+                    <div class="col-6 w-100 col-md-4">
+                        <div class="p-2 bg-light rounded">
+                            <div class="fw-bold">Average Completion Time (min)</div>
+                            <div class="fs-5">@UserAnalytics?.TotalTimeTaken?.ToString("N0")</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @*
+        @if (UserAnalytics?.TotalTimeTaken.HasValue ?? false)
+        {
+            <div class="mt-2 text-center fw-bold">
+                Average Time Taken: @($"{UserAnalytics?.TotalTimeTaken} mins")
+            </div>
+        }
+        *@
+    </div>
+</div>
+
+@code {
+
+    [Parameter, EditorRequired] 
+    public UserUnitAssignedUserTaskAnalyticsDto UserAnalytics { get; set; }
+}

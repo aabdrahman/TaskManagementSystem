@@ -14,6 +14,7 @@
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="8.1.4" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.22" />
 		
+		
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.22" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.22">
 			<PrivateAssets>all</PrivateAssets>
@@ -30,6 +31,7 @@
 	  <ProjectReference Include="..\LoggerManager\LoggerService.csproj" />
 	  <ProjectReference Include="..\Repository\Repository.csproj" />
 	  <ProjectReference Include="..\Services\Services.csproj" />
+	  <ProjectReference Include="..\TaskManageemntSystem.WorkerService\TaskManageemntSystem.WorkerService.csproj" />
 	  <ProjectReference Include="..\TaskManagementSystem.ApiPresentation\TaskManagementSystem.ApiPresentation.csproj" />
 	</ItemGroup>
 

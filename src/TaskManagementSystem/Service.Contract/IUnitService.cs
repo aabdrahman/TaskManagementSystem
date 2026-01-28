@@ -9,4 +9,5 @@ public interface IUnitService
     Task<GenericResponse<UnitDto>> CreateAsync(CreateUnitDto newUnitToCreate);
     Task<GenericResponse<string>> DeleteAsync(int UnitId, bool isSoftDelete = true);
     Task<GenericResponse<UnitDto>> GetByIdAsuync(int UnitId);
+    Task<GenericResponse<UnitDto>> UpdateUnitAsync(UpdateUnitDto updatedUnit);
 }

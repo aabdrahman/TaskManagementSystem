@@ -1,0 +1,13 @@
+﻿@using Shared.DataTransferObjects.AnalyticsReporting
+@using Shared.RequestParameters.Analytics
+@using Shared.DataTransferObjects.Unit
+@using Shared.DataTransferObjects.User
+@using TaskManagementSystem.Client.Handlers.ReportAnalytics
+@using TaskManagementSystem.Client.Handlers.Unit
+
+
+@inject TaskManagementSystem.Client.Handlers.User.GetUserSummaryDetailsHandler getUserSummaryDetailsHandler
+@inject GetUserUnitTaskUserAnalyticsHandler getUserUnitTaskUserAnalyticsHandler
+@inject GetUnitsHandler getUnitsHandler
+@inject AuthenticationStateProvider authenticationStateProvider
+@inject NavigationManager navManager

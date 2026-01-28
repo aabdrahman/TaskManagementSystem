@@ -18,6 +18,7 @@ public sealed class ServiceManager : IServiceManager
     private readonly IOptionsMonitor<UploadConfig> _uploadConfigOptionsMonitor;
     private readonly IConfiguration _configuration;
     private readonly IOptionsMonitor<JwtConfiguration> _jwtConfigurationOptionsMonitor;
+    private readonly IAuditPersistenceService _auditPersistenceService;
 
     private readonly Lazy<IUnitService> _unitService;
     private readonly Lazy<IRoleService> _roleService;
@@ -25,11 +26,13 @@ public sealed class ServiceManager : IServiceManager
     private readonly Lazy<ICreatedTaskService> _createdTaskService;
     private readonly Lazy<ITaskUserService> _taskUserService;
     private readonly Lazy<IAttachmentService> _attachmentService;
+    private readonly Lazy<IAnalyticsReportingService> _analyticsReportingService;
+    private readonly Lazy<IAuditService> _auditService;
 
     public ServiceManager(ILoggerManager loggerManager, IRepositoryManager repositoryManager, 
                             IInfrastructureManager infrastructureManager, IOptionsMonitor<UploadConfig> uploadConfigOptionsMonitor, 
                             IHttpContextAccessor httpContextAccessor, IConfiguration configuration,
-                            IOptionsMonitor<JwtConfiguration> jwtConfigurationOptionsMonitor)
+                            IOptionsMonitor<JwtConfiguration> jwtConfigurationOptionsMonitor, IAuditPersistenceService auditPersistenceService)
     {
         _loggerManager = loggerManager;
         _repositoryManager = repositoryManager;
@@ -38,14 +41,16 @@ public sealed class ServiceManager : IServiceManager
         _contextAccessor = httpContextAccessor;
         _configuration = configuration;
         _jwtConfigurationOptionsMonitor = jwtConfigurationOptionsMonitor;
+        _auditPersistenceService = auditPersistenceService;
 
-        _unitService = new Lazy<IUnitService>(() => new UnitService(_loggerManager, _repositoryManager));
-        _roleService = new Lazy<IRoleService>(() => new RoleService(_repositoryManager, _loggerManager));
-        _userService = new Lazy<IUserService>(() => new UserService(_repositoryManager, _loggerManager, _configuration, _jwtConfigurationOptionsMonitor, _contextAccessor));
-        _createdTaskService = new Lazy<ICreatedTaskService>(() => new CreatedTaskService(_repositoryManager, _loggerManager, _contextAccessor));
-        _taskUserService = new Lazy<ITaskUserService>(() => new TaskUserService(_repositoryManager, _loggerManager, _contextAccessor));
+        _unitService = new Lazy<IUnitService>(() => new UnitService(_loggerManager, _repositoryManager, _contextAccessor, _infrastructureManager, _auditPersistenceService));
+        _roleService = new Lazy<IRoleService>(() => new RoleService(_repositoryManager, _loggerManager, _infrastructureManager, _contextAccessor));
+        _userService = new Lazy<IUserService>(() => new UserService(_repositoryManager, _loggerManager, _configuration, _jwtConfigurationOptionsMonitor, _contextAccessor, _auditPersistenceService));
+        _createdTaskService = new Lazy<ICreatedTaskService>(() => new CreatedTaskService(_repositoryManager, _loggerManager, _contextAccessor, _auditPersistenceService));
+        _taskUserService = new Lazy<ITaskUserService>(() => new TaskUserService(_repositoryManager, _loggerManager, _contextAccessor, _infrastructureManager, _auditPersistenceService));
         _attachmentService = new Lazy<IAttachmentService>(() => new AttachmentService(_repositoryManager, _loggerManager, _infrastructureManager, _uploadConfigOptionsMonitor, _contextAccessor));
-
+        _analyticsReportingService = new Lazy<IAnalyticsReportingService>(() => new AnalyticsReportingService(_loggerManager, _repositoryManager, _contextAccessor));
+        _auditService = new Lazy<IAuditService>(() => new AuditService(_loggerManager, _repositoryManager));
     }
 
 
@@ -60,4 +65,8 @@ public sealed class ServiceManager : IServiceManager
     public ITaskUserService TaskUserService => _taskUserService.Value;
 
     public IAttachmentService AttachmentService => _attachmentService.Value;
+
+    public IAnalyticsReportingService AnalyticsReportingService => _analyticsReportingService.Value;
+
+    public IAuditService AuditService => _auditService.Value;
 }

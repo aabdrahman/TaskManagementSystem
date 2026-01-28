@@ -1,7 +1,11 @@
 ﻿using Contracts.Infrastructure;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service.Contract;
 using Shared.DataTransferObjects.User;
+using Shared.RequestParameters;
+using System.Text.Json;
 
 namespace TaskManagementSystem.ApiPresentation.Controllers;
 
@@ -18,6 +22,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("{username}")]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> GetByUsername(string username, bool hasQueryFilter = true)
     {
         try
@@ -34,6 +39,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("getByUnitId/{UnitId:int}")]
+    [Authorize(Policy = "UnitHeadOrAdminOrProductOwnerPolicy")]
     public async Task<IActionResult> GetUsersByUnitId(int UnitId, bool hasQueryFilter = true)
     {
         try
@@ -49,7 +55,51 @@ public class UsersController : ControllerBase
         }
     }
 
+
+    [HttpGet("getUserSummaryDetails")]
+    [Authorize]
+    public async Task<IActionResult> GetUserSummaryDetails([FromQuery] UsersRequestParameter usersRequestParameter, bool hasQueryFilter = true)
+    {
+        try
+        {
+            var getUserResponse = await _serviceManager.UserService.GetAllUsers(usersRequestParameter, hasQueryFilter);
+            if(getUserResponse.IsSuccessful)
+            {
+                //Response.Headers.Append("X-Pagination", JsonSerializer.Serialize(getUserResponse!.Data!.metaData));
+                //Response.Headers.Append("X-Pagination", JsonSerializer.Serialize(getUserResponse.Data!.metaData));
+                Response.HttpContext.Response.Headers.Append("X-Pagination", JsonSerializer.Serialize(getUserResponse.Data!.metaData));
+            }
+                
+
+            return StatusCode((int)getUserResponse.StatusCode, getUserResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "An Error Occurred.");
+            return StatusCode(500, ex.Message);
+        }
+    }
+
+    [HttpGet]
+    //[Authorize]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetUserSummary(int? AssignedUnitId, bool trackChanges = false, bool hasQueryFilter = true)
+    {
+        try
+        {
+            var getUserSummaryResponse = await _serviceManager.UserService.GetUsersSummaryDetails(AssignedUnitId, trackChanges, hasQueryFilter);
+
+            return StatusCode((int)getUserSummaryResponse.StatusCode, getUserSummaryResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "An Error Occurred.");
+            return StatusCode(500, ex.Message);
+        }
+    }
+
     [HttpGet("{Id:int}")]
+    [Authorize]
     public async Task<IActionResult> GetById(int Id, bool hasQueryFilter = true)
     {
         try
@@ -65,7 +115,25 @@ public class UsersController : ControllerBase
         }
     }
 
+    [HttpGet("getUnitMember/{UserId:int}")]
+    [Authorize(Policy = "UnitHeadOrAdminPolicy")]
+    public async Task<IActionResult> GetUnitMember(int UserId)
+    {
+        try
+        {
+            var getUnitMemberResponse = await _serviceManager.UserService.GetUsersWithSameUnit(UserId);
+
+            return StatusCode((int)getUnitMemberResponse.StatusCode, getUnitMemberResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "An Error Occurred.");
+            return StatusCode(500, ex.Message);
+        }
+    }
+
     [HttpPost]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> Register([FromBody] CreateUserDto createUser)
     {
         try
@@ -82,6 +150,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpDelete("{Username}")]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> DeleteUser(string Username, bool isSoftDelete = false)
     {
         try
@@ -137,6 +206,40 @@ public class UsersController : ControllerBase
             var refreshResponse = await _serviceManager.UserService.RefreshTokenAsync(tokenDto);
 
             return StatusCode((int)refreshResponse.StatusCode, refreshResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "An Error Occurred.");
+            return StatusCode(500, ex.Message);
+        }
+    }
+
+    [HttpGet("getUserDetailsToUpdate/{Id:int}")]
+    [Authorize(Policy = "AdminPolicy")]
+    public async Task<IActionResult> GetUserDetailsToUpdate(int Id)
+    {
+        try
+        {
+            var getDetailsResponse = await _serviceManager.UserService.GetUserToUpdateByIdAsync(Id);
+
+            return StatusCode((int)getDetailsResponse.StatusCode, getDetailsResponse);
+        }
+        catch (Exception ex)
+        {
+            await _loggerManager.LogError(ex, "An Error Occurred.");
+            return StatusCode(500, ex.Message);
+        }
+    }
+
+    [HttpPut]
+    [Authorize(Policy = "AdminPolicy")]
+    public async Task<IActionResult> UpdateUserDetails([FromBody] UpdateUserDto updateUserDto)
+    {
+        try
+        {
+            var updateUserResponse = await _serviceManager.UserService.UpdateUserDetailsAsync(updateUserDto);
+
+            return StatusCode((int)updateUserResponse.StatusCode, updateUserResponse);
         }
         catch (Exception ex)
         {

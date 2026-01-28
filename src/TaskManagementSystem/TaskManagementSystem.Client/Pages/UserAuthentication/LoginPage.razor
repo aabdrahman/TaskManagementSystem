@@ -1,0 +1,164 @@
+﻿@layout CustomLayout
+@page "/identity/login"
+
+
+@if(_editContext is not null)
+{
+	<div class="container h-100 d-flex justify-content-center align-items-center">
+		<div class="col-lg-4 col-md-6 col-sm-10">
+			<div class="card shadow-sm rounded-4 p-4">
+				<h3 class="text-center mb-4 fw-bold">Login</h3>
+
+				<EditForm EditContext="_editContext" OnValidSubmit="HandleLogin">
+					<DataAnnotationsValidator />
+
+					<!-- Email -->
+					<div class="form-group my-3">
+						<label class="form-label fw-bold" for="login-email">Email Address</label>
+						<InputText @bind-Value="_loginDetails.Email"
+								   id="login-email"
+								   class="form-control" />
+						<ValidationMessage For="() => _loginDetails.Email" />
+					</div>
+
+					<!-- Password -->
+					<div class="form-group">
+
+						<label class="form-label fw-bold" for="login-password">Password</label>
+
+						<div class="input-group p-2">
+
+							<InputText @bind-Value="_loginDetails.Password"
+									   id="login-password"
+									   class="form-control"
+									   type="@PasswordInputType" />
+
+							<button class="btn btn-outline-secondary"
+									type="button"
+									@onpointerdown="TogglePassword"
+									@onpointerup="TogglePassword"
+									aria-label="Toggle password visibility">
+								<i class="bi @(_showPassword ? "bi-eye-slash" : "bi-eye")"></i>
+							</button>
+						</div>
+						<ValidationMessage For="() => _loginDetails.Password" />
+					</div>
+
+					@if (_responseMessage is not null && !_isLoading && !_isSuccess)
+					{
+						<p class="text-danger alert mt-2 fst-italic fw-bold fs-6 text-center text-wrap">
+							@_responseMessage
+						</p>
+					}
+
+					<div class="mt-2">
+						@if (_isLoading)
+						{
+							<button class="btn btn-primary w-100 rounded-3" type="button" disabled>
+								<span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+								<span role="status">Loading...</span>
+							</button>
+						}
+						else
+						{
+							if (string.Equals("Password Change required", _responseMessage, StringComparison.OrdinalIgnoreCase))
+							{
+								<button class="btn btn-outline-primary w-100" type="button" @onclick="NavigateToPasswordChange">
+									<i class="bi bi-arrow-right-square-fill"></i>
+									Proceed to change password
+								</button>
+							}
+							else
+							{
+								<button type="submit" class="btn btn-primary w-100 rounded-3">
+									Login
+								</button>
+							}
+
+						}
+
+					</div>
+				</EditForm>
+			</div>
+		</div>
+	</div>
+}
+
+
+
+
+
+@code {
+
+	private UserToLoginDto _loginDetails { get; set; }
+	private EditContext _editContext;
+
+	private bool _isLoading = false;
+	private bool _isSuccess;
+	private string _responseMessage;
+
+	protected override async Task OnInitializedAsync()
+	{
+		UserToLoginDto? loggedInUser = await _localStorageService.GetItemAsync<UserToLoginDto>("UserToChangePassword") ?? null;
+
+		if(loggedInUser is not null)
+		{
+			_loginDetails = new UserToLoginDto() { Email = loggedInUser.Email };
+		}
+		else
+		{
+			_loginDetails = new();	
+		}
+
+		_editContext = new EditContext(_loginDetails);
+	}
+
+	// protected override void OnParametersSet()
+	// {
+	// 	if(LoginUserDetails is null)
+	// 	{
+	// 		LoginUserDetails = new();
+	// 		_loginDetails = LoginUserDetails;
+	// 		_editContext = new EditContext(_loginDetails);
+	// 	}
+	// 	else
+	// 	{
+	// 		_loginDetails = LoginUserDetails;
+	// 		_editContext = new EditContext(_loginDetails);
+	// 	}
+
+	// }
+
+	private async Task HandleLogin()
+	{
+		_isLoading = true;
+		var response = await _authenticationSignInHandler.Handle(_loginDetails);
+		_isSuccess = response.isSuccessful;
+		_responseMessage = response.message;
+		_isLoading = false;
+		if(_isSuccess)
+		{
+			await _localStorageService.RemoveItemAsync("UserToChangePassword");
+			_navManager.NavigateTo("/", forceLoad: true);
+		}
+	}
+
+	private async Task NavigateToPasswordChange()
+	{
+		await _localStorageService.SetItemAsync<UserToLoginDto>("UserToChangePassword", _loginDetails);
+		_navManager.NavigateTo("identity/change-password", forceLoad: true);
+	}
+}
+
+
+@code {
+
+	private bool _showPassword = false;
+
+	private string PasswordInputType => _showPassword ? "text" : "password";
+
+	private void TogglePassword()
+	{
+		_showPassword = !_showPassword;
+	}
+}

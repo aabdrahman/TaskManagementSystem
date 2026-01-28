@@ -1,0 +1,122 @@
+﻿@page "/user-tasks"
+@attribute [Authorize]
+
+<PageTitle>User Assigned Tasks</PageTitle>
+
+<h4 class="text-start">Tasks Assigned To Me</h4>
+
+@if(_isLoading)
+{
+    <p class="fw-bolder fs-4 text-info fst-italic">
+        Fetching Assigned Tasks To User......
+    </p>
+}
+else
+{
+    if(_tasksAssignedToUser.Count() == 0)
+    {
+
+        <div class="no-trails" style="text-align:center;margin-top:100px;">
+            <svg viewBox="0 0 16 16" class="bi bi-tree" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style="width:200px;">
+                <path fill-rule="evenodd" d="M8 0a.5.5 0 0 1 .416.223l3 4.5A.5.50 0 1 11 5.5h-.098l2.022 3.235a.5.5 0 0 1-.424.765h-.191l1.638 3.276a.5.50 0 1-.447.724h-11a.5.5 0 0 1-.447-.724L3.69 9.5H3.5a.5.5 0 01-.424-.765L5.098 5.5H5a.5.5 0 0 1-.416-.777l3-4.5A.5.5 0 0 1 8 0zM5.9344.5H6a.5.5 0 0 1 .424.765L4.402 8.5H4.5a.5.5 0 0 1 .447.724L3.3112.5h9.382l-1.638-3.276A.5.5 0 0 1 11.5 8.5h.098L9.576 5.265A.5.5 0 0 110 4.5h.066L8 1.401 5.934 4.5z" />
+                <path d="M7 13.5h2V16H7v-2.5z" />
+            </svg>
+            <h3 class="text-muted fw-light">
+                @_responseMessage
+            </h3>
+        </div>
+    }
+    else
+    {
+        <UserTasksView MyAssignedTasks="_tasksAssignedToUser" HandleSelection="HandleSelectedUserTask" HandleMarkCompleteSelection="HandleSelectedUserTaskToComplete" />
+    }
+}
+
+<Popup Title="@_title" @ref="popup" ShowCloseButton="@_showCloseButton" SaveChanges="HandlePopupClose" >
+    <Body>
+        @if(_operationToPerform == OperationType.ReadOnly)
+        {
+        <UserTaskDetails UserTask="_selectedUserTask" />
+        }
+        else if (_operationToPerform == OperationType.MarkAsComplete)
+        {
+            <UserTaskMarkCompleteOperation UserTask="_selectedUserTask" HandleClose="HandlePopupClose" />
+        }
+    </Body>
+</Popup>
+
+
+
+@code {
+    private int _loggedInUserId;
+    private bool _isLoading = true;
+    private string _responseMessage;
+    private bool _showCloseButton = true;
+    private string _title = "";
+
+    private Popup popup;
+
+
+    private TaskUserDto _selectedUserTask;
+
+    private IEnumerable<TaskUserDto> _tasksAssignedToUser;
+
+    private OperationType _operationToPerform;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        _loggedInUserId = int.Parse(user.FindFirst(x => x.Type.EndsWith("serialnumber"))?.Value ?? "0");
+
+        if(_loggedInUserId > 0)
+        {
+            // var responseBody = await getUserTasksHandler.Handle(_loggedInUserId);
+            // _responseMessage = responseBody.responseMessage; _tasksAssignedToUser = responseBody.userTasks;
+
+            await HandleGetUserTasks();
+        }
+
+        _isLoading = false;
+    }
+
+    private void HandleSelectedUserTask(TaskUserDto selectedtaskUser)
+    {
+        _selectedUserTask = selectedtaskUser;
+        _operationToPerform = OperationType.ReadOnly; _title = "User Task Details";
+        popup.Open();
+    }
+
+    private void HandlePopupClose()
+    {
+        _selectedUserTask = null;
+        _operationToPerform = OperationType.None; _showCloseButton = true;
+        popup.Close();
+    }
+
+    private void HandleSelectedUserTaskToComplete(TaskUserDto selectedtaskUserToComplete)
+    {
+        _selectedUserTask = selectedtaskUserToComplete;
+        _showCloseButton = false;
+        _title = "User Task Operations";
+        _operationToPerform = OperationType.MarkAsComplete; 
+        popup.Open();
+    }
+
+    private async Task HandleGetUserTasks()
+    {
+        var responseBody = await getUserTasksHandler.Handle(_loggedInUserId);
+        _responseMessage = responseBody.responseMessage; _tasksAssignedToUser = responseBody.userTasks;
+    }
+}
+
+@code
+{
+    enum OperationType
+    {
+        None,
+        ReadOnly,
+        MarkAsComplete
+    }
+}

@@ -1,11 +1,12 @@
 ﻿using Entities.Models;
 using Shared.DataTransferObjects.User;
+using System.Linq.Expressions;
 
 namespace Shared.Mapper;
 
 public static class UserMapper
 {
-    public static UserDto ToDto(this User user)
+    public static UserDto ToDto(this User user, int maxDaysToPasswordExpire)
     {
         return new UserDto()
         {
@@ -15,7 +16,9 @@ public static class UserMapper
             Email = user.Email,
             PhoneNumber = user.PhoneNumber,
             Username = user.Username,
-            DaysToPasswordExpiry = (int)(DateTime.Now.Date - user.LastPasswordChangeDate.Date).TotalDays
+            DaysToPasswordExpiry = (int)(maxDaysToPasswordExpire - (DateTime.Now.Date - user.LastPasswordChangeDate.Date).TotalDays),
+            LastLoginDate = user.LastLoginDate ?? DateTime.MinValue,
+            AssignedUnit = user?.AssignedUnit?.NormalizedName ?? ""
         };
     }
 
@@ -32,5 +35,70 @@ public static class UserMapper
             Username = createUserDto.Username.Trim().ToUpper(),
             RoleLink = new List<UserRole>() { new UserRole() { CreatedBy = "", RoleId = createUserDto.AssignedRole } }
         };
+    }
+
+    public static UserSummaryDto ToSummaryDto(this User user)
+    {
+        return new UserSummaryDto()
+        {
+            Id = user.Id,
+            Email = user.Email.Trim(),
+            FullName = string.Concat(user.FirstName, " ", user.LastName)
+        };
+    }
+
+    public static Expression<Func<User, UserDto>> ToDtoExpression(int maxDaysToPasswordExpire)
+    {
+        return user => new UserDto()
+        {
+            Id = user.Id,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
+            Username = user.Username,
+            DaysToPasswordExpiry = (int)(maxDaysToPasswordExpire - (DateTime.Now - user.LastPasswordChangeDate).TotalDays),
+            LastLoginDate = user.LastLoginDate ?? DateTime.MinValue,
+            AssignedUnit = user.AssignedUnit.NormalizedName
+        };
+    }
+
+    public static Expression<Func<User, UserSummaryDto>> ToSummaryDtoExpression()
+    {
+        return user => new UserSummaryDto()
+        {
+            Id = user.Id,
+            Email = user.Email.Trim(),
+            FullName = string.Concat(user.FirstName, " ", user.LastName)
+        };
+    }
+
+    public static Expression<Func<User, UpdateUserDto>> ToUpdateDtoExpression()
+    {
+        return user => new UpdateUserDto()
+        {
+            Id = user.Id,
+            Email = user.Email,
+            PhoneNumber= user.PhoneNumber,
+            FirstName= user.FirstName,
+            LastName= user.LastName,
+            Username= user.Username,
+            AssignedUnit = user.UnitId,
+            AssignedRole = user.RoleLink.First().RoleId
+        };
+    }
+
+    public static User ToEntity(this UpdateUserDto updatedUserDetails, User existingUser)
+    {
+        existingUser.IsActive = true;
+        existingUser.UnitId = updatedUserDetails.AssignedUnit;
+        existingUser.FirstName = updatedUserDetails.FirstName.Trim();
+        existingUser.LastName = updatedUserDetails.LastName.Trim();
+        existingUser.Username = updatedUserDetails.Username.Trim().ToUpper();
+        existingUser.PhoneNumber = updatedUserDetails.PhoneNumber;
+        existingUser.Email = updatedUserDetails.Email.Trim().ToUpper();
+        existingUser.RoleLink.ToList().ForEach(x => x.RoleId = updatedUserDetails.AssignedRole);
+
+        return existingUser;
     }
 }

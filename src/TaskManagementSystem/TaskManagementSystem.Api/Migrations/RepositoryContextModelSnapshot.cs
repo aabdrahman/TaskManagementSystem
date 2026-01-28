@@ -64,6 +64,60 @@ namespace TaskManagementSystem.Api.Migrations
                     b.ToTable("Attachments");
                 });
 
+            modelBuilder.Entity("Entities.Models.AuditTrail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EntityId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("EntityName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("NewValue")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OldValue")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ParticipandIdentification")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ParticipantName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("PerformedAction")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("PerformedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntityId");
+
+                    b.HasIndex("EntityName");
+
+                    b.HasIndex("ParticipandIdentification");
+
+                    b.HasIndex("ParticipantName");
+
+                    b.ToTable("AuditTrails");
+                });
+
             modelBuilder.Entity("Entities.Models.CreatedTask", b =>
                 {
                     b.Property<int>("Id")
@@ -136,10 +190,58 @@ namespace TaskManagementSystem.Api.Migrations
                         {
                             t.HasCheckConstraint("CK_Priority_Level", "[Priority] IN ('Low', 'Medium', 'High', 'Critical')");
 
-                            t.HasCheckConstraint("CK_Projected_Completion_Date", "ProjectedCompletionDate > CAST(GETDATE() AS DATE)");
+                            t.HasCheckConstraint("CK_Projected_Completion_Date", "ProjectedCompletionDate > CAST(GETDATE() AS DATE) OR [TaskStage] != 'Cancelled' ");
 
                             t.HasCheckConstraint("CK_Stage", "[TaskStage] IN ('Development', 'Testing', 'Deployment', 'ChangeManagement', 'Completed', 'Cancelled', 'Review')");
                         });
+                });
+
+            modelBuilder.Entity("Entities.Models.Keyless_Entities.UserUnitAssignedUserTaskAnalytics", b =>
+                {
+                    b.Property<int>("CompletedAfterDueDate")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CompletedWithinDueDate")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("CompletionRate")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TotalAssignedTasks")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalCancelledTasks")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalCompletedTasks")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalDeletedTasks")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalOverdueTasks")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalPendingTasks")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TotalTimeTaken")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.ToTable((string)null);
+
+                    b.ToView(null, (string)null);
                 });
 
             modelBuilder.Entity("Entities.Models.Role", b =>
@@ -175,6 +277,64 @@ namespace TaskManagementSystem.Api.Migrations
                     b.HasIndex("Id");
 
                     b.ToTable("Roles");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2026, 1, 28, 21, 13, 10, 199, DateTimeKind.Local).AddTicks(9789),
+                            CreatedBy = "SYSTEM",
+                            Name = "Admin"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedAt = new DateTime(2026, 1, 28, 21, 13, 10, 199, DateTimeKind.Local).AddTicks(9818),
+                            CreatedBy = "SYSTEM",
+                            Name = "itgovernance"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CreatedAt = new DateTime(2026, 1, 28, 21, 13, 10, 199, DateTimeKind.Local).AddTicks(9821),
+                            CreatedBy = "SYSTEM",
+                            Name = "developer"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CreatedAt = new DateTime(2026, 1, 28, 21, 13, 10, 199, DateTimeKind.Local).AddTicks(9823),
+                            CreatedBy = "SYSTEM",
+                            Name = "tester"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            CreatedAt = new DateTime(2026, 1, 28, 21, 13, 10, 199, DateTimeKind.Local).AddTicks(9825),
+                            CreatedBy = "SYSTEM",
+                            Name = "deployment"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            CreatedAt = new DateTime(2026, 1, 28, 21, 13, 10, 199, DateTimeKind.Local).AddTicks(9829),
+                            CreatedBy = "SYSTEM",
+                            Name = "productowner"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            CreatedAt = new DateTime(2026, 1, 28, 21, 13, 10, 199, DateTimeKind.Local).AddTicks(9830),
+                            CreatedBy = "SYSTEM",
+                            Name = "businessanalyst"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            CreatedAt = new DateTime(2026, 1, 28, 21, 13, 10, 199, DateTimeKind.Local).AddTicks(9832),
+                            CreatedBy = "SYSTEM",
+                            Name = "admin"
+                        });
                 });
 
             modelBuilder.Entity("Entities.Models.TaskUser", b =>

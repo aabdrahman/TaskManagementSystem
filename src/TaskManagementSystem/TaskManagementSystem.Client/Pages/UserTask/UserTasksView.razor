@@ -1,0 +1,107 @@
+﻿
+
+<div class="d-flex align-items-center justify-content-center py-2">
+    <table class="table table-borderless table-striped table-hover">
+        <thead>
+            <tr>
+                <th scope="col">Task ID</th>
+                <th scope="col">Title</th>
+                @*
+                <th scope="col">Description</th>
+                *@
+                <th scope="col">Proposed Completion Date</th>
+                <th scope="col">Status</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var assignedTask in _myAssignedTasks)
+            {
+                <tr style="cursor:pointer;" @onclick="(() => HandleSelectedUserTask(assignedTask))">
+                    <td>@assignedTask.TaskId</td>
+                    <td>@assignedTask.Title</td>
+                    @*
+                    <td>@assignedTask.Description</td>
+                    *@
+                    <td>@assignedTask.ProposedCompletionDate.ToString("dd MMM yyyy")</td>
+                    <td>
+                    
+                        @if (assignedTask.CompletionDate.HasValue)
+                        {
+                            <span class="badge rounded-pill text-bg-success">Completed</span>
+                        }
+                        else if (assignedTask.CancelReason is not null)
+                        {
+                            <span class="badge rounded-pill text-bg-secondary">Cancelled</span>
+                        }
+                            else if (assignedTask.ProposedCompletionDate < DateTime.UtcNow.Date)
+                        {
+                            <span class="badge rounded-pill text-bg-danger">Overdue</span>
+                        }
+                            else if (assignedTask.ProposedCompletionDate == DateTime.UtcNow.Date)
+                        {
+                            <span class="badge rounded-pill text-bg-warning">Due Today</span>
+                        }
+                        else
+                        {
+                             <span class="badge rounded-pill text-bg-info">Pending</span>
+                        }
+                        @*
+                        @if(assignedTask.CompletionDate.HasValue)
+                        {
+                            <span class="badge rounded-pill text-bg-success">Completed</span>
+                        }
+                        else if(!assignedTask.CompletionDate.HasValue && assignedTask.ProposedCompletionDate < DateTime.UtcNow.Date)
+                        {
+                            <span class="badge rounded-pill text-bg-danger">OverDue</span>
+                        }
+                        else if(!assignedTask.CompletionDate.HasValue && assignedTask.ProposedCompletionDate == DateTime.UtcNow.Date)
+                        {
+                            <span class="badge rounded-pill text-bg-warning">Due Today</span>
+                        }
+                        else if(assignedTask.CancelReason is not null)
+                        {
+                            <span class="badge rounded-pill text-bg-secondary">Cancelled</span>
+                        }
+                    *@
+                    </td>
+                    <td class="d-flex justify-content-between gap-1">
+                        @if(!assignedTask.CompletionDate.HasValue && string.IsNullOrEmpty(assignedTask.CancelReason))
+                        {
+                            <button type="button" class="btn btn-info" @onclick:stopPropagation="true" @onclick="(() => OnHandleMarkComplete(assignedTask))">Mark Complete</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+
+@code {
+    private IEnumerable<Shared.DataTransferObjects.TaskUser.TaskUserDto> _myAssignedTasks;
+
+    [Parameter, EditorRequired]
+    public IEnumerable<Shared.DataTransferObjects.TaskUser.TaskUserDto> MyAssignedTasks { get; set; } = [];
+
+    [Parameter, EditorRequired]
+    public EventCallback<TaskUserDto> HandleSelection { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<TaskUserDto> HandleMarkCompleteSelection { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _myAssignedTasks = MyAssignedTasks;
+    }
+
+    private async Task HandleSelectedUserTask(TaskUserDto selectedUserTask)
+    {
+        await HandleSelection.InvokeAsync(selectedUserTask);
+    }
+
+    private async Task OnHandleMarkComplete(TaskUserDto userTaskToMarkAsComplete)
+    {
+        await HandleMarkCompleteSelection.InvokeAsync(userTaskToMarkAsComplete);
+    }
+}

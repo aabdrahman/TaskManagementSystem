@@ -22,9 +22,14 @@ public abstract class RepositoryBase<T> : IRepositoryBase<T> where T : class
         await _repositoryContext.AddRangeAsync(entities);
     }
 
-    public async Task<IQueryable<T>> CustomeDatabaseQuery(string command, params object[] parameters)
+    public async Task<IQueryable<T>> CustomDatabaseQueryWithListResult(string command, params object[] parameters)
     {
         return await Task.FromResult(_repositoryContext.Database.SqlQueryRaw<T>(command, parameters));
+    }
+
+    public async Task<IQueryable<T>> CustomeDatabaseQuery(string command, params object[] parameters)
+    {
+        return await Task.FromResult(_repositoryContext.Set<T>().FromSqlRaw(command, parameters));
     }
 
     public void DeleteEntity(T entity)

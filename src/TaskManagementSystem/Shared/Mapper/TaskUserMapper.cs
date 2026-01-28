@@ -1,5 +1,6 @@
 ﻿using Entities.Models;
 using Shared.DataTransferObjects.TaskUser;
+using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 
 namespace Shared.Mapper;
@@ -30,7 +31,35 @@ public static class TaskUserMapper
             CompletionDate = taskUser?.CompletionDate,
             AssignedUser = taskUser?.user?.FirstName + " " + taskUser?.user?.LastName ?? "",
             PrimaryTaskId = taskUser.TaskId,
-            ProposedCompletionDate = taskUser.ProposedCompletionDate
+            ProposedCompletionDate = taskUser.ProposedCompletionDate,
+            CancelReason = taskUser?.CancelReason ?? null,
+            UserId = taskUser.UserId
         };
     }
+
+    public static Expression<Func<TaskUser, TaskUserDto>> ToDtoExpression()
+    {
+        return taskUser => new TaskUserDto
+        {
+            Id = taskUser.Id,
+            Title = taskUser.Title,
+            Description = taskUser.Description,
+
+            TaskId = taskUser.task != null
+                ? taskUser.task.TaskId
+                : "",
+
+            CompletionDate = taskUser.CompletionDate,
+
+            AssignedUser = taskUser.user != null
+                ? taskUser.user.FirstName + " " + taskUser.user.LastName
+                : "",
+
+            PrimaryTaskId = taskUser.TaskId,
+            ProposedCompletionDate = taskUser.ProposedCompletionDate,
+            CancelReason = taskUser.CancelReason,
+            UserId = taskUser.UserId
+        };
+    }
+
 }

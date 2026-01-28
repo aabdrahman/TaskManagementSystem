@@ -1,6 +1,7 @@
 ﻿using Entities.Models;
 using Entities.StaticValues;
 using Shared.DataTransferObjects.CreatedTask;
+using System.Linq.Expressions;
 
 namespace Shared.Mapper;
 
@@ -18,7 +19,8 @@ public static class CreatedTaskMapper
             Priority = createdTask.Priority.ToString(),
             Stage = createdTask.TaskStage.ToString(),
             IsActive = !createdTask.IsDeleted,
-            TaskId = createdTask.TaskId
+            TaskId = createdTask.TaskId,
+            CancelReason = createdTask?.CancelReason ?? null,
         };
     }
 
@@ -32,6 +34,23 @@ public static class CreatedTaskMapper
             Priority = Enum.Parse<PriorityLevel>(newCreateTask?.Priority.ToString(), ignoreCase: true),
             CreatedBy = "",
             UserId = newCreateTask.UserId
+        };
+    }
+
+    public static Expression<Func<CreatedTask, CreatedTaskDto>> ToDtoExpression()
+    {
+        return createdTask => new CreatedTaskDto()
+        {
+            Id = createdTask.Id,
+            Title = createdTask.Title,
+            Description = createdTask.Description,
+            ProposedCompletionDate = createdTask.ProjectedCompletionDate,
+            CompletionDate = createdTask.CompletionDate,
+            Priority = createdTask.Priority.ToString(),
+            Stage = createdTask.TaskStage.ToString(),
+            IsActive = !createdTask.IsDeleted,
+            TaskId = createdTask.TaskId,
+            CancelReason = createdTask.CancelReason ?? null,
         };
     }
 }

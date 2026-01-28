@@ -1,0 +1,216 @@
+﻿@page "/tasks/add"
+@attribute [Authorize(Roles = "BUSINESSANALYST,PRODUCTOWNER")]
+
+@inject AuthenticationStateProvider authStateProvider
+
+<PageTitle>Add New Task</PageTitle>
+
+<div class="d-flex flex-row justify-content-between">
+    <h2>
+        Add New Task
+    </h2>
+    <button class="btn btn-primary" tyoe="button" @onclick="HandleNavigateToList">
+        Go to Tasks List
+    </button>
+</div>
+
+
+
+<hr style="height:30px;color:black;" />
+
+@if(_editContext is not null)
+{
+    <div class="container-fluid container-xxl">
+        <div class="row">
+            <div class="col-1">
+            </div>
+            <div class="col-10">
+                <div class="d-flex flex-column gap-2 justify-content-center align-iitems-center">
+                    @if(_responseMessage is not null && !_isLoading)
+                    {
+                        <div class="alert fst-italic text-center fs-6 fw-bold alert-@(_isSuccessful ? "success" : "danger")" role="alert">
+                            @(_isSuccessful ? $"{_responseMessage}" : _responseMessage)
+                        </div>
+                    }
+                    <EditForm EditContext="_editContext" OnValidSubmit="OnHandleSubmit" class="w-100">
+                        <DataAnnotationsValidator />
+                        <div class="form-group d-flex mb-2 flex-column">
+                            <label class="form-label fw-bolder" for="create-task-title">Title</label>
+                            <InputText class="form-control" @bind-Value="_taskToCreate.Title" id="create-task-title" placeholder="Task title" />
+                            <ValidationMessage For="(() => _taskToCreate.Title)" />
+                        </div>
+                        <div class="form-group d-flex mb-2 flex-column">
+                            <label class="form-label fw-bolder" for="create-task-description">Description</label>
+                            <InputTextArea class="form-control" @bind-Value="_taskToCreate.Description" id="create-task-description" placeholder="Task Description" />
+                            <ValidationMessage For="(() => _taskToCreate.Description)" />
+                        </div>
+                        <div class="d-flex flex-row mb-2 justify-content-between gap-2">
+                            <div class="form-group d-flex flex-column w-50">
+                                <label for="create-task-priority" class="form-label fw-bold">Priority</label>
+                                <InputSelect class="form-select" id="create-task-priority" @bind-Value="_taskToCreate.Priority">
+                                    <option selected value="0"></option>
+                                    @foreach (var item in Enum.GetValues(typeof(Entities.StaticValues.PriorityLevel)))
+                                    {
+                                        <option value="@item.ToString()">@item.ToString()</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="(() => _taskToCreate.Priority)" />
+                            </div>
+                            <div class="d-flex flex-column w-50 form-group">
+                                <label class="form-label fw-bold" for="create-task-priority">Expected Delivery Date</label>
+                                <InputDate class="form-control" id="create-task-priority" @bind-Value="_taskToCreate.ProposedCompletionDate" />
+                                <ValidationMessage For="(() => _taskToCreate.ProposedCompletionDate)" />
+                            </div>
+                        </div>
+                        <div class="d-flex flex-row justify-content-between">
+                            @*
+                                <button class="btn btn-secondary" type="button" @onclick="ResetForm">
+                                    Cancel
+                                </button>
+                                <button class="btn btn-primary" type="submit" disabled="@(_isLoading)">
+                                    Submit
+                                </button>
+                            *@
+                            <button class="btn btn-secondary" type="button" @onclick="ResetForm">
+                                Cancel
+                            </button>
+                            @if(_isLoading)
+                            {
+                                <button class="btn btn-primary" type="button" disabled>
+                                    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                                    <span role="status">Loading...</span>
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-primary" type="submit" disabled="@(_isSuccessful && !_isLoading)">
+                                    Submit
+                                </button>
+                            }
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+            <div class="col-1">
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private CreateTaskDto _taskToCreate;
+    private EditContext _editContext;
+    private ValidationMessageStore _messageStore;
+    private int _loggedInUserId;
+
+    private bool _isLoading = false;
+    private bool _isSuccessful;
+    private string _responseMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        _loggedInUserId = int.Parse(user.FindFirst(x => x.Type.EndsWith("serialnumber"))?.Value ?? "0");
+
+        _taskToCreate = new CreateTaskDto() { UserId = _loggedInUserId, ProposedCompletionDate = DateTime.UtcNow.AddDays(1) };
+
+        _editContext = new EditContext(_taskToCreate);
+        _messageStore = new ValidationMessageStore(_editContext);
+
+        _editContext.OnFieldChanged += (sender, args) =>
+        {
+            ValidateField(args.FieldIdentifier);
+        };
+
+        _editContext.OnValidationRequested += (sender, args) =>
+       {
+           _messageStore.Clear();
+           ValidateAll();
+           _editContext.NotifyValidationStateChanged();
+       };
+    }
+
+    private async Task OnHandleSubmit()
+    {
+        _editContext.Validate(); 
+
+        if (!_editContext.Validate())
+        {
+            return;
+        } 
+
+        _isLoading = true;
+
+        // Add more custom rules here...
+        var response = await addNewTaskHandler.Handle(_taskToCreate);
+        _isSuccessful = response.isSuccessful; _responseMessage = response.responseMessage;
+
+        // await Task.Delay(5500);
+        // _isSuccessful = DateTime.Now.Second % 2 == 0;
+        // _responseMessage = _isSuccessful ? "Successful" : "Failed";
+
+        _isLoading = false;
+
+        if (_isSuccessful)
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            _loggedInUserId = int.Parse(user.FindFirst(x => x.Type.EndsWith("serialnumber"))?.Value ?? "0");
+
+            _taskToCreate = new CreateTaskDto() { UserId = _loggedInUserId, ProposedCompletionDate = DateTime.UtcNow.AddDays(1) };
+
+            _editContext = new EditContext(_taskToCreate);
+            _messageStore = new ValidationMessageStore(_editContext);
+        }
+
+    }
+    private async Task ResetForm()
+    {
+        var authState = await authStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        _loggedInUserId = int.Parse(user.FindFirst(x => x.Type.EndsWith("serialnumber"))?.Value ?? "0");
+
+        _taskToCreate = new CreateTaskDto() { UserId = _loggedInUserId, ProposedCompletionDate = DateTime.UtcNow.AddDays(1) };
+
+        _editContext = new EditContext(_taskToCreate);
+        _messageStore = new ValidationMessageStore(_editContext);
+
+        _isSuccessful = default;
+        _isLoading = false;
+        _responseMessage = null;
+    }
+
+    private void ValidateField(FieldIdentifier field)
+    {
+        _messageStore.Clear(field);
+
+        if (field.FieldName == nameof(CreateTaskDto.ProposedCompletionDate))
+        {
+            if (_taskToCreate.ProposedCompletionDate <= DateTime.UtcNow.Date)
+            {
+                _messageStore.Add(field, "Expected delivery date must be in the future.");
+            }
+        }
+    }
+
+    private void ValidateAll()
+    {
+        // Example: validate date
+        if (_taskToCreate.ProposedCompletionDate <= DateTime.UtcNow.Date)
+        {
+            var field = new FieldIdentifier(_taskToCreate, nameof(CreateTaskDto.ProposedCompletionDate));
+            _messageStore.Add(field, "Expected delivery date must be in the future.");
+        }
+
+        
+    }
+
+    private void HandleNavigateToList()
+    {
+        navManager.NavigateTo("tasks");
+    }
+}

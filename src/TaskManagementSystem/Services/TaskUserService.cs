@@ -10,6 +10,8 @@ using System.Text.Json;
 using System.Net;
 using Shared.Mapper;
 using Microsoft.AspNetCore.Http;
+using Infrastructure.Contracts;
+using Shared.DataTransferObjects.AnalyticsReporting.UserDashboard;
 
 namespace Services;
 
@@ -18,18 +20,24 @@ public sealed class TaskUserService : ITaskUserService
     private readonly IRepositoryManager _repositoryManager;
     private readonly ILoggerManager _loggerManager;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IInfrastructureManager _infrastructureManager;
+    private readonly IAuditPersistenceService _auditPersistenceService;
 
-    public TaskUserService(IRepositoryManager repositoryManager, ILoggerManager loggerManager, IHttpContextAccessor httpContextAccessor)
+    public TaskUserService(IRepositoryManager repositoryManager, ILoggerManager loggerManager, IHttpContextAccessor httpContextAccessor, IInfrastructureManager infrastructureManager, IAuditPersistenceService auditPersistenceService)
     {
         _repositoryManager = repositoryManager;
         _loggerManager = loggerManager;
         _httpContextAccessor = httpContextAccessor;
+        _infrastructureManager = infrastructureManager;
+        _auditPersistenceService = auditPersistenceService;
     }
     public async Task<GenericResponse<TaskUserDto>> AssignUserToTask(CreateTaskUserDto taskUserDto)
     {
         try
         {
             await _loggerManager.LogInfo($"Creating Task User: {SerializeObject(taskUserDto)}");
+
+            string loggedInUserId = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("serialnumber"))?.Value ?? "0";
 
             CreatedTask? existingTask = await _repositoryManager.CreatedTaskRepository.GetById(taskUserDto.PrimaryTaskId, false, true)
                                             .SingleOrDefaultAsync();
@@ -45,6 +53,12 @@ public sealed class TaskUserService : ITaskUserService
                 return GenericResponse<TaskUserDto>.Failure(null, HttpStatusCode.NotFound, $"Invalid Task Credentials.",null);
             }
 
+            if(taskUserDto.AssignedUser.ToString().Equals(existingTask.UserId))
+            {
+                await _loggerManager.LogWarning($"Task created by: {existingTask.UserId} cannot be assigned a user task.");
+                return GenericResponse<TaskUserDto>.Failure(null, HttpStatusCode.Conflict, $"User Task cannot be assigned to selected user.", null);
+            }
+
             if(existingTask.ProjectedCompletionDate.Date < taskUserDto.ProposedCompletionDate.Date)
             {
                 await _loggerManager.LogWarning($"Task Proposed Completion Date: {existingTask.ProjectedCompletionDate.Date} is earlier than Assigned Task Proposed Completion Date: {taskUserDto.ProposedCompletionDate.Date}");
@@ -58,11 +72,29 @@ public sealed class TaskUserService : ITaskUserService
             
             TaskUser taskUserToInsert = taskUserDto.ToEntity();
 
+            var createdByEmail = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("emailaddress"))?.Value ?? "anonymous";
+
+            taskUserToInsert.CreatedBy = loggedInUserId;
+
             await _repositoryManager.TaskUserRepository.CreateTaskUser(taskUserToInsert);
 
             await _repositoryManager.SaveChangesAsync();
 
-            await _loggerManager.LogInfo($"Task User Assign Operation successful - {SerializeObject(taskUserToInsert.ToDto())}");
+            AuditTrail deleteAuditTrail = new AuditTrail()
+            {
+                EntityId = taskUserToInsert.Id.ToString(),
+                EntityName = typeof(TaskUser).Name,
+                PerformedAction = Entities.StaticValues.AuditAction.Created,
+                PerformedAt = DateTime.UtcNow.ToLocalTime(),
+                ParticipantName = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
+                ParticipandIdentification = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
+                NewValue = SerializeObject(taskUserToInsert),
+                Comment = "Create User Task"
+            };
+
+            bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(deleteAuditTrail);
+
+            await _loggerManager.LogInfo($"Task User Assign Operation successful - {SerializeObject(taskUserToInsert.ToDto())}. Queue Audit Response: {queueAuditResponse}");
 
             return GenericResponse<TaskUserDto>.Success(taskUserToInsert.ToDto(), HttpStatusCode.Created, $"Task User Assign Operation Successful.");
 
@@ -115,7 +147,20 @@ public sealed class TaskUserService : ITaskUserService
 
             await _repositoryManager.SaveChangesAsync();
 
-            await _loggerManager.LogInfo($"User Task: {cancelUserTaskDto.UserTaskId} cancelled by {_httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value} due to {cancelUserTaskDto.CancelReason}");
+            AuditTrail deleteAuditTrail = new AuditTrail()
+            {
+                EntityId = taskUserToCancel.Id.ToString(),
+                EntityName = typeof(TaskUser).Name,
+                PerformedAction = Entities.StaticValues.AuditAction.Cancelled,
+                PerformedAt = DateTime.UtcNow.ToLocalTime(),
+                ParticipantName = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
+                ParticipandIdentification = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
+                Comment = cancelUserTaskDto.CancelReason
+            };
+
+            bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(deleteAuditTrail);
+
+            await _loggerManager.LogInfo($"User Task: {cancelUserTaskDto.UserTaskId} cancelled by {_httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value} due to {cancelUserTaskDto.CancelReason}. Queue Audit Response: {queueAuditResponse}");
 
             return GenericResponse<string>.Success($"Operation Success.", HttpStatusCode.OK, "User Task Cancelled Successsfully.");
         }
@@ -139,7 +184,8 @@ public sealed class TaskUserService : ITaskUserService
 
             IEnumerable<TaskUserDto> assignedTasksToUsers = await _repositoryManager.TaskUserRepository.GetByTaskId(TaskId, false, true)
                                                                             .Include(X => X.user).Include(x => x.task)
-                                                                            .Select(x => x.ToDto())
+                                                                            //.Select(x => x.ToDto())
+                                                                            .Select(TaskUserMapper.ToDtoExpression())
                                                                             .ToListAsync();
 
             await _loggerManager.LogInfo($"Assigned User Tasks Fetched - {SerializeObject(assignedTasksToUsers)}");
@@ -166,7 +212,8 @@ public sealed class TaskUserService : ITaskUserService
 
             IEnumerable<TaskUserDto> assignedTasksToUser = await _repositoryManager.TaskUserRepository.GetByUserId(UserId, false, true)
                                                                                     .Include(x => x.user).Include(x => x.task)
-                                                                                    .Select(x => x.ToDto())
+                                                                                    //.Select(x => x.ToDto())
+                                                                                    .Select(TaskUserMapper.ToDtoExpression())
                                                                                     .ToListAsync();
             await _loggerManager.LogInfo($"User Tasks fetched successfully - {SerializeObject(assignedTasksToUser)}");
 
@@ -184,7 +231,57 @@ public sealed class TaskUserService : ITaskUserService
         }
     }
 
-    public async Task<GenericResponse<string>> MarkAsCompleteAsync(UpdateUserTaskCompleteStatusDto updateUserTaskCompleteStatus)
+	//public async Task<GenericResponse<UserTaskDashboardDto>> GetUserDashboard(int UserId)
+	//{
+ //       try
+ //       {
+ //           await _loggerManager.LogInfo($"Fetching User Dashboard for: {UserId}");
+
+ //           //GET COUNT OF USER TASKS
+ //           int TotalUserTasks = await _repositoryManager.TaskUserRepository.GetByUserId(UserId).CountAsync(x => !x.CompletionDate.HasValue && x.CancelReason == null);
+
+ //           if(TotalUserTasks == 0)
+ //           {
+ //               await _loggerManager.LogWarning($"No Record Found for - {UserId}");
+ //               return GenericResponse<UserTaskDashboardDto>.Failure(new UserTaskDashboardDto(), HttpStatusCode.NotFound, "No Pending Record Found."); //This returns a default instance for frontend use
+ //           }
+
+	//		UserTaskDashboardDto output = await _repositoryManager.TaskUserRepository.GetByUserId(UserId)
+ //                                                                       .Where(x => !x.CompletionDate.HasValue && x.CancelReason == null)
+ //                                                                       .GroupBy(_ => 1)
+ //                                                                       .Select(x => new UserTaskDashboardDto()
+ //                                                                       {
+ //                                                                           DueToday = x.Count(x => x.ProposedCompletionDate == DateTime.UtcNow.Date),
+ //                                                                           OverDueTasks = x.Count(x => x.ProposedCompletionDate < DateTime.UtcNow.Date),
+ //                                                                           PendingTasks = x.Count(x => x.ProposedCompletionDate >= DateTime.UtcNow.Date.AddDays(1)),
+
+ //                                                                           UserTasks = x.OrderBy(x => x.ProposedCompletionDate).Select(x => new UserTaskSummaryDto() { Id = x.Id, Title = x.Title, DueDate = x.ProposedCompletionDate }).Skip(0).Take(5).ToList()
+ //                                                                       })
+ //                                                                       .FirstAsync() ?? new UserTaskDashboardDto();
+
+ //           //IEnumerable<TaskUserDto> output = await _repositoryManager.TaskUserRepository.GetByUserId(UserId)
+ //           //                                            .Where(x => !x.CompletionDate.HasValue || string.IsNullOrEmpty(x.CancelReason))
+ //           //                                            .Select(x => x.ToDto())
+ //           //                                            .ToListAsync();
+
+ //           await _loggerManager.LogInfo($"User Dashboard fetched for user: {UserId} - {SerializeObject(output)}");
+
+ //           return GenericResponse<UserTaskDashboardDto>.Success(output, HttpStatusCode.OK, "Dashboard Fetched.");
+
+ //       }
+	//	catch (DbException ex)
+	//	{
+	//		await _loggerManager.LogError(ex, "Internal Server Error - Database");
+	//		return GenericResponse<UserTaskDashboardDto>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Server Error - Database", new { ex.Message, Description = ex?.InnerException?.Message });
+	//	}
+	//	catch (Exception ex)
+	//	{
+	//		await _loggerManager.LogError(ex, "Internal Server Error");
+	//		return GenericResponse<UserTaskDashboardDto>.Failure(null, HttpStatusCode.InternalServerError, $"Internal Server Error", new { ex.Message, Description = ex?.InnerException?.Message });
+	//	}
+	//}
+
+	public async Task<GenericResponse<string>> MarkAsCompleteAsync(UpdateUserTaskCompleteStatusDto updateUserTaskCompleteStatus)
     {
         try
         {
@@ -195,12 +292,19 @@ public sealed class TaskUserService : ITaskUserService
             if(taskUserToUpdate is null)
             {
                 await _loggerManager.LogWarning($"User Task does not exist - {updateUserTaskCompleteStatus.Id}");
+                return GenericResponse<string>.Failure(null, HttpStatusCode.NotFound, $"User Task does not exist.");
             }
 
             if(taskUserToUpdate.CompletionDate.HasValue)
             {
                 await _loggerManager.LogWarning($"User Task already completed at {taskUserToUpdate.CompletionDate}");
                 return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.Conflict, $"User Task already completed at: {taskUserToUpdate.CompletionDate.Value.Date}", null);
+            }
+
+            if(!string.IsNullOrEmpty(taskUserToUpdate.CancelReason))
+            {
+                await _loggerManager.LogWarning($"Task is already cancelled with reason: {taskUserToUpdate.CancelReason}");
+                return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.Conflict, $"User Task already cancelled.", null);
             }
 
             string loggedInUserId = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0";
@@ -217,7 +321,20 @@ public sealed class TaskUserService : ITaskUserService
 
             await _repositoryManager.SaveChangesAsync();
 
-            await _loggerManager.LogInfo($"Mark User Task Completion Successfu - {SerializeObject(updateUserTaskCompleteStatus)}");
+            AuditTrail auditTrail = new AuditTrail()
+            {
+                EntityId = taskUserToUpdate.Id.ToString(),
+                EntityName = typeof(TaskUser).Name,
+                PerformedAction = Entities.StaticValues.AuditAction.Completed,
+                PerformedAt = DateTime.UtcNow.ToLocalTime(),
+                ParticipantName = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
+                ParticipandIdentification = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
+                Comment = updateUserTaskCompleteStatus.Comment
+            };
+
+            bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(auditTrail);
+
+            await _loggerManager.LogInfo($"Mark User Task Completion Successful - {SerializeObject(updateUserTaskCompleteStatus)}. Queue Audit Response: {queueAuditResponse}");
 
             return GenericResponse<string>.Success("Operation Success", HttpStatusCode.OK, $"User Task marked as completed.");
 
@@ -252,10 +369,22 @@ public sealed class TaskUserService : ITaskUserService
                 return GenericResponse<string>.Failure("Operation Failed.", HttpStatusCode.NotFound, "Invalid User Task Id", null);
             }
 
-            if(loggedInUserId != taskUserToReassign.task.UserId.ToString())
+            bool isCreator = loggedInUserId == taskUserToReassign.task.UserId.ToString();
+
+            bool isPrivilegedUser =
+                            _httpContextAccessor.HttpContext.User.IsInRole("ADMIN") ||
+                            _httpContextAccessor.HttpContext.User.HasClaim("isUnitHead", "true");
+
+            if (!isCreator && !isPrivilegedUser)
             {
-                await _loggerManager.LogWarning($"Logged in user and created task user mismatch. Logged in user: {loggedInUserId}. Created Task User Id: {taskUserToReassign.UserId}");
+                await _loggerManager.LogWarning($"Logged in user and created task user mismatch. Logged in user: {loggedInUserId}. Created Task User Id: {taskUserToReassign.task.UserId.ToString()}");
                 return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.Conflict, "Invalid Credentials.", null);
+            }
+
+            if(reassignTaskUserDto.UserId.ToString().Equals(taskUserToReassign.task.UserId.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
+                await _loggerManager.LogWarning($"Parent Task Createdd By: {taskUserToReassign.task.UserId} is the same as the newly assigned user: {reassignTaskUserDto.UserId}");
+                return GenericResponse<string>.Failure("Operation Failed", HttpStatusCode.Conflict, "Invalid Credentials.Created By User cannot be a recipient.", null);
             }
 
             User? userToAssignTask = await _repositoryManager.UserRepository.GetById(reassignTaskUserDto.UserId, false)
@@ -274,7 +403,7 @@ public sealed class TaskUserService : ITaskUserService
 
             if(userToAssignTask.UnitId != taskUserToReassign.user.UnitId)
             {
-                await _loggerManager.LogInfo($"Current User and new user to reassign does not belong to same unit. Current User: {taskUserToReassign.user.UnitId} - Reassign User: {userToAssignTask.UnitId}");
+                await _loggerManager.LogInfo($"Current User and new user to reassign does not belong to same unit. Current User: {taskUserToReassign.user.UnitId} - Reassign User Unit: {userToAssignTask.UnitId}");
                 return GenericResponse<string>.Failure($"Operation Failed.", HttpStatusCode.BadRequest, "User to assign task is not in the expected unit.", null);
             }
 
@@ -284,7 +413,22 @@ public sealed class TaskUserService : ITaskUserService
 
             await _repositoryManager.SaveChangesAsync();
 
-            await _loggerManager.LogInfo($"Reassign User Task: {reassignTaskUserDto.TaskId} Operation successful by: {_httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value}. Justification: {reassignTaskUserDto.Justification}");
+            AuditTrail reassignAuditTrail = new AuditTrail()
+            {
+                EntityId = taskUserToReassign.Id.ToString(),
+                EntityName = typeof(TaskUser).Name,
+                PerformedAction = Entities.StaticValues.AuditAction.Reassigned,
+                PerformedAt = DateTime.UtcNow.ToLocalTime(),
+                ParticipantName = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
+                ParticipandIdentification = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
+                OldValue = $"{taskUserToReassign.UserId}",
+                NewValue = $"{reassignTaskUserDto.UserId}",
+                Comment = reassignTaskUserDto.Justification
+            };
+
+            bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(reassignAuditTrail);
+
+            await _loggerManager.LogInfo($"Reassign User Task: {reassignTaskUserDto.TaskId} Operation successful by: {_httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value}. Justification: {reassignTaskUserDto.Justification}. Queue Audit Response: {queueAuditResponse}");
 
             return GenericResponse<string>.Success("Operation Successful.", HttpStatusCode.OK, "User Task Reassigned Successfully.");
         }
@@ -334,7 +478,20 @@ public sealed class TaskUserService : ITaskUserService
 
             await _repositoryManager.SaveChangesAsync();
 
-            await _loggerManager.LogInfo(isSoftDelete ? $"Task User Deactivation Successful - {Id}" : $"Task User Deletion Successful - {Id}");
+            AuditTrail auditTrail = new AuditTrail()
+            {
+                EntityId = existingTaskUser.Id.ToString(),
+                EntityName = typeof(TaskUser).Name,
+                PerformedAction = isSoftDelete ? Entities.StaticValues.AuditAction.SoftDeleted : Entities.StaticValues.AuditAction.HardDeleted,
+                PerformedAt = DateTime.UtcNow.ToLocalTime(),
+                ParticipantName = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
+                ParticipandIdentification = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
+                Comment = isSoftDelete ? "Hard Delete User Task" : "Soft Delete User Task"
+            };
+
+            bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(auditTrail);
+
+            await _loggerManager.LogInfo(isSoftDelete ? $"Task User Deactivation Successful - {Id}" : $"Task User Deletion Successful - {Id}. Queue Audit Response: {queueAuditResponse}");
 
             return GenericResponse<string>.Success("Operation successful", HttpStatusCode.OK, isSoftDelete ? $"Task User Deactivation Successful - {Id}" : $"Task User Deletion Successful - {Id}");
 
@@ -385,14 +542,32 @@ public sealed class TaskUserService : ITaskUserService
                 return GenericResponse<TaskUserDto>.Failure(null, HttpStatusCode.Conflict, "User Task already cancelled.", null);
             }
 
+            var oldValue = taskUserToUpdate.ToDto();
+
             taskUserToUpdate.Title = taskUserDto.Title;
             taskUserToUpdate.Description = taskUserDto.Description;
+            taskUserToUpdate.ProposedCompletionDate = taskUserDto.ProposedCompletionDate.Date;
 
             _repositoryManager.TaskUserRepository.UpdateTaskUser(taskUserToUpdate);
 
             await _repositoryManager.SaveChangesAsync();
 
-            await _loggerManager.LogInfo($"User Task successfully updated - {SerializeObject(taskUserDto)}");
+            AuditTrail auditTrail = new AuditTrail()
+            {
+                EntityId = taskUserToUpdate.Id.ToString(),
+                EntityName = typeof(TaskUser).Name,
+                PerformedAction = Entities.StaticValues.AuditAction.Updated,
+                PerformedAt = DateTime.UtcNow.ToLocalTime(),
+                ParticipantName = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/name"))?.Value ?? "",
+                ParticipandIdentification = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type.EndsWith("claims/serialnumber"))?.Value ?? "0",
+                OldValue = SerializeObject(oldValue),
+                NewValue = SerializeObject(taskUserToUpdate.ToDto()),
+                Comment = "Update User Task Details"
+            };
+
+            bool queueAuditResponse = await _auditPersistenceService.QueueAuditRecord(auditTrail);
+
+            await _loggerManager.LogInfo($"User Task successfully updated - {SerializeObject(taskUserDto)}. Queue Audit Response: {queueAuditResponse}");
 
             return GenericResponse<TaskUserDto>.Success(taskUserToUpdate.ToDto(), HttpStatusCode.OK, "User Task Update Successfully.");
         }

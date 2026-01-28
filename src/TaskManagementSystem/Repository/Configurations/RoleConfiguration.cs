@@ -31,5 +31,57 @@ internal class RoleConfiguration : IEntityTypeConfiguration<Role>
             .WithOne(x => x.role)
             .HasForeignKey(x => x.RoleId)
             .OnDelete(DeleteBehavior.Cascade).IsRequired();
+
+        builder.HasData(new List<Role>()
+        {
+            new Role()
+            {
+                Id = 1,
+                Name = "Admin",
+                CreatedBy = "SYSTEM"
+            },
+            new Role()
+            {
+                Id = 2,
+                Name = "itgovernance",
+                CreatedBy = "SYSTEM"
+            },
+            new Role()
+            {
+                Id = 3,
+                Name = "developer",
+                CreatedBy = "SYSTEM"
+            },
+            new Role()
+            {
+                Id = 4,
+                Name = "tester",
+                CreatedBy = "SYSTEM"
+            },
+            new Role()
+            {
+                Id = 5,
+                Name = "deployment",
+                CreatedBy = "SYSTEM"
+            },
+            new Role()
+            {
+                Id = 6,
+                Name = "productowner",
+                CreatedBy = "SYSTEM"
+            },
+            new Role()
+            {
+                Id = 7,
+                Name = "businessanalyst",
+                CreatedBy = "SYSTEM"
+            },
+            new Role()
+            {
+                Id = 8,
+                Name = "admin",
+                CreatedBy = "SYSTEM"
+            }
+        });
     }
 }
