@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Repository;
 
@@ -11,9 +12,11 @@ using Repository;
 namespace TaskManagementSystem.Api.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    partial class RepositoryContextModelSnapshot : ModelSnapshot
+    [Migration("20260128200351_RemoveAllRoles")]
+    partial class RemoveAllRoles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -277,64 +280,6 @@ namespace TaskManagementSystem.Api.Migrations
                     b.HasIndex("Id");
 
                     b.ToTable("Roles");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2026, 1, 28, 21, 13, 10, 199, DateTimeKind.Local).AddTicks(9789),
-                            CreatedBy = "SYSTEM",
-                            Name = "Admin"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CreatedAt = new DateTime(2026, 1, 28, 21, 13, 10, 199, DateTimeKind.Local).AddTicks(9818),
-                            CreatedBy = "SYSTEM",
-                            Name = "itgovernance"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            CreatedAt = new DateTime(2026, 1, 28, 21, 13, 10, 199, DateTimeKind.Local).AddTicks(9821),
-                            CreatedBy = "SYSTEM",
-                            Name = "developer"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            CreatedAt = new DateTime(2026, 1, 28, 21, 13, 10, 199, DateTimeKind.Local).AddTicks(9823),
-                            CreatedBy = "SYSTEM",
-                            Name = "tester"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            CreatedAt = new DateTime(2026, 1, 28, 21, 13, 10, 199, DateTimeKind.Local).AddTicks(9825),
-                            CreatedBy = "SYSTEM",
-                            Name = "deployment"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            CreatedAt = new DateTime(2026, 1, 28, 21, 13, 10, 199, DateTimeKind.Local).AddTicks(9829),
-                            CreatedBy = "SYSTEM",
-                            Name = "productowner"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            CreatedAt = new DateTime(2026, 1, 28, 21, 13, 10, 199, DateTimeKind.Local).AddTicks(9830),
-                            CreatedBy = "SYSTEM",
-                            Name = "businessanalyst"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            CreatedAt = new DateTime(2026, 1, 28, 21, 13, 10, 199, DateTimeKind.Local).AddTicks(9832),
-                            CreatedBy = "SYSTEM",
-                            Name = "admin"
-                        });
                 });
 
             modelBuilder.Entity("Entities.Models.TaskUser", b =>
